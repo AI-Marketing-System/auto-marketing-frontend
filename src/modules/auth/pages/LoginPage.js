@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "../styles/LoginPage.css";
-import Brand from "../components/Brand";
+import Brand from "../../../public-site/components/Brand";
 import SocialButton from "../components/SocialButton";
 import InputField from "../components/InputField";
 

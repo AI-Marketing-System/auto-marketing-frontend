@@ -4,6 +4,7 @@ import HomePage from "../public-site/pages/HomePage";
 import LoginPage from "../modules/auth/pages/LoginPage";
 import RegisterPage from "../modules/auth/pages/RegisterPage";
 import ForgotPasswordPage from "../modules/auth/pages/ForgotPasswordPage";
+import DashboardPage from "../modules/analytics/pages/DashboardPage";
 
 function AppRoutes() {
     return (
@@ -12,6 +13,7 @@ function AppRoutes() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
         </Routes>
     );
 }

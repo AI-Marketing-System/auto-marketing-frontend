@@ -1,5 +1,5 @@
 import React from "react";
-import Brand from "./Brand";
+import Brand from "../../../public-site/components/Brand";
 
 function RegisterLeft() {
     return (
