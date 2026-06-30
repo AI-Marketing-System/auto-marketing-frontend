@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Numito:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #FFFFFF;
+  --surface: #E0F2FE;
+  --surface-2: #F0ECF8;
+  --border: #D1D5DB;
+  --text: #374151;
+  --muted: #4B5563;
+  --accent: #6D28D9;
+  --accent-soft: rgba(109, 40, 217, 0.14);
+  --warm: #1877F2;
+  --warm-soft: rgba(24, 119, 242, 0.14);
+  --success: #10B981;
+
+  --font-display: 'Numito', sans-serif;
+  --font-body: 'Numito', sans-serif;
+  --font-mono: 'Numito', sans-serif;
+
+  --radius: 14px;
+  --container: 1120px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+img { max-width: 100%; display: block; }
+
+a { color: inherit; text-decoration: none; }
+
+button { font-family: inherit; cursor: pointer; border: none; }
+
+.container {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--warm);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 15px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #FFFFFF;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-soft); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

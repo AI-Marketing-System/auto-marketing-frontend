@@ -4,7 +4,7 @@ function Navbar() {
     return (
         <header className="navbar">
             <div className="logo">
-                Auto Marketing
+                MarqOps
             </div>
 
             <nav>

@@ -1,13 +1,22 @@
-import HeroSection from "../components/HeroSection";
-import FeatureSection from "../components/FeatureSection";
+import '../styles/globals.css';
+import Header from '../components/Header';
+import Hero from '../components/Hero';
+import Features from '../components/Features';
+import HowItWorks from '../components/HowItWorks';
+import CTA from '../components/CTA';
+import Footer from '../components/Footer';
 
-function HomePage() {
+export default function Home() {
     return (
         <>
-            <HeroSection />
-            <FeatureSection />
+            <Header />
+            <main>
+                <Hero />
+                <Features />
+                <HowItWorks />
+                <CTA />
+            </main>
+            <Footer />
         </>
     );
 }
-
-export default HomePage;

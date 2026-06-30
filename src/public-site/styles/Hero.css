@@ -1,0 +1,103 @@
+.hero {
+  padding: 96px 0 80px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero__inner {
+  max-width: 760px;
+}
+
+.hero__title {
+  font-size: clamp(36px, 5.5vw, 58px);
+  line-height: 1.08;
+  margin: 18px 0 22px;
+}
+
+.hero__subtitle {
+  font-size: 17px;
+  color: var(--muted);
+  max-width: 560px;
+  margin-bottom: 34px;
+}
+
+.hero__actions {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 64px;
+}
+
+/* Signature: scheduling timeline */
+.timeline {
+  max-width: 640px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 22px 22px 8px;
+  position: relative;
+}
+
+.timeline__line {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  top: 0;
+  height: 2px;
+  display: none;
+}
+
+.timeline__item {
+  display: grid;
+  grid-template-columns: 14px 56px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+}
+.timeline__item:last-child { border-bottom: none; }
+
+.timeline__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.timeline__dot--done { background: var(--success); }
+.timeline__dot--live {
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  animation: pulse 1.8s ease-in-out infinite;
+}
+.timeline__dot--queued { background: var(--warm); }
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 4px var(--accent-soft); }
+  50% { box-shadow: 0 0 0 7px var(--accent-soft); }
+}
+
+.timeline__time {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.timeline__page {
+  font-size: 14.5px;
+  color: var(--text);
+}
+
+.timeline__badge {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.timeline__badge--done { color: var(--success); background: rgba(87, 217, 163, 0.12); }
+.timeline__badge--live { color: var(--accent); background: var(--accent-soft); }
+.timeline__badge--queued { color: var(--warm); background: var(--warm-soft); }
+
+@media (max-width: 560px) {
+  .timeline__item { grid-template-columns: 10px 48px 1fr; }
+  .timeline__badge { grid-column: 2 / 4; justify-self: start; margin-top: 4px; }
+}
