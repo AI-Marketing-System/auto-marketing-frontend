@@ -1,0 +1,42 @@
+.how {
+  padding: 88px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.how__title {
+  font-size: clamp(26px, 3.4vw, 34px);
+  margin: 14px 0 44px;
+}
+
+.how__steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.how__step {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+
+.how__step-n {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.how__step h3 {
+  font-size: 17px;
+  margin-bottom: 8px;
+}
+
+.how__step p {
+  font-size: 14.5px;
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .how__steps { grid-template-columns: 1fr; }
+}
