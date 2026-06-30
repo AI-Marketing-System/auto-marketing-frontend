@@ -5,6 +5,7 @@ import LoginPage from "../modules/auth/pages/LoginPage";
 import RegisterPage from "../modules/auth/pages/RegisterPage";
 import ForgotPasswordPage from "../modules/auth/pages/ForgotPasswordPage";
 import DashboardPage from "../modules/analytics/pages/DashboardPage";
+import CampaignListPage from "../modules/campaigns/pages/CampaignListPage";
 
 function AppRoutes() {
     return (
@@ -14,6 +15,7 @@ function AppRoutes() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/campaigns" element={<CampaignListPage />} />
         </Routes>
     );
 }
