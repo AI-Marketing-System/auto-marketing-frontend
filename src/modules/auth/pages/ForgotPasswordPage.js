@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "../styles/ForgotPasswordPage.css";
-import Brand from "../components/Brand";
+import Brand from "../../../public-site/components/Brand";
 import InputField from "../components/InputField";
 
 function ForgotPasswordPage() {
