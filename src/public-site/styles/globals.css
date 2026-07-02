@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Numito:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
 
 :root {
   --bg: #FFFFFF;
@@ -8,14 +8,14 @@
   --text: #374151;
   --muted: #4B5563;
   --accent: #6D28D9;
-  --accent-soft: rgba(109, 40, 217, 0.14);
+  --accent-soft: rgba(109, 40, 217, 0.08);
   --warm: #1877F2;
-  --warm-soft: rgba(24, 119, 242, 0.14);
+  --warm-soft: rgba(24, 119, 242, 0.08);
   --success: #10B981;
 
-  --font-display: 'Numito', sans-serif;
-  --font-body: 'Numito', sans-serif;
-  --font-mono: 'Numito', sans-serif;
+  --font-display: 'Nunito', sans-serif;
+  --font-body: 'Nunito', sans-serif;
+  --font-mono: 'Nunito', sans-serif;
 
   --radius: 14px;
   --container: 1120px;

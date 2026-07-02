@@ -32,9 +32,9 @@ function ForgotPasswordPage() {
                         <p className="forgot-subtitle">
                             Chúng tôi đã gửi liên kết đặt lại mật khẩu đến <strong>{email}</strong>. Vui lòng kiểm tra hộp thư của bạn.
                         </p>
-                        <button 
-                            type="button" 
-                            className="btn-submit" 
+                        <button
+                            type="button"
+                            className="btn-submit"
                             onClick={() => setIsSubmitted(false)}
                         >
                             Gửi lại yêu cầu

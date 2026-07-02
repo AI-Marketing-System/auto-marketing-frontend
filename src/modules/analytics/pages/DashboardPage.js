@@ -105,9 +105,9 @@ function DashboardPage() {
                         {/* Grid of Workspaces */}
                         <div className="workspaces-grid">
                             {/* Creator Card */}
-                            <WorkspaceCard 
-                                isCreator={true} 
-                                onCardClick={handleCreateWorkspace} 
+                            <WorkspaceCard
+                                isCreator={true}
+                                onCardClick={handleCreateWorkspace}
                             />
 
                             {/* Normal Workspace Cards */}
@@ -154,7 +154,7 @@ function DashboardPage() {
                 </div>
             </main>
 
-            <CreateWorkspaceModal 
+            <CreateWorkspaceModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSubmit={handleModalSubmit}

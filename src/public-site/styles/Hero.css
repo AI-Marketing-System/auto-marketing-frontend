@@ -1,23 +1,35 @@
 .hero {
-  padding: 96px 0 80px;
+  padding: 100px 0 88px;
+  background: radial-gradient(circle at 80% 20%, rgba(245, 243, 255, 0.6) 0%, #FFFFFF 100%);
   border-bottom: 1px solid var(--border);
 }
 
 .hero__inner {
-  max-width: 760px;
+  max-width: 840px;
+  text-align: left;
 }
 
 .hero__title {
-  font-size: clamp(36px, 5.5vw, 58px);
-  line-height: 1.08;
+  font-size: clamp(38px, 6vw, 60px);
+  line-height: 1.1;
+  font-weight: 800;
   margin: 18px 0 22px;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.hero__title span {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--warm) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .hero__subtitle {
-  font-size: 17px;
+  font-size: 18px;
+  line-height: 1.6;
   color: var(--muted);
-  max-width: 560px;
-  margin-bottom: 34px;
+  max-width: 620px;
+  margin-bottom: 36px;
 }
 
 .hero__actions {
@@ -26,78 +38,201 @@
   margin-bottom: 64px;
 }
 
-/* Signature: scheduling timeline */
-.timeline {
-  max-width: 640px;
+/* Premium Scheduler Pipeline UI */
+.timeline-card {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
-  padding: 22px 22px 8px;
-  position: relative;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
 }
 
-.timeline__line {
-  position: absolute;
-  left: 22px;
-  right: 22px;
-  top: 0;
-  height: 2px;
-  display: none;
-}
-
-.timeline__item {
-  display: grid;
-  grid-template-columns: 14px 56px 1fr auto;
+.timeline-card__header {
+  display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 13px 0;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background: rgba(109, 40, 217, 0.03);
   border-bottom: 1px solid var(--border);
 }
-.timeline__item:last-child { border-bottom: none; }
 
-.timeline__dot {
-  width: 9px;
-  height: 9px;
+.timeline-card__header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.timeline-card__header-dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--muted);
-}
-.timeline__dot--done { background: var(--success); }
-.timeline__dot--live {
-  background: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
-  animation: pulse 1.8s ease-in-out infinite;
-}
-.timeline__dot--queued { background: var(--warm); }
-
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 4px var(--accent-soft); }
-  50% { box-shadow: 0 0 0 7px var(--accent-soft); }
+  background: var(--success);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
-.timeline__time {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.timeline__page {
-  font-size: 14.5px;
+.timeline-card__header h3 {
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text);
 }
 
-.timeline__badge {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  letter-spacing: 0.03em;
+.timeline-card__header-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timeline-list {
+  padding: 8px 24px;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(209, 213, 219, 0.4);
+}
+
+.timeline-item:last-child {
+  border-bottom: none;
+}
+
+.timeline-item__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-grow: 1;
+}
+
+.timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.timeline-dot--done {
+  background: var(--success);
+}
+
+.timeline-dot--live {
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+.timeline-dot--queued {
+  background: var(--warm);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 4px var(--accent-soft); }
+  50% { box-shadow: 0 0 0 8px var(--accent-soft); }
+}
+
+.timeline-time {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--muted);
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.timeline-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.timeline-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.timeline-page {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.timeline-snippet {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.timeline-badge {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 99px;
   white-space: nowrap;
 }
-.timeline__badge--done { color: var(--success); background: rgba(87, 217, 163, 0.12); }
-.timeline__badge--live { color: var(--accent); background: var(--accent-soft); }
-.timeline__badge--queued { color: var(--warm); background: var(--warm-soft); }
 
-@media (max-width: 560px) {
-  .timeline__item { grid-template-columns: 10px 48px 1fr; }
-  .timeline__badge { grid-column: 2 / 4; justify-self: start; margin-top: 4px; }
+.timeline-badge--done {
+  color: var(--success);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.timeline-badge--live {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.timeline-badge--queued {
+  color: var(--warm);
+  background: var(--warm-soft);
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 72px 0 60px;
+  }
+  .hero__inner {
+    text-align: center;
+  }
+  .hero__subtitle {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .hero__actions {
+    justify-content: center;
+  }
+  .timeline-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .timeline-badge {
+    align-self: flex-start;
+    margin-left: 76px;
+  }
+  .timeline-snippet {
+    -webkit-line-clamp: 2;
+  }
 }
