@@ -7,6 +7,7 @@ import ForgotPasswordPage from '../modules/auth/pages/ForgotPasswordPage';
 import AuthApiLabPage from '../modules/auth/pages/AuthApiLabPage';
 import DashboardPage from '../modules/analytics/pages/DashboardPage';
 import CampaignListPage from '../modules/campaigns/pages/CampaignListPage';
+import PlanManagementPage from '../modules/admin/plans/pages/PlanManagementPage';
 
 function AppRoutes() {
   return (
@@ -18,6 +19,7 @@ function AppRoutes() {
       <Route path="/auth-lab" element={<AuthApiLabPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/campaigns" element={<CampaignListPage />} />
+      <Route path="/admin/plans" element={<PlanManagementPage />} />
     </Routes>
   );
 }
