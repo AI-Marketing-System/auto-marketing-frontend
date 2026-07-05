@@ -1,9 +1,9 @@
 .footer {
-  background: linear-gradient(135deg, #FFFFFF 0%, #F5F3FF 100%);
+  background: linear-gradient(180deg, #FFFFFF 0%, #F5F3FF 100%);
   border-top: 1px solid var(--border);
-  padding-top: 64px;
+  padding-top: 80px;
   padding-bottom: 32px;
-  margin-top: 80px;
+  margin-top: 0;
 }
 
 .footer__content {

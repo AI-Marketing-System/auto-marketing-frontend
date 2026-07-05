@@ -9,8 +9,8 @@ export default function CTA() {
           Dùng thử miễn phí 14 ngày — không cần thẻ thanh toán.
         </p>
         <div className="cta__actions">
-          <a href="#signup" className="btn btn-primary">Dùng thử miễn phí</a>
-          <a href="#contact" className="btn btn-ghost">Liên hệ tư vấn</a>
+          <a href="/register" className="btn btn-primary">Dùng thử miễn phí</a>
+          <a href="#pricing" className="btn btn-ghost">Xem bảng giá</a>
         </div>
       </div>
     </section>

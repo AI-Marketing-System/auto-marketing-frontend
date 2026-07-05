@@ -1,42 +1,82 @@
 .how {
   padding: 88px 0;
   border-bottom: 1px solid var(--border);
+  background: var(--bg);
 }
 
 .how__title {
-  font-size: clamp(26px, 3.4vw, 34px);
-  margin: 14px 0 44px;
+  font-size: clamp(28px, 3.4vw, 36px);
+  font-weight: 700;
+  margin: 14px 0 48px;
+  line-height: 1.2;
 }
 
 .how__steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  gap: 36px;
 }
 
 .how__step {
-  border-top: 1px solid var(--border);
-  padding-top: 18px;
+  border-top: 3px solid rgba(209, 213, 219, 0.4);
+  padding-top: 28px;
+  text-align: left;
+  transition: border-color 0.3s ease;
+}
+
+.how__step:hover {
+  border-top-color: var(--accent);
 }
 
 .how__step-n {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-2);
   color: var(--accent);
-  margin-bottom: 14px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 13.5px;
+  margin-bottom: 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.how__step:hover .how__step-n {
+  background: var(--accent);
+  color: #FFFFFF;
 }
 
 .how__step h3 {
-  font-size: 17px;
-  margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text);
 }
 
 .how__step p {
   font-size: 14.5px;
   color: var(--muted);
+  line-height: 1.55;
 }
 
-@media (max-width: 700px) {
-  .how__steps { grid-template-columns: 1fr; }
+@media (max-width: 768px) {
+  .how__steps {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .how__step {
+    border-top: none;
+    border-left: 3px solid rgba(209, 213, 219, 0.4);
+    padding-top: 0;
+    padding-left: 20px;
+  }
+  .how__step:hover {
+    border-left-color: var(--accent);
+  }
+  .how__step-n {
+    margin-bottom: 12px;
+  }
 }
