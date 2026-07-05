@@ -1,92 +1,108 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../styles/CampaignListPage.css";
 import Brand from "../../../public-site/components/Brand";
 import CampaignCard from "../components/CampaignCard";
 import CreateCampaignModal from "../components/CreateCampaignModal";
+import { campaignApi } from "../api/campaignApi";
+import { API_BASE_URL } from "../../../config/env";
 
 function CampaignListPage() {
     const [activeTab, setActiveTab] = useState("campaigns"); // "campaigns" or "schedule"
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("Tất cả");
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [campaigns, setCampaigns] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    const [campaigns, setCampaigns] = useState([
-        {
-            id: 1,
-            initials: "KT",
-            initialsBg: "#f3e8ff",
-            initialsColor: "#7c3aed",
-            status: "Đang chạy",
-            title: "Khai trương cửa hàng mới",
-            dateRange: "12/06 - 30/06",
-            topicsCount: 4,
-            postsCount: 18
-        },
-        {
-            id: 2,
-            initials: "MS",
-            initialsBg: "#ffedd5",
-            initialsColor: "#ea580c",
-            status: "Tạm dừng",
-            title: "Mid-year sale",
-            dateRange: "01/06 - 15/06",
-            topicsCount: 2,
-            postsCount: 9
-        },
-        {
-            id: 3,
-            initials: "TT",
-            initialsBg: "#dcfce7",
-            initialsColor: "#15803d",
-            status: "Hoàn thành",
-            title: "Tết Nguyên Đán 2026",
-            dateRange: "20/01 - 10/02",
-            topicsCount: 6,
-            postsCount: 31
+    useEffect(() => {
+        async function loadCampaigns() {
+            setLoading(true);
+            setError(null);
+            try {
+                const data = await campaignApi.list(API_BASE_URL);
+                if (Array.isArray(data)) {
+                    setCampaigns(
+                        data.map((campaign) => ({
+                            id: campaign.id,
+                            initials: generateInitials(campaign.name || campaign.title || "CD"),
+                            initialsBg: getInitialBgColor(campaign.id),
+                            initialsColor: getInitialTextColor(campaign.id),
+                            status: campaign.status || "Đang chạy",
+                            title: campaign.name || campaign.title || "Chiến dịch mới",
+                            dateRange: campaign.dateRange || campaign.dates || "--",
+                            topicsCount: campaign.topicsCount ?? 0,
+                            postsCount: campaign.postsCount ?? 0,
+                        }))
+                    );
+                } else {
+                    setCampaigns([]);
+                }
+            } catch (err) {
+                setError(err.message || "Không thể tải chiến dịch");
+            } finally {
+                setLoading(false);
+            }
         }
-    ]);
+
+        loadCampaigns();
+    }, []);
+
+    const getInitialBgColor = (id) => {
+        const schemes = ["#f3e8ff", "#ffedd5", "#dcfce7", "#e0f2fe"];
+        return schemes[id % schemes.length];
+    };
+
+    const getInitialTextColor = (id) => {
+        const colors = ["#7c3aed", "#ea580c", "#15803d", "#0369a1"];
+        return colors[id % colors.length];
+    };
+
+    const generateInitials = (title) => {
+        const words = title.trim().split(" ");
+        if (words.length >= 2) {
+            return (words[0][0] + words[1][0]).toUpperCase();
+        }
+        return title.substring(0, 2).toUpperCase();
+    };
 
     const handleCreateCampaign = () => {
         setIsModalOpen(true);
     };
 
-    const handleModalSubmit = (data) => {
-        console.log("Creating campaign with data:", data);
-
-        // Generate initials
-        const words = data.title.trim().split(" ");
-        let initials = "";
-        if (words.length >= 2) {
-            initials = (words[0][0] + words[1][0]).toUpperCase();
-        } else if (words.length === 1) {
-            initials = words[0].substring(0, 2).toUpperCase();
-        } else {
-            initials = "CD";
+    const handleModalSubmit = async (data) => {
+        const accessToken = window.localStorage.getItem('marqops.authLab.accessToken');
+        if (!accessToken) {
+            window.alert('Vui lòng đăng nhập trước khi tạo chiến dịch.');
+            return;
         }
 
-        // Cycle colors
-        const colorSchemes = [
-            { bg: "#f3e8ff", color: "#7c3aed" },
-            { bg: "#ffedd5", color: "#ea580c" },
-            { bg: "#dcfce7", color: "#15803d" },
-            { bg: "#e0f2fe", color: "#0369a1" }
-        ];
-        const scheme = colorSchemes[campaigns.length % colorSchemes.length];
-
-        const newCampaign = {
-            id: Date.now(),
-            initials,
-            initialsBg: scheme.bg,
-            initialsColor: scheme.color,
-            status: data.status,
-            title: data.title,
-            dateRange: data.dateRange,
-            topicsCount: 0,
-            postsCount: 0
-        };
-
-        setCampaigns([newCampaign, ...campaigns]);
-        setIsModalOpen(false);
+        try {
+            const payload = {
+                name: data.title,
+                status: data.status,
+                dateRange: data.dateRange,
+                description: data.description,
+            };
+            const created = await campaignApi.create(payload, API_BASE_URL);
+            setCampaigns((prev) => [
+                {
+                    id: created.id || Date.now(),
+                    initials: generateInitials(created.name || payload.name),
+                    initialsBg: getInitialBgColor(created.id || prev.length),
+                    initialsColor: getInitialTextColor(created.id || prev.length),
+                    status: created.status || payload.status,
+                    title: created.name || payload.name,
+                    dateRange: created.dateRange || payload.dateRange,
+                    topicsCount: created.topicsCount ?? 0,
+                    postsCount: created.postsCount ?? 0,
+                },
+                ...prev,
+            ]);
+            setIsModalOpen(false);
+        } catch (err) {
+            window.alert(err.message || "Không thể tạo chiến dịch. Vui lòng thử lại.");
+        }
     };
 
     // Filter campaigns based on search query and status dropdown
@@ -196,6 +212,25 @@ function CampaignListPage() {
                     </div>
                 </div>
 
+                <div className="campaign-summary-grid">
+                    <div className="campaign-summary-card">
+                        <span className="summary-label">Tổng chiến dịch</span>
+                        <strong className="summary-value">{campaigns.length}</strong>
+                    </div>
+                    <div className="campaign-summary-card">
+                        <span className="summary-label">Đang chạy</span>
+                        <strong className="summary-value">{campaigns.filter((camp) => camp.status === 'Đang chạy').length}</strong>
+                    </div>
+                    <div className="campaign-summary-card">
+                        <span className="summary-label">Tạm dừng</span>
+                        <strong className="summary-value">{campaigns.filter((camp) => camp.status === 'Tạm dừng').length}</strong>
+                    </div>
+                    <div className="campaign-summary-card">
+                        <span className="summary-label">Hoàn thành</span>
+                        <strong className="summary-value">{campaigns.filter((camp) => camp.status === 'Hoàn thành').length}</strong>
+                    </div>
+                </div>
+
                 {/* Filter and Search Bar */}
                 <div className="filter-search-container">
                     <div className="search-input-wrapper">
@@ -226,15 +261,23 @@ function CampaignListPage() {
                     </div>
                 </div>
 
-                {/* Campaigns Grid */}
-                {filteredCampaigns.length > 0 ? (
+                {/* Loading & Error states */}
+                {loading ? (
+                    <div className="empty-campaigns-state">
+                        <p className="empty-text">Đang tải chiến dịch...</p>
+                    </div>
+                ) : error ? (
+                    <div className="empty-campaigns-state">
+                        <p className="empty-text">Lỗi: {error}</p>
+                    </div>
+                ) : filteredCampaigns.length > 0 ? (
                     <div className="campaigns-cards-grid">
                         {filteredCampaigns.map((camp) => (
                             <CampaignCard
                                 key={camp.id}
                                 initials={camp.initials}
                                 initialsBg={camp.initialsBg}
-                                initialsColor={camp.initialsColor} // passed in style internally
+                                initialsColor={camp.initialsColor}
                                 status={camp.status}
                                 title={camp.title}
                                 dateRange={camp.dateRange}
@@ -246,7 +289,7 @@ function CampaignListPage() {
                     </div>
                 ) : (
                     <div className="empty-campaigns-state">
-                        <p className="empty-text">Không tìm thấy chiến dịch nào phù hợp.</p>
+                        <p className="empty-text">Chưa có chiến dịch nào. Hãy tạo mới ngay!</p>
                     </div>
                 )}
 

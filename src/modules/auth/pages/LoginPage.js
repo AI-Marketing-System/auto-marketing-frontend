@@ -23,6 +23,9 @@ function LoginPage() {
     setFeedback(null);
 
     try {
+      localStorage.removeItem('marqops.authLab.accessToken');
+      localStorage.removeItem('marqops.authLab.refreshToken');
+
       const response = await authApi.login({ email, password }, API_BASE_URL);
       if (response?.data?.accessToken) {
         localStorage.setItem('marqops.authLab.accessToken', response.data.accessToken);
