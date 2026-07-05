@@ -119,18 +119,18 @@ function CampaignListPage() {
                 <div className="header-left">
                     <Brand className="campaign-brand" textClassName="brand-name" />
                 </div>
-                
+
                 {/* Center Tab Selector */}
                 <div className="header-center-tabs">
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         className={`tab-link-btn ${activeTab === "campaigns" ? "active" : ""}`}
                         onClick={() => setActiveTab("campaigns")}
                     >
                         Chiến dịch
                     </button>
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         className={`tab-link-btn ${activeTab === "schedule" ? "active" : ""}`}
                         onClick={() => setActiveTab("schedule")}
                     >
@@ -154,7 +154,7 @@ function CampaignListPage() {
 
             {/* Campaign Main Body */}
             <main className="campaign-main-content">
-                
+
                 {/* Workspace Selector Bar */}
                 <div className="workspace-selector-card">
                     <div className="workspace-selector-dropdown">
@@ -238,17 +238,17 @@ function CampaignListPage() {
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        <input 
-                            type="text" 
-                            className="search-campaign-input" 
-                            placeholder="Tìm chiến dịch..." 
+                        <input
+                            type="text"
+                            className="search-campaign-input"
+                            placeholder="Tìm chiến dịch..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
 
                     <div className="status-filter-wrapper">
-                        <select 
+                        <select
                             className="status-filter-select"
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
@@ -295,7 +295,7 @@ function CampaignListPage() {
 
             </main>
 
-            <CreateCampaignModal 
+            <CreateCampaignModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSubmit={handleModalSubmit}

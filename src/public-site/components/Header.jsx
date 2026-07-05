@@ -17,7 +17,7 @@ export default function Header() {
 
         <div className="header__actions">
           <a href="/login" className="header__login">Đăng nhập</a>
-          <a href="#cta" className="btn btn-primary header__cta">Dùng thử miễn phí</a>
+          <a href="#pricing" className="btn btn-primary header__cta">Dùng thử miễn phí</a>
         </div>
       </div>
     </header>
