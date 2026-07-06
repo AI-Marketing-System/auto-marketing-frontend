@@ -5,3 +5,7 @@ export const campaignApi = {
   create: (payload, baseUrl) =>
     requestJson('/campaigns', { method: 'POST', body: JSON.stringify(payload) }, baseUrl),
 };
+
+export const workspaceApi = {
+  myWorkspaces: (baseUrl) => requestJson('/workspaces/me', { method: 'GET' }, baseUrl),
+};
