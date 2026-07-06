@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Thêm import hook điều hướng
 import { API_BASE_URL } from '../../../../config/env';
 import { plansApi } from '../api/plansApi';
 import PlanHeader from '../components/PlanHeader';
@@ -9,9 +10,12 @@ import PlanDetailPanel from '../components/PlanDetailPanel';
 import PlanFormModal from '../components/PlanFormModal';
 import { buildPlanPayload, normalizePlanList } from '../utils/planHelpers';
 import '../styles/PlanManagementPage.css';
+
 const EMPTY_PLAN = null;
 
 function PlanManagementPage() {
+  const navigate = useNavigate(); // Khởi tạo hook
+
   const [plans, setPlans] = useState([]);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [search, setSearch] = useState('');
@@ -45,8 +49,8 @@ function PlanManagementPage() {
   }, [loadPlans]);
 
   const selectedPlan = useMemo(
-    () => plans.find((plan) => plan.id === selectedPlanId) || plans[0] || null,
-    [plans, selectedPlanId]
+      () => plans.find((plan) => plan.id === selectedPlanId) || plans[0] || null,
+      [plans, selectedPlanId]
   );
 
   const stats = useMemo(() => {
@@ -66,16 +70,16 @@ function PlanManagementPage() {
     const query = search.trim().toLowerCase();
     const sorted = [...plans].filter((plan) => {
       const matchesSearch =
-        !query ||
-        [plan.name, plan.description, String(plan.price), String(plan.billingCycleDays)]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase()
-          .includes(query);
+          !query ||
+          [plan.name, plan.description, String(plan.price), String(plan.billingCycleDays)]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase()
+              .includes(query);
       const matchesStatus =
-        statusFilter === 'all' ||
-        (statusFilter === 'active' && plan.isActive) ||
-        (statusFilter === 'inactive' && !plan.isActive);
+          statusFilter === 'all' ||
+          (statusFilter === 'active' && plan.isActive) ||
+          (statusFilter === 'inactive' && !plan.isActive);
 
       return matchesSearch && matchesStatus;
     });
@@ -145,54 +149,63 @@ function PlanManagementPage() {
     }
   };
 
+  // Hàm xử lý quay lại Admin Dashboard
+  const handleBackToDashboard = () => {
+    navigate('/admin'); // Thay đổi '/admin' bằng đường dẫn thực tế trong hệ thống của bạn
+  };
+
   return (
-    <div className="plan-page">
-      <PlanHeader onRefresh={loadPlans} onCreatePlan={openCreateModal} />
-
-      <main className="plan-shell">
-        <PlanHero stats={stats} />
-
-        {errorMessage ? <div className="plan-alert">{errorMessage}</div> : null}
-
-        <PlanToolbar
-          search={search}
-          onSearchChange={setSearch}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          sortBy={sortBy}
-          onSortByChange={setSortBy}
+      <div className="plan-page">
+        <PlanHeader
+            onRefresh={loadPlans}
+            onCreatePlan={openCreateModal}
+            onBackToDashboard={handleBackToDashboard} // Truyền prop vào Header
         />
 
-        <section className="plan-content">
-          {loading ? (
-            <div className="plan-table-card">
-              <div className="plan-empty-state">Đang tải dữ liệu...</div>
-            </div>
-          ) : (
-            <>
-              <PlanPlansTable
-                plans={filteredPlans}
-                selectedPlanId={selectedPlan?.id || null}
-                onSelectPlan={setSelectedPlanId}
-                onEditPlan={openEditModal}
-                onDeletePlan={handleDeletePlan}
-                isBusy={saving}
-              />
-              <PlanDetailPanel plan={selectedPlan} onEditPlan={openEditModal} />
-            </>
-          )}
-        </section>
-      </main>
+        <main className="plan-shell">
+          <PlanHero stats={stats} />
 
-      <PlanFormModal
-        isOpen={isModalOpen}
-        mode={modalMode}
-        plan={editingPlan}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleSavePlan}
-        isSaving={saving}
-      />
-    </div>
+          {errorMessage ? <div className="plan-alert">{errorMessage}</div> : null}
+
+          <PlanToolbar
+              search={search}
+              onSearchChange={setSearch}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
+          />
+
+          <section className="plan-content">
+            {loading ? (
+                <div className="plan-table-card">
+                  <div className="plan-empty-state">Đang tải dữ liệu...</div>
+                </div>
+            ) : (
+                <>
+                  <PlanPlansTable
+                      plans={filteredPlans}
+                      selectedPlanId={selectedPlan?.id || null}
+                      onSelectPlan={setSelectedPlanId}
+                      onEditPlan={openEditModal}
+                      onDeletePlan={handleDeletePlan}
+                      isBusy={saving}
+                  />
+                  <PlanDetailPanel plan={selectedPlan} onEditPlan={openEditModal} />
+                </>
+            )}
+          </section>
+        </main>
+
+        <PlanFormModal
+            isOpen={isModalOpen}
+            mode={modalMode}
+            plan={editingPlan}
+            onClose={() => setIsModalOpen(false)}
+            onSubmit={handleSavePlan}
+            isSaving={saving}
+        />
+      </div>
   );
 }
 
