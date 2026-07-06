@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/LoginPage.css';
 import '../styles/auth-feedback.css';
@@ -6,12 +6,22 @@ import Brand from '../../../public-site/components/Brand';
 import SocialButton from '../components/SocialButton';
 import InputField from '../components/InputField';
 import { API_BASE_URL } from '../../../config/env';
-import { authApi } from '../api/authApi';
+import { useAuth } from '../../../context/AuthContext';
 
 function LoginPage() {
   const navigate = useNavigate();
+  const auth = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    if (!auth.isAuthenticated) return;
+    const role = auth.user?.role;
+    const roles = auth.user?.roles || [];
+    const isAdmin = role === 'ADMIN' || roles.includes('ADMIN') || roles.includes('ROLE_ADMIN');
+    navigate(isAdmin ? '/admin/plans' : '/dashboard', { replace: true });
+  }, [auth.isAuthenticated, auth.user, navigate]);
+
   const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
@@ -21,31 +31,21 @@ function LoginPage() {
     e.preventDefault();
     setIsSubmitting(true);
     setFeedback(null);
+    setResponseBody(null);
 
     try {
-      localStorage.removeItem('marqops.authLab.accessToken');
-      localStorage.removeItem('marqops.authLab.refreshToken');
-
-      const response = await authApi.login({ email, password }, API_BASE_URL);
-      if (response?.data?.accessToken) {
-        localStorage.setItem('marqops.authLab.accessToken', response.data.accessToken);
-      }
-      if (response?.data?.refreshToken) {
-        localStorage.setItem('marqops.authLab.refreshToken', response.data.refreshToken);
-      }
-      setResponseBody(response);
+      const data = await auth.login({ email, password }, API_BASE_URL);
+      setResponseBody(data);
       setFeedback({
         kind: 'success',
         title: 'Đăng nhập thành công',
-        message: response?.message || 'Backend trả về token hợp lệ.',
+        message: data?.message || 'Đăng nhập thành công.',
       });
       navigate('/dashboard');
     } catch (error) {
       setResponseBody({
         success: false,
         message: error.message,
-        status: error.status,
-        body: error.body,
       });
       setFeedback({ kind: 'error', title: 'Đăng nhập thất bại', message: error.message });
     } finally {
@@ -60,21 +60,11 @@ function LoginPage() {
   return (
     <div className="login-container">
       <div className="login-card">
-        {/* Logo & Brand Name */}
         <Brand className="login-header" textClassName="brand-name" />
-
-        {/* Form Title */}
         <h1 className="login-title">Đăng nhập tài khoản</h1>
-
-        {/* Social Facebook Login */}
         <SocialButton onClick={handleFacebookLogin}>Đăng nhập với Facebook</SocialButton>
-
-        {/* Divider */}
         <div className="divider">Hoặc</div>
-
-        {/* Login Form */}
         <form className="login-form" onSubmit={handleSubmit}>
-          {/* Email Field */}
           <InputField
             label="Email"
             id="email"
@@ -85,8 +75,6 @@ function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-
-          {/* Password Field */}
           <InputField
             label="Mật khẩu"
             id="password"
@@ -97,8 +85,6 @@ function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-
-          {/* Remember me & Forgot password */}
           <div className="form-options">
             <label className="remember-me">
               <input
@@ -113,8 +99,6 @@ function LoginPage() {
               Quên mật khẩu?
             </Link>
           </div>
-
-          {/* Submit Button */}
           <button type="submit" className="btn-submit">
             {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
@@ -140,7 +124,6 @@ function LoginPage() {
           </div>
         ) : null}
 
-        {/* Footer Signup Link */}
         <div className="login-footer">
           Chưa có tài khoản?
           <Link to="/register" className="signup-link">

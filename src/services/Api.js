@@ -1,6 +1,4 @@
-const DEFAULT_API_BASE_URL = (
-  process.env.REACT_APP_API_BASE_URL || '/api/v1'
-).replace(/\/+$/, '');
+const DEFAULT_API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || '/api/v1').replace(/\/+$/, '');
 
 const ACCESS_TOKEN_STORAGE_KEY = 'marqops.authLab.accessToken';
 const REFRESH_TOKEN_STORAGE_KEY = 'marqops.authLab.refreshToken';
@@ -27,8 +25,7 @@ function getAuthHeaders(path, options = {}) {
   };
 
   const isPublicAuthRoute =
-    typeof path === 'string' &&
-    (path.startsWith('/auth/') || path === '/auth');
+    typeof path === 'string' && (path.startsWith('/auth/') || path === '/auth');
 
   if (!isPublicAuthRoute && typeof window !== 'undefined') {
     const accessToken = window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -70,9 +67,7 @@ export async function requestJson(path, options = {}, baseUrl) {
       clearStoredAuthTokens();
     }
 
-    const error = new Error(
-      body?.message || `Request failed with status ${response.status}`
-    );
+    const error = new Error(body?.message || `Request failed with status ${response.status}`);
     error.status = response.status;
     error.body = body;
     throw error;
@@ -92,4 +87,9 @@ export async function requestJson(path, options = {}, baseUrl) {
 
 export function getApiBaseUrl() {
   return DEFAULT_API_BASE_URL;
+}
+
+export function getAccessToken() {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
 }

@@ -37,4 +37,13 @@ export const authApi = {
       },
       baseUrl
     ),
+  logout: (payload, baseUrl) =>
+    requestJson(
+      '/auth/logout',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+      baseUrl
+    ),
 };
