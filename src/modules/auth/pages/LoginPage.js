@@ -21,6 +21,7 @@ function LoginPage() {
     const isAdmin = role === 'ADMIN' || roles.includes('ADMIN') || roles.includes('ROLE_ADMIN');
     navigate(isAdmin ? '/admin/plans' : '/dashboard', { replace: true });
   }, [auth.isAuthenticated, auth.user, navigate]);
+
   const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);

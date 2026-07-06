@@ -1,11 +1,40 @@
-const DEFAULT_API_BASE_URL = (
-  process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api/v1'
-).replace(/\/+$/, '');
+const DEFAULT_API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || '/api/v1').replace(/\/+$/, '');
+
+const ACCESS_TOKEN_STORAGE_KEY = 'marqops.authLab.accessToken';
+const REFRESH_TOKEN_STORAGE_KEY = 'marqops.authLab.refreshToken';
+
+function clearStoredAuthTokens() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+  window.localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+}
 
 function joinUrl(baseUrl, path) {
   const trimmedBaseUrl = (baseUrl || DEFAULT_API_BASE_URL).replace(/\/+$/, '');
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   return `${trimmedBaseUrl}${normalizedPath}`;
+}
+
+function getAuthHeaders(path, options = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {}),
+  };
+
+  const isPublicAuthRoute =
+    typeof path === 'string' && (path.startsWith('/auth/') || path === '/auth');
+
+  if (!isPublicAuthRoute && typeof window !== 'undefined') {
+    const accessToken = window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+  }
+
+  return headers;
 }
 
 async function readResponseBody(response) {
@@ -14,6 +43,7 @@ async function readResponseBody(response) {
   }
 
   const contentType = response.headers.get('content-type') || '';
+
   if (contentType.includes('application/json')) {
     const text = await response.text();
     return text && text.trim() ? JSON.parse(text) : null;
@@ -23,31 +53,21 @@ async function readResponseBody(response) {
   return text ? { message: text, raw: text, contentType } : null;
 }
 
-const TOKEN_KEY = 'marqops.authLab.accessToken';
-
 export async function requestJson(path, options = {}, baseUrl) {
-  const hasBody = options.body !== undefined && options.body !== null;
-  const token = typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
-  const headers = {
-    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
-    ...(options.headers || {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-
   const response = await fetch(joinUrl(baseUrl, path), {
     cache: 'no-store',
-    headers,
+    headers: getAuthHeaders(path, options),
     ...options,
   });
 
   const body = await readResponseBody(response);
 
   if (!response.ok) {
-    const message =
-      response.status === 401 || response.status === 403
-        ? 'Unauthorized'
-        : body?.message || `Request failed with status ${response.status}`;
-    const error = new Error(message);
+    if (response.status === 401 || response.status === 403) {
+      clearStoredAuthTokens();
+    }
+
+    const error = new Error(body?.message || `Request failed with status ${response.status}`);
     error.status = response.status;
     error.body = body;
     throw error;
@@ -70,6 +90,6 @@ export function getApiBaseUrl() {
 }
 
 export function getAccessToken() {
-  if (typeof localStorage === 'undefined') return null;
-  return localStorage.getItem(TOKEN_KEY);
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
 }
