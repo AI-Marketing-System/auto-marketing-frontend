@@ -23,11 +23,15 @@ async function readResponseBody(response) {
   return text ? { message: text, raw: text, contentType } : null;
 }
 
+const TOKEN_KEY = 'marqops.authLab.accessToken';
+
 export async function requestJson(path, options = {}, baseUrl) {
   const hasBody = options.body !== undefined && options.body !== null;
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
   const headers = {
     ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
     ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
   const response = await fetch(joinUrl(baseUrl, path), {
@@ -39,7 +43,11 @@ export async function requestJson(path, options = {}, baseUrl) {
   const body = await readResponseBody(response);
 
   if (!response.ok) {
-    const error = new Error(body?.message || `Request failed with status ${response.status}`);
+    const message =
+      response.status === 401 || response.status === 403
+        ? 'Unauthorized'
+        : body?.message || `Request failed with status ${response.status}`;
+    const error = new Error(message);
     error.status = response.status;
     error.body = body;
     throw error;
@@ -59,4 +67,9 @@ export async function requestJson(path, options = {}, baseUrl) {
 
 export function getApiBaseUrl() {
   return DEFAULT_API_BASE_URL;
+}
+
+export function getAccessToken() {
+  if (typeof localStorage === 'undefined') return null;
+  return localStorage.getItem(TOKEN_KEY);
 }

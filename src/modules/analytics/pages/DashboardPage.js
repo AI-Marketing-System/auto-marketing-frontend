@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../../context/AuthContext';
 import '../styles/DashboardPage.css';
-import Brand from '../../../public-site/components/Brand';
 import WorkspaceCard from '../components/WorkspaceCard';
 import SharedWorkspaceCard from '../components/SharedWorkspaceCard';
 import CreateWorkspaceModal from '../components/CreateWorkspaceModal';
 
 function DashboardPage() {
-  const [user] = useState({ fullName: 'Nguyễn Gia Kiệt' });
+  const { user } = useAuth();
   const [workspaces, setWorkspaces] = useState([
     { id: 1, title: 'Client – Coffee House Brand', accountsCount: 2 },
     { id: 2, title: 'Thương hiệu của Nguyễn Gia Kiệt', accountsCount: 1 },
@@ -45,53 +45,12 @@ function DashboardPage() {
 
   return (
     <div className="dashboard-container">
-      {/* Top Navigation Header */}
-      <header className="dashboard-header-bar">
-        <div className="header-left">
-          <Brand className="dashboard-brand" textClassName="brand-name" />
-        </div>
-        <div className="header-right">
-          <button type="button" className="help-link-btn">
-            <span className="help-text">Trợ giúp</span>
-            <svg
-              className="help-icon"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" />
-            </svg>
-          </button>
-          <div className="user-avatar-circle">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </div>
-        </div>
-      </header>
-
       {/* Dashboard Inner Body */}
       <main className="dashboard-main-content">
         <div className="dashboard-inner-container">
           {/* Greeting Header */}
           <div className="greeting-section">
-            <h1 className="greeting-title">Xin chào {user.fullName} !</h1>
+            <h1 className="greeting-title">Xin chào {user?.fullName || 'User'} !</h1>
           </div>
 
           {/* Section 1: My Workspaces */}

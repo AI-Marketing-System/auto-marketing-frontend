@@ -1,6 +1,16 @@
-import "../styles/Header.css";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import '../styles/Header.css';
 
 export default function Header() {
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout('/api/v1');
+    navigate('/login', { replace: true });
+  };
+
   return (
     <header className="header">
       <div className="container header__inner">
@@ -16,8 +26,23 @@ export default function Header() {
         </nav>
 
         <div className="header__actions">
-          <a href="/login" className="header__login">Đăng nhập</a>
-          <a href="#pricing" className="btn btn-primary header__cta">Dùng thử miễn phí</a>
+          {isAuthenticated ? (
+            <>
+              <span className="header__user">{user?.fullName || user?.email}</span>
+              <button className="btn btn-ghost header__login" onClick={handleLogout}>
+                Đăng xuất
+              </button>
+            </>
+          ) : (
+            <>
+              <a href="/login" className="header__login">
+                Đăng nhập
+              </a>
+              <a href="#pricing" className="btn btn-primary header__cta">
+                Dùng thử miễn phí
+              </a>
+            </>
+          )}
         </div>
       </div>
     </header>
