@@ -128,23 +128,113 @@
 }
 
 .workspace-selector-dropdown {
+  position: relative;
+}
+
+.workspace-dropdown-trigger {
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-  color: #1e293b;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+  user-select: none;
 }
 
-.workspace-selector-dropdown:hover {
+.workspace-dropdown-trigger:hover {
   background-color: #f8fafc;
+  border-color: #cbd5e1;
 }
 
 .selected-workspace-name {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
+  color: #1e293b;
+}
+
+.dropdown-chevron {
+  color: #64748b;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.dropdown-chevron.open {
+  transform: rotate(180deg);
+  color: #4f46e5;
+}
+
+/* Custom Dropdown Menu container */
+.workspace-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 220px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05), 0 0 1px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-sizing: border-box;
+  animation: dropdownSlideUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdownSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Workspace Dropdown Item styling */
+.workspace-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  gap: 12px;
+  user-select: none;
+}
+
+.workspace-dropdown-item:hover {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+.workspace-dropdown-item.active {
+  background-color: #e0e7ff;
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.workspace-dropdown-item.empty {
+  color: #94a3b8;
+  cursor: default;
+  font-style: italic;
+}
+
+.workspace-dropdown-item.empty:hover {
+  background: none;
+}
+
+.check-icon {
+  color: #4f46e5;
+  flex-shrink: 0;
 }
 
 .connected-accounts-section {
