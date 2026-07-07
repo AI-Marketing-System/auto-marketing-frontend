@@ -12,6 +12,7 @@ import ErrorPage from '../public-site/pages/ErrorPage';
 import DashboardLayout from '../layouts/DashboardLayout/DashboardLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { AdminRoute } from '../components/ProtectedRoute';
+import AdminHomePage from "../modules/admin/home/pages/AdminHomePage";
 
 function AppRoutes() {
   return (
@@ -62,7 +63,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route
+        <Route path="/admin" element={<AdminHomePage />} />
+        <Route
         path="/admin/plans"
         element={
           <AdminRoute>

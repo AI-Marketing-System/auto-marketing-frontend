@@ -19,7 +19,7 @@ function LoginPage() {
     const role = auth.user?.role;
     const roles = auth.user?.roles || [];
     const isAdmin = role === 'ADMIN' || roles.includes('ADMIN') || roles.includes('ROLE_ADMIN');
-    navigate(isAdmin ? '/admin/plans' : '/dashboard', { replace: true });
+    navigate(isAdmin ? '/admin' : '/dashboard', { replace: true });
   }, [auth.isAuthenticated, auth.user, navigate]);
 
   const [rememberMe, setRememberMe] = useState(true);

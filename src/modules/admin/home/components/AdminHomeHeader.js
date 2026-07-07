@@ -23,9 +23,6 @@ function AdminHomeHeader() {
             </div>
 
             <div className="admin-home-header__actions">
-                <Link className="admin-home-btn-ghost" to="/dashboard">
-                    Workspace Dashboard
-                </Link>
                 <div className="admin-home-avatar">A</div>
             </div>
         </header>
