@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../../context/AuthContext';
 import '../styles/DashboardPage.css';
 import Brand from '../../../public-site/components/Brand';
 import WorkspaceCard from '../components/WorkspaceCard';
@@ -7,8 +8,8 @@ import CreateWorkspaceModal from '../components/CreateWorkspaceModal';
 import UpgradeModal from '../components/UpgradeModal';
 
 function DashboardPage() {
-  const [user] = useState({ fullName: 'Kiệt Nguyễn Gia' });
-  const [subscription, setSubscription] = useState({ planName: 'Free', isTrial: false });
+  const { user } = useAuth();
+  const [subscription, setSubscription] = useState({ planName: 'Free', planPrice: 0, isTrial: false });
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [workspaces, setWorkspaces] = useState([
     { id: 1, title: 'Client – Coffee House Brand', accountsCount: 2 },
@@ -109,9 +110,11 @@ function DashboardPage() {
           
           {/* Vùng hiển thị User và nút Nâng cấp dạng phẳng */}
           <div className="user-profile-widget">
-            <div className="user-profile-avatar">KG</div>
+            <div className="user-profile-avatar">
+              {user?.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'US'}
+            </div>
             <div className="user-profile-details">
-              <span className="user-profile-name">{user.fullName}</span>
+              <span className="user-profile-name">{user?.fullName || 'User'}</span>
               <span className="user-profile-tier">
                 {subscription.planName} {subscription.isTrial ? "(Dùng thử)" : ""}
               </span>
@@ -132,7 +135,7 @@ function DashboardPage() {
         <div className="dashboard-inner-container">
           {/* Greeting Header */}
           <div className="greeting-section">
-            <h1 className="greeting-title">Xin chào {user.fullName} !</h1>
+            <h1 className="greeting-title">Xin chào {user?.fullName || 'User'} !</h1>
           </div>
 
           {/* Section 1: My Workspaces */}

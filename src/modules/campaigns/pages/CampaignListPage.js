@@ -1,264 +1,432 @@
-import React, { useState } from "react";
-import "../styles/CampaignListPage.css";
-import Brand from "../../../public-site/components/Brand";
-import CampaignCard from "../components/CampaignCard";
-import CreateCampaignModal from "../components/CreateCampaignModal";
+import React, { useEffect, useState, useRef } from 'react';
+import '../styles/CampaignListPage.css';
+import CampaignCard from '../components/CampaignCard';
+import CreateCampaignModal from '../components/CreateCampaignModal';
+import { campaignApi, workspaceApi } from '../api/campaignApi';
+import { API_BASE_URL } from '../../../config/env';
+import { useLocation } from 'react-router-dom';
+import SchedulePage from '../../schedule/pages/SchedulePage';
+
+const mapStatusToVietnamese = (status) => {
+  switch (status) {
+    case 'ACTIVE':
+      return 'Đang chạy';
+    case 'PAUSED':
+      return 'Tạm dừng';
+    case 'COMPLETED':
+      return 'Hoàn thành';
+    default:
+      return status || 'Đang chạy';
+  }
+};
+
+const formatDate = (isoString) => {
+  if (!isoString) return '';
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch (e) {
+    return '';
+  }
+};
+
+const formatRange = (start, end) => {
+  const s = formatDate(start);
+  const e = formatDate(end);
+  if (s && e) return `${s} - ${e}`;
+  if (s) return `Từ ${s}`;
+  if (e) return `Đến ${e}`;
+  return '--';
+};
 
 function CampaignListPage() {
-    const [activeTab, setActiveTab] = useState("campaigns"); // "campaigns" or "schedule"
-    const [searchQuery, setSearchQuery] = useState("");
-    const [statusFilter, setStatusFilter] = useState("Tất cả");
-    const [isModalOpen, setIsModalOpen] = useState(false);
+  const location = useLocation();
+  const isScheduleTab = location.hash === '#schedule';
 
-    const [campaigns, setCampaigns] = useState([
-        {
-            id: 1,
-            initials: "KT",
-            initialsBg: "#f3e8ff",
-            initialsColor: "#7c3aed",
-            status: "Đang chạy",
-            title: "Khai trương cửa hàng mới",
-            dateRange: "12/06 - 30/06",
-            topicsCount: 4,
-            postsCount: 18
-        },
-        {
-            id: 2,
-            initials: "MS",
-            initialsBg: "#ffedd5",
-            initialsColor: "#ea580c",
-            status: "Tạm dừng",
-            title: "Mid-year sale",
-            dateRange: "01/06 - 15/06",
-            topicsCount: 2,
-            postsCount: 9
-        },
-        {
-            id: 3,
-            initials: "TT",
-            initialsBg: "#dcfce7",
-            initialsColor: "#15803d",
-            status: "Hoàn thành",
-            title: "Tết Nguyên Đán 2026",
-            dateRange: "20/01 - 10/02",
-            topicsCount: 6,
-            postsCount: 31
-        }
-    ]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('Tất cả');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [campaigns, setCampaigns] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [workspaces, setWorkspaces] = useState([]);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-    const handleCreateCampaign = () => {
-        setIsModalOpen(true);
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, []);
 
-    const handleModalSubmit = (data) => {
-        console.log("Creating campaign with data:", data);
+  useEffect(() => {
+    let cancelled = false;
+    workspaceApi
+      .myWorkspaces(API_BASE_URL)
+      .then((res) => {
+        if (!cancelled && res && Array.isArray(res.data)) {
+          setWorkspaces(res.data);
+          if (res.data.length > 0) {
+            setSelectedWorkspaceId(res.data[0].id);
+          }
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-        // Generate initials
-        const words = data.title.trim().split(" ");
-        let initials = "";
-        if (words.length >= 2) {
-            initials = (words[0][0] + words[1][0]).toUpperCase();
-        } else if (words.length === 1) {
-            initials = words[0].substring(0, 2).toUpperCase();
+  useEffect(() => {
+    if (selectedWorkspaceId == null) return;
+    async function loadCampaigns() {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await campaignApi.list(API_BASE_URL, selectedWorkspaceId);
+        const data = Array.isArray(response) ? response : response?.data || [];
+        if (Array.isArray(data)) {
+          setCampaigns(
+            data.map((campaign) => ({
+              id: campaign.id,
+              initials: generateInitials(campaign.name || campaign.title || 'CD'),
+              initialsBg: getInitialBgColor(campaign.id),
+              initialsColor: getInitialTextColor(campaign.id),
+              status: mapStatusToVietnamese(campaign.status),
+              title: campaign.name || campaign.title || 'Chiến dịch mới',
+              dateRange: formatRange(campaign.startDate, campaign.endDate),
+              topicsCount: campaign.topicsCount ?? 0,
+              postsCount: campaign.postsCount ?? 0,
+            }))
+          );
         } else {
-            initials = "CD";
+          setCampaigns([]);
         }
+      } catch (err) {
+        setError(err.message || 'Không thể tải chiến dịch');
+      } finally {
+        setLoading(false);
+      }
+    }
 
-        // Cycle colors
-        const colorSchemes = [
-            { bg: "#f3e8ff", color: "#7c3aed" },
-            { bg: "#ffedd5", color: "#ea580c" },
-            { bg: "#dcfce7", color: "#15803d" },
-            { bg: "#e0f2fe", color: "#0369a1" }
-        ];
-        const scheme = colorSchemes[campaigns.length % colorSchemes.length];
+    loadCampaigns();
+  }, [selectedWorkspaceId]);
 
-        const newCampaign = {
-            id: Date.now(),
-            initials,
-            initialsBg: scheme.bg,
-            initialsColor: scheme.color,
-            status: data.status,
-            title: data.title,
-            dateRange: data.dateRange,
-            topicsCount: 0,
-            postsCount: 0
-        };
+  const getInitialBgColor = (id) => {
+    const schemes = ['#f3e8ff', '#ffedd5', '#dcfce7', '#e0f2fe'];
+    return schemes[id % schemes.length];
+  };
 
-        setCampaigns([newCampaign, ...campaigns]);
-        setIsModalOpen(false);
-    };
+  const getInitialTextColor = (id) => {
+    const colors = ['#7c3aed', '#ea580c', '#15803d', '#0369a1'];
+    return colors[id % colors.length];
+  };
 
-    // Filter campaigns based on search query and status dropdown
-    const filteredCampaigns = campaigns.filter((camp) => {
-        const matchesSearch = camp.title.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesStatus = statusFilter === "Tất cả" || camp.status === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
+  const generateInitials = (title) => {
+    const words = title.trim().split(' ');
+    if (words.length >= 2) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return title.substring(0, 2).toUpperCase();
+  };
 
-    return (
-        <div className="campaign-page-container">
-            {/* Navigation Header */}
-            <header className="campaign-header-bar">
-                <div className="header-left">
-                    <Brand className="campaign-brand" textClassName="brand-name" />
-                </div>
+  const handleCreateCampaign = () => {
+    setIsModalOpen(true);
+  };
 
-                {/* Center Tab Selector */}
-                <div className="header-center-tabs">
-                    <button
-                        type="button"
-                        className={`tab-link-btn ${activeTab === "campaigns" ? "active" : ""}`}
-                        onClick={() => setActiveTab("campaigns")}
-                    >
-                        Chiến dịch
-                    </button>
-                    <button
-                        type="button"
-                        className={`tab-link-btn ${activeTab === "schedule" ? "active" : ""}`}
-                        onClick={() => setActiveTab("schedule")}
-                    >
-                        Lịch đăng
-                    </button>
-                </div>
+  const handleModalSubmit = async (data) => {
+    try {
+      const response = await campaignApi.create(data, API_BASE_URL);
+      const created = response?.data || response;
+      if (Number(created.workspaceId || data.workspaceId) === selectedWorkspaceId) {
+        setCampaigns((prev) => [
+          {
+            id: created.id || Date.now(),
+            initials: generateInitials(created.name || data.title),
+            initialsBg: getInitialBgColor(created.id || prev.length),
+            initialsColor: getInitialTextColor(created.id || prev.length),
+            status: mapStatusToVietnamese(created.status || data.status),
+            title: created.name || data.title,
+            dateRange: formatRange(created.startDate || data.startDate, created.endDate || data.endDate),
+            topicsCount: created.topicsCount ?? 0,
+            postsCount: created.postsCount ?? 0,
+          },
+          ...prev,
+        ]);
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      window.alert(err.message || 'Không thể tạo chiến dịch. Vui lòng thử lại.');
+    }
+  };
 
-                <div className="header-right">
-                    <button type="button" className="help-link-btn">
-                        <svg className="help-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" />
-                        </svg>
-                        <span className="help-text">Trợ giúp</span>
-                    </button>
-                    <div className="user-avatar-initials">
-                        NK
-                    </div>
-                </div>
-            </header>
+  const selectedWorkspace = workspaces.find((ws) => ws.id === selectedWorkspaceId);
 
-            {/* Campaign Main Body */}
-            <main className="campaign-main-content">
+  const filteredCampaigns = campaigns.filter((camp) => {
+    const matchesSearch = camp.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'Tất cả' || camp.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
-                {/* Workspace Selector Bar */}
-                <div className="workspace-selector-card">
-                    <div className="workspace-selector-dropdown">
-                        <span className="selected-workspace-name">Client - Coffee House Brand</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </div>
+  // Nếu đang ở tab Lịch đăng, render SchedulePage toàn màn hình
+  if (isScheduleTab) {
+    return <SchedulePage />;
+  }
 
-                    {/* Connected Social Accounts */}
-                    <div className="connected-accounts-section">
-                        <div className="connected-avatar-wrapper">
-                            <div className="avatar-img-circle bg-blue">
-                                <span className="avatar-initial">CH</span>
-                            </div>
-                            <div className="social-badge facebook-badge">
-                                <span>f</span>
-                            </div>
-                        </div>
+  return (
+    <div className="campaign-page-container">
+      {/* Campaign Main Body */}
+      <main className="campaign-main-content">
+        {/* Workspace Selector Bar */}
+        <div className="workspace-selector-card">
+          <div className="workspace-selector-dropdown" ref={dropdownRef}>
+            <div
+              className="workspace-dropdown-trigger"
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+            >
+              <span className="selected-workspace-name">
+                {selectedWorkspace ? selectedWorkspace.name : 'Chọn workspace'}
+              </span>
+              <svg
+                className={`dropdown-chevron ${isDropdownOpen ? 'open' : ''}`}
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
 
-                        <div className="connected-avatar-wrapper">
-                            <div className="avatar-img-circle bg-orange">
-                                <span className="avatar-initial">PL</span>
-                            </div>
-                            <div className="social-badge facebook-badge">
-                                <span>f</span>
-                            </div>
-                        </div>
-
-                        {/* Add Account Button */}
-                        <button type="button" className="add-account-circle-btn" onClick={() => alert("Kết nối tài khoản mạng xã hội mới")}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Workspace Title & Create Campaign Button */}
-                <div className="workspace-title-section">
-                    <div className="title-left">
-                        <span className="workspace-label">Workspace</span>
-                        <h1 className="workspace-title-main">Client – Coffee House Brand</h1>
-                        <h2 className="section-subtitle">Chiến dịch</h2>
-                    </div>
-                    <div className="title-right">
-                        <button type="button" className="btn-create-campaign" onClick={handleCreateCampaign}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Tạo chiến dịch
-                        </button>
-                    </div>
-                </div>
-
-                {/* Filter and Search Bar */}
-                <div className="filter-search-container">
-                    <div className="search-input-wrapper">
-                        <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                        <input
-                            type="text"
-                            className="search-campaign-input"
-                            placeholder="Tìm chiến dịch..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="status-filter-wrapper">
-                        <select
-                            className="status-filter-select"
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="Tất cả">Tất cả trạng thái</option>
-                            <option value="Đang chạy">Đang chạy</option>
-                            <option value="Tạm dừng">Tạm dừng</option>
-                            <option value="Hoàn thành">Hoàn thành</option>
-                        </select>
-                    </div>
-                </div>
-
-                {/* Campaigns Grid */}
-                {filteredCampaigns.length > 0 ? (
-                    <div className="campaigns-cards-grid">
-                        {filteredCampaigns.map((camp) => (
-                            <CampaignCard
-                                key={camp.id}
-                                initials={camp.initials}
-                                initialsBg={camp.initialsBg}
-                                initialsColor={camp.initialsColor} // passed in style internally
-                                status={camp.status}
-                                title={camp.title}
-                                dateRange={camp.dateRange}
-                                topicsCount={camp.topicsCount}
-                                postsCount={camp.postsCount}
-                                onClick={() => alert(`Truy cập chiến dịch: ${camp.title}`)}
-                            />
-                        ))}
-                    </div>
+            {isDropdownOpen && (
+              <div className="workspace-dropdown-menu">
+                {workspaces.length === 0 ? (
+                  <div className="workspace-dropdown-item empty">Không có workspace</div>
                 ) : (
-                    <div className="empty-campaigns-state">
-                        <p className="empty-text">Không tìm thấy chiến dịch nào phù hợp.</p>
+                  workspaces.map((ws) => (
+                    <div
+                      key={ws.id}
+                      className={`workspace-dropdown-item ${ws.id === selectedWorkspaceId ? 'active' : ''}`}
+                      onClick={() => {
+                        setSelectedWorkspaceId(ws.id);
+                        setIsDropdownOpen(false);
+                      }}
+                    >
+                      <span className="workspace-item-name">{ws.name}</span>
+                      {ws.id === selectedWorkspaceId && (
+                        <svg
+                          className="check-icon"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      )}
                     </div>
+                  ))
                 )}
+              </div>
+            )}
+          </div>
 
-            </main>
+          {/* Connected Social Accounts */}
+          <div className="connected-accounts-section">
+            <div className="connected-avatar-wrapper">
+              <div className="avatar-img-circle bg-blue">
+                <span className="avatar-initial">CH</span>
+              </div>
+              <div className="social-badge facebook-badge">
+                <span>f</span>
+              </div>
+            </div>
 
-            <CreateCampaignModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSubmit={handleModalSubmit}
-            />
+            <div className="connected-avatar-wrapper">
+              <div className="avatar-img-circle bg-orange">
+                <span className="avatar-initial">PL</span>
+              </div>
+              <div className="social-badge facebook-badge">
+                <span>f</span>
+              </div>
+            </div>
+
+            {/* Add Account Button */}
+            <button
+              type="button"
+              className="add-account-circle-btn"
+              onClick={() => alert('Kết nối tài khoản mạng xã hội mới')}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
         </div>
-    );
+
+        {/* Workspace Title & Create Campaign Button */}
+        <div className="workspace-title-section">
+          <div className="title-left">
+            <span className="workspace-label">Workspace</span>
+            <h1 className="workspace-title-main">
+              {selectedWorkspace ? selectedWorkspace.name : 'Chọn workspace'}
+            </h1>
+            <h2 className="section-subtitle">Chiến dịch</h2>
+          </div>
+          <div className="title-right">
+            <button type="button" className="btn-create-campaign" onClick={handleCreateCampaign}>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Tạo chiến dịch
+            </button>
+          </div>
+        </div>
+
+        <div className="campaign-summary-grid">
+          <div className="campaign-summary-card">
+            <span className="summary-label">Tổng chiến dịch</span>
+            <strong className="summary-value">{campaigns.length}</strong>
+          </div>
+          <div className="campaign-summary-card">
+            <span className="summary-label">Đang chạy</span>
+            <strong className="summary-value">
+              {campaigns.filter((camp) => camp.status === 'Đang chạy').length}
+            </strong>
+          </div>
+          <div className="campaign-summary-card">
+            <span className="summary-label">Tạm dừng</span>
+            <strong className="summary-value">
+              {campaigns.filter((camp) => camp.status === 'Tạm dừng').length}
+            </strong>
+          </div>
+          <div className="campaign-summary-card">
+            <span className="summary-label">Hoàn thành</span>
+            <strong className="summary-value">
+              {campaigns.filter((camp) => camp.status === 'Hoàn thành').length}
+            </strong>
+          </div>
+        </div>
+
+        {/* Filter and Search Bar */}
+        <div className="filter-search-container">
+          <div className="search-input-wrapper">
+            <svg
+              className="search-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              className="search-campaign-input"
+              placeholder="Tìm chiến dịch..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="status-filter-wrapper">
+            <select
+              className="status-filter-select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="Tất cả">Tất cả trạng thái</option>
+              <option value="Đang chạy">Đang chạy</option>
+              <option value="Tạm dừng">Tạm dừng</option>
+              <option value="Hoàn thành">Hoàn thành</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Loading & Error states */}
+        {loading ? (
+          <div className="empty-campaigns-state">
+            <p className="empty-text">Đang tải chiến dịch...</p>
+          </div>
+        ) : error ? (
+          <div className="empty-campaigns-state">
+            <p className="empty-text">Lỗi: {error}</p>
+          </div>
+        ) : filteredCampaigns.length > 0 ? (
+          <div className="campaigns-cards-grid">
+            {filteredCampaigns.map((camp) => (
+              <CampaignCard
+                key={camp.id}
+                initials={camp.initials}
+                initialsBg={camp.initialsBg}
+                initialsColor={camp.initialsColor}
+                status={camp.status}
+                title={camp.title}
+                dateRange={camp.dateRange}
+                topicsCount={camp.topicsCount}
+                postsCount={camp.postsCount}
+                onClick={() => alert(`Truy cập chiến dịch: ${camp.title}`)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="empty-campaigns-state">
+            <p className="empty-text">Chưa có chiến dịch nào. Hãy tạo mới ngay!</p>
+          </div>
+        )}
+      </main>
+
+      <CreateCampaignModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleModalSubmit}
+      />
+    </div>
+  );
 }
 
 export default CampaignListPage;

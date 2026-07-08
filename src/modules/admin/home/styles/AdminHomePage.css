@@ -1,0 +1,38 @@
+.admin-home-page {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-family: inherit; /* Hoặc font chữ riêng của project */
+}
+
+.admin-home-main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.admin-home-hero {
+  margin-bottom: 32px;
+}
+
+.admin-home-hero__title {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.admin-home-hero__subtitle {
+  margin: 0;
+  color: #64748b;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .admin-home-main {
+    padding: 24px 16px;
+  }
+  .admin-home-hero__title {
+    font-size: 24px;
+  }
+}

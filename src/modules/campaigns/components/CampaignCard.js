@@ -1,6 +1,6 @@
 import React from "react";
 
-function CampaignCard({ initials, initialsBg = "#7c3aed", status, title, dateRange, topicsCount, postsCount, onClick }) {
+function CampaignCard({ initials, initialsBg = "#7c3aed", initialsColor = "#ffffff", status, title, dateRange, topicsCount, postsCount, onClick }) {
     // Determine status badge classes
     let statusClass = "status-pill";
     if (status === "Đang chạy") statusClass += " status-running";
@@ -11,7 +11,7 @@ function CampaignCard({ initials, initialsBg = "#7c3aed", status, title, dateRan
         <div className="campaign-card" onClick={onClick}>
             {/* Card Header */}
             <div className="campaign-card-header">
-                <div className="campaign-initials" style={{ backgroundColor: initialsBg }}>
+                <div className="campaign-initials" style={{ backgroundColor: initialsBg, color: initialsColor }}>
                     {initials}
                 </div>
                 <span className={statusClass}>{status}</span>
