@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import '../styles/CampaignListPage.css';
-import Brand from '../../../public-site/components/Brand';
 import CampaignCard from '../components/CampaignCard';
 import CreateCampaignModal from '../components/CreateCampaignModal';
 import { campaignApi, workspaceApi } from '../api/campaignApi';
 import { API_BASE_URL } from '../../../config/env';
+import { useLocation } from 'react-router-dom';
+import SchedulePage from '../../schedule/pages/SchedulePage';
 
 const mapStatusToVietnamese = (status) => {
   switch (status) {
@@ -43,7 +44,9 @@ const formatRange = (start, end) => {
 };
 
 function CampaignListPage() {
-  const [activeTab, setActiveTab] = useState('campaigns');
+  const location = useLocation();
+  const isScheduleTab = location.hash === '#schedule';
+
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Tất cả');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -176,52 +179,13 @@ function CampaignListPage() {
     return matchesSearch && matchesStatus;
   });
 
+  // Nếu đang ở tab Lịch đăng, render SchedulePage toàn màn hình
+  if (isScheduleTab) {
+    return <SchedulePage />;
+  }
+
   return (
     <div className="campaign-page-container">
-      {/* Navigation Header */}
-      <header className="campaign-header-bar">
-        <div className="header-left">
-          <Brand className="campaign-brand" textClassName="brand-name" />
-        </div>
-
-        {/* Center Tab Selector */}
-        <div className="header-center-tabs">
-          <button
-            type="button"
-            className={`tab-link-btn ${activeTab === 'campaigns' ? 'active' : ''}`}
-            onClick={() => setActiveTab('campaigns')}
-          >
-            Chiến dịch
-          </button>
-          <button
-            type="button"
-            className={`tab-link-btn ${activeTab === 'schedule' ? 'active' : ''}`}
-            onClick={() => setActiveTab('schedule')}
-          >
-            Lịch đăng
-          </button>
-        </div>
-
-        <div className="header-right">
-          <button type="button" className="help-link-btn">
-            <svg
-              className="help-icon"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" />
-            </svg>
-            <span className="help-text">Trợ giúp</span>
-          </button>
-          <div className="user-avatar-initials">NK</div>
-        </div>
-      </header>
-
       {/* Campaign Main Body */}
       <main className="campaign-main-content">
         {/* Workspace Selector Bar */}
