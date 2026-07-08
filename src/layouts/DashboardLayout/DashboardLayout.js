@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import UserDropdown from './UserDropdown';
+import UpgradeModal from '../../modules/analytics/components/UpgradeModal';
 import './DashboardLayout.css';
 
 /** Tabs hiển thị khi đang ở khu vực Chiến dịch / Lịch đăng */
@@ -37,6 +39,42 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
   const location = useLocation();
   const isCampaignArea = location.pathname === '/campaigns';
 
+  const [subscription, setSubscription] = useState({ planName: 'Free', planPrice: 0, isTrial: false });
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+
+  const fetchSubscription = () => {
+    const token = localStorage.getItem("marqops.authLab.accessToken");
+    if (!token) return;
+
+    fetch("http://localhost:8080/api/v1/subscriptions/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("No subscription");
+        }
+        return res.json();
+      })
+      .then((resJson) => {
+        if (resJson && resJson.success && resJson.data) {
+          setSubscription({
+            planName: resJson.data.planName,
+            planPrice: resJson.data.planPrice || 0,
+            isTrial: resJson.data.isTrial || false,
+          });
+        }
+      })
+      .catch((err) => {
+        setSubscription({ planName: 'Free', planPrice: 0, isTrial: false });
+      });
+  };
+
+  useEffect(() => {
+    fetchSubscription();
+  }, []);
+
   return (
     <div className="layout">
       <Sidebar variant={variant} />
@@ -68,11 +106,21 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
               </svg>
               <span>Trợ giúp</span>
             </button>
-            <UserDropdown />
+            <UserDropdown 
+              subscription={subscription}
+              onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+            />
           </div>
         </header>
         <main className="content">{children}</main>
       </div>
+
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        onUpgradeSuccess={fetchSubscription}
+        currentSubscription={subscription}
+      />
     </div>
   );
 }

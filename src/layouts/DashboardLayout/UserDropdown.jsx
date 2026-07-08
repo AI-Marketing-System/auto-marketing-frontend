@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './DashboardLayout.css';
 
-export default function UserDropdown() {
+export default function UserDropdown({ subscription, onUpgradeClick }) {
   const [open, setOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -23,39 +23,40 @@ export default function UserDropdown() {
     navigate('/login', { replace: true });
   };
 
+  const getInitials = (name) => {
+    if (!name) return "US";
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   return (
     <div className="user-dropdown" ref={ref}>
-      <button className="user-dropdown__trigger" onClick={() => setOpen((v) => !v)}>
-        <div className="user-dropdown__avatar">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
+      {/* Khối Pill Widget thống nhất bao bọc toàn bộ thông tin */}
+      <div className="user-dropdown__pill-container">
+        
+        {/* Click vào Avatar + Tên để mở rộng Dropdown */}
+        <div className="user-dropdown__profile-trigger" onClick={() => setOpen((v) => !v)}>
+          <div className="user-dropdown__avatar-circle">
+            {getInitials(user?.fullName)}
+          </div>
+          <div className="user-dropdown__profile-details">
+            <span className="user-dropdown__name-text">{user?.fullName || 'User'}</span>
+            <span className="user-dropdown__tier-text">
+              {subscription?.planName || 'Free'} {subscription?.isTrial ? "(Dùng thử)" : ""}
+            </span>
+          </div>
         </div>
-        <span className="user-dropdown__name">{user?.fullName || 'User'}</span>
-        <svg
-          className="user-dropdown__chevron"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
+
+        {/* Nút nâng cấp nằm gọn bên phải cùng */}
+        {subscription?.planName !== 'Admin' && (
+          <button 
+            type="button" 
+            className="user-dropdown__btn-upgrade"
+            onClick={onUpgradeClick}
+          >
+            Nâng cấp
+          </button>
+        )}
+      </div>
 
       {open && (
         <div className="user-dropdown__menu">
