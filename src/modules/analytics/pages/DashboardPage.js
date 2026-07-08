@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/DashboardPage.css';
 import Brand from '../../../public-site/components/Brand';
 import WorkspaceCard from '../components/WorkspaceCard';
 import SharedWorkspaceCard from '../components/SharedWorkspaceCard';
 import CreateWorkspaceModal from '../components/CreateWorkspaceModal';
+import UpgradeModal from '../components/UpgradeModal';
 
 function DashboardPage() {
-  const [user] = useState({ fullName: 'Nguyễn Gia Kiệt' });
+  const [user] = useState({ fullName: 'Kiệt Nguyễn Gia' });
+  const [subscription, setSubscription] = useState({ planName: 'Free', isTrial: false });
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [workspaces, setWorkspaces] = useState([
     { id: 1, title: 'Client – Coffee House Brand', accountsCount: 2 },
     { id: 2, title: 'Thương hiệu của Nguyễn Gia Kiệt', accountsCount: 1 },
@@ -21,6 +24,41 @@ function DashboardPage() {
     { id: 4, title: 'TechVista Solutions', role: 'ADMIN', campaigns: ['TechVista Marketing'] },
   ]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Hàm tải thông tin Subscription của user từ Backend
+  const fetchSubscription = () => {
+    const token = localStorage.getItem("marqops.authLab.accessToken");
+    if (!token) return;
+
+    fetch("http://localhost:8080/api/v1/subscriptions/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("No subscription");
+        }
+        return res.json();
+      })
+      .then((resJson) => {
+        if (resJson && resJson.success && resJson.data) {
+          setSubscription({
+            planName: resJson.data.planName,
+            planPrice: resJson.data.planPrice || 0,
+            isTrial: resJson.data.isTrial || false,
+          });
+        }
+      })
+      .catch((err) => {
+        // Nếu lỗi (ví dụ 404 chưa đăng ký gói nào), mặc định là Free
+        setSubscription({ planName: 'Free', planPrice: 0, isTrial: false });
+      });
+  };
+
+  useEffect(() => {
+    fetchSubscription();
+  }, []);
 
   const handleCreateWorkspace = () => {
     console.log('Opening create workspace modal');
@@ -68,20 +106,23 @@ function DashboardPage() {
               <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" />
             </svg>
           </button>
-          <div className="user-avatar-circle">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          
+          {/* Vùng hiển thị User và nút Nâng cấp dạng phẳng */}
+          <div className="user-profile-widget">
+            <div className="user-profile-avatar">KG</div>
+            <div className="user-profile-details">
+              <span className="user-profile-name">{user.fullName}</span>
+              <span className="user-profile-tier">
+                {subscription.planName} {subscription.isTrial ? "(Dùng thử)" : ""}
+              </span>
+            </div>
+            <button 
+              type="button" 
+              className="btn-upgrade-action" 
+              onClick={() => setIsUpgradeModalOpen(true)}
             >
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
+              Nâng cấp
+            </button>
           </div>
         </div>
       </header>
@@ -219,6 +260,13 @@ function DashboardPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleModalSubmit}
+      />
+
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        onUpgradeSuccess={fetchSubscription}
+        currentSubscription={subscription}
       />
     </div>
   );
