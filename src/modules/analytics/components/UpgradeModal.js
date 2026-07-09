@@ -204,7 +204,11 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
 
                       <div className="plan-btn-container">
                         {isActive ? (
-                          currentSubscription.isTrial ? (
+                          isFree ? (
+                            <button className="upgrade-btn disabled-btn" disabled>
+                              Gói mặc định
+                            </button>
+                          ) : currentSubscription.isTrial ? (
                             <button
                               className="upgrade-btn buy-btn"
                               onClick={() => handleGoToCheckout(plan, false, false)}
