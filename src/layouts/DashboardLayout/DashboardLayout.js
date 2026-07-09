@@ -39,7 +39,7 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
   const location = useLocation();
   const isCampaignArea = location.pathname === '/campaigns';
 
-  const [subscription, setSubscription] = useState({ planName: 'Free', planPrice: 0, isTrial: false });
+  const [subscription, setSubscription] = useState({ id: null, planName: 'Free', planPrice: 0, isTrial: false });
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   const fetchSubscription = () => {
@@ -60,14 +60,17 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
       .then((resJson) => {
         if (resJson && resJson.success && resJson.data) {
           setSubscription({
+            id: resJson.data.id,
             planName: resJson.data.planName,
             planPrice: resJson.data.planPrice || 0,
             isTrial: resJson.data.isTrial || false,
+            startDate: resJson.data.startDate,
+            endDate: resJson.data.endDate,
           });
         }
       })
       .catch((err) => {
-        setSubscription({ planName: 'Free', planPrice: 0, isTrial: false });
+        setSubscription({ id: null, planName: 'Free', planPrice: 0, isTrial: false });
       });
   };
 
@@ -90,7 +93,7 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
           {isCampaignArea && <CampaignTabs />}
 
           <div className="topbar__right">
-            <button type="button" className="topbar__help">
+            {/* <button type="button" className="topbar__help">
               <svg
                 width="16"
                 height="16"
@@ -105,8 +108,8 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
                 <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" />
               </svg>
               <span>Trợ giúp</span>
-            </button>
-            <UserDropdown 
+            </button> */}
+            <UserDropdown
               subscription={subscription}
               onUpgradeClick={() => setIsUpgradeModalOpen(true)}
             />

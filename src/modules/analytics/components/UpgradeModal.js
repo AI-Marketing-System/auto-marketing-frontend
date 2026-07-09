@@ -4,10 +4,11 @@ import "../styles/UpgradeModal.css"; // Import tu thu muc styles dung quy chuan
 export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, currentSubscription }) {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [checkoutPlan, setCheckoutPlan] = useState(null); 
-  const [checkoutIsTrial, setCheckoutIsTrial] = useState(false); 
-  const [paymentMethod, setPaymentMethod] = useState("MOMO"); 
-  const [paymentTx, setPaymentTx] = useState(null); 
+  const [checkoutPlan, setCheckoutPlan] = useState(null);
+  const [checkoutIsTrial, setCheckoutIsTrial] = useState(false);
+  const [checkoutIsRenew, setCheckoutIsRenew] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("MOMO");
+  const [paymentTx, setPaymentTx] = useState(null);
   const [confirming, setConfirming] = useState(false);
 
   // States quản lý cập nhật địa chỉ lập hóa đơn ở FE
@@ -23,6 +24,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
     setLoading(true);
     setPaymentTx(null);
     setCheckoutPlan(null);
+    setCheckoutIsRenew(false);
 
     fetch("http://localhost:8080/api/v1/plans")
       .then((res) => res.json())
@@ -70,13 +72,14 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
     return ["Tính năng cơ bản của hệ thống"];
   };
 
-  const handleGoToCheckout = (plan, isTrial) => {
+  const handleGoToCheckout = (plan, isTrial, isRenew = false) => {
     if (!token) {
       alert("Vui lòng đăng nhập để thực hiện giao dịch.");
       return;
     }
     setCheckoutPlan(plan);
     setCheckoutIsTrial(isTrial);
+    setCheckoutIsRenew(isRenew);
   };
 
   const handleRegisterSubscription = async () => {
@@ -90,19 +93,24 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
     }
 
     try {
-      const response = await fetch("http://localhost:8080/api/v1/subscriptions", {
-        method: "POST",
+      const url = checkoutIsRenew
+        ? `http://localhost:8080/api/v1/subscriptions/${currentSubscription.id}`
+        : "http://localhost:8080/api/v1/subscriptions";
+      const method = checkoutIsRenew ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(checkoutIsRenew ? { paymentMethod } : payload),
       });
 
       const resJson = await response.json();
 
       if (!response.ok) {
-        throw new Error(resJson.message || "Đăng ký gói thất bại.");
+        throw new Error(resJson.message || "Giao dịch thất bại.");
       }
 
       if (checkoutIsTrial) {
@@ -193,12 +201,24 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                       <h3 className="plan-name-txt">{plan.name}</h3>
                       <div className="plan-price-txt">{formatPrice(plan.price)}</div>
                       <p className="plan-desc-txt">{plan.description}</p>
-                      
+
                       <div className="plan-btn-container">
                         {isActive ? (
-                          <button className="upgrade-btn disabled-btn" disabled>
-                            Đang sử dụng
-                          </button>
+                          currentSubscription.isTrial ? (
+                            <button
+                              className="upgrade-btn buy-btn"
+                              onClick={() => handleGoToCheckout(plan, false, false)}
+                            >
+                              Nâng cấp gói
+                            </button>
+                          ) : (
+                            <button
+                              className="upgrade-btn buy-btn"
+                              onClick={() => handleGoToCheckout(plan, false, true)}
+                            >
+                              Gia hạn gói
+                            </button>
+                          )
                         ) : isFree ? (
                           <button className="upgrade-btn disabled-btn" disabled>
                             Gói mặc định
@@ -248,7 +268,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
               <div className="checkout-left-col">
                 <div className="checkout-section-box">
                   <h4 className="checkout-section-title">Phương thức thanh toán</h4>
-                  
+
                   {checkoutIsTrial ? (
                     <div className="trial-payment-hint">
                       🎁 Gói dùng thử 14 ngày hoàn toàn miễn phí ($0). Không yêu cầu phương thức thanh toán.
@@ -256,21 +276,21 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                   ) : (
                     <>
                       <div className="payment-options-grid">
-                        <div 
+                        <div
                           className={`payment-opt-card ${paymentMethod === "MOMO" ? "selected" : ""}`}
                           onClick={() => setPaymentMethod("MOMO")}
                         >
                           <span className="pay-opt-icon">📱</span>
                           <span className="pay-opt-label">Ví MoMo</span>
                         </div>
-                        <div 
+                        <div
                           className={`payment-opt-card ${paymentMethod === "VNPAY" ? "selected" : ""}`}
                           onClick={() => setPaymentMethod("VNPAY")}
                         >
                           <span className="pay-opt-icon">🏦</span>
                           <span className="pay-opt-label">Cổng VNPAY</span>
                         </div>
-                        <div 
+                        <div
                           className={`payment-opt-card ${paymentMethod === "STRIPE" ? "selected" : ""}`}
                           onClick={() => setPaymentMethod("STRIPE")}
                         >
@@ -367,7 +387,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
               <div className="checkout-right-col">
                 <div className="order-summary-box">
                   <h3 className="summary-plan-title">Gói {checkoutPlan.name}</h3>
-                  
+
                   <div className="summary-features-label">Các tính năng hàng đầu</div>
                   <ul className="summary-features-list">
                     {getPlanFeatures(checkoutPlan.name).map((feat, idx) => (
@@ -390,7 +410,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                     <span>Thuế VAT (10%)</span>
                     <span>{checkoutIsTrial ? formatPrice(0) : formatPrice(checkoutPlan.price * 0.1)}</span>
                   </div>
-                  
+
                   <div className="total-divider"></div>
 
                   <div className="price-row total-row">
@@ -401,10 +421,10 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                   </div>
 
                   <button className="btn-checkout-submit" onClick={handleRegisterSubscription}>
-                    {checkoutIsTrial ? "Kích hoạt dùng thử" : "Đăng ký"}
+                    {checkoutIsTrial ? "Kích hoạt dùng thử" : checkoutIsRenew ? "Xác nhận gia hạn" : "Đăng ký"}
                   </button>
                 </div>
-                
+
                 <p className="checkout-policy-text">
                   Gia hạn hàng tháng cho đến khi hủy. Sẽ tính phí {checkoutIsTrial ? formatPrice(checkoutPlan.price) : formatPrice(checkoutPlan.price)}/tháng sau khi hết hạn. Hủy bất cứ lúc nào trong phần Cài đặt. Khi đăng ký, bạn đồng ý với Điều khoản sử dụng.
                 </p>
