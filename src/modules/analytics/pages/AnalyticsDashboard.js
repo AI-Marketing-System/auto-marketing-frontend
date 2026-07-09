@@ -1,5 +1,5 @@
 import React from 'react';
-import AnalyticsHeaderV2 from '../components/AnalyticsHeaderV2';
+import AnalyticsHeaderV2 from '../components/AnalyticsHeader';
 import HeatmapChart from '../components/HeatmapChart';
 import LineChartComponent from '../components/LineChartComponent';
 import { ViewsAreaChart, ReachAreaChart } from '../components/AreaChartComponent';
