@@ -64,24 +64,76 @@
   stroke: #94a3b8;
 }
 
-.user-avatar-circle {
-  width: 34px;
-  height: 34px;
+/* User profile widget & Upgrade button (Light Theme Capsule) */
+.user-profile-widget {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #f8fafc;
+  padding: 4px 12px 4px 6px;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.user-profile-avatar {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background-color: #e0f2fe;
-  color: #0284c7;
+  background-color: #ef4444; /* Mau do noi bat */
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  border: 1px solid #bae6fd;
-  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.user-avatar-circle:hover {
-  background-color: #bae6fd;
-  transform: scale(1.05);
+.user-profile-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
+
+.user-profile-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.user-profile-tier {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.2;
+  margin-top: 1px;
+}
+
+.btn-upgrade-action {
+  background-color: #7c3aed; /* Tím nổi bật để kích thích nâng cấp */
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 4px;
+}
+
+.btn-upgrade-action:hover {
+  background-color: #6d28d9;
+  transform: scale(1.03);
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.15);
+}
+
+
+
+
 
 /* Main Content Layout */
 .dashboard-main-content {

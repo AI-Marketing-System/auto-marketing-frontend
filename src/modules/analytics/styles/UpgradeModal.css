@@ -1,0 +1,672 @@
+/* Premium Split-Screen Checkout (ChatGPT Plus - Light Theme Edition) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.4); /* Slate transparent backdrop */
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.upgrade-modal-card {
+  background: #ffffff; /* Nền trắng cao cấp */
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 40px;
+  width: 95%;
+  max-width: 1100px; /* Tăng chiều rộng lên 1100px cho thoáng */
+  min-height: 520px;
+  position: relative;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #0f172a;
+  font-family: 'Inter', -apple-system, sans-serif;
+  overflow-y: auto;
+  max-height: 90vh;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 32px;
+  cursor: pointer;
+  transition: color 0.15s;
+  z-index: 10;
+  line-height: 1;
+}
+
+.modal-close-btn:hover {
+  color: #0f172a;
+}
+
+/* PHẦN CHỌN GÓI (BẢNG GIÁ) - LIGHT THEME */
+.modal-title {
+  font-size: 26px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 8px;
+  color: #0f172a;
+}
+
+.modal-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr); /* Mac dinh 1 cot trên dien thoai */
+  gap: 20px;
+}
+
+@media (min-width: 640px) {
+  .plans-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2x2 tren tablet */
+  }
+}
+
+@media (min-width: 1024px) {
+  .plans-grid {
+    grid-template-columns: repeat(4, 1fr); /* 4 cot thang hang cực đẹp trên PC */
+  }
+}
+
+.plan-card-item {
+  background: #f8fafc; /* Thẻ nền sáng nhạt */
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px; /* Thu padding ve 20px de dep hon khi chia 4 cot */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.plan-card-item:hover {
+  transform: translateY(-4px);
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.03);
+}
+
+.active-plan {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.02);
+  box-shadow: 0 0 0 1px #7c3aed;
+}
+
+.starter-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ef4444 0%, #ec4899 100%);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);
+  white-space: nowrap;
+}
+
+.plan-name-txt {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #0f172a;
+}
+
+.plan-price-txt {
+  font-size: 24px;
+  font-weight: 800;
+  color: #7c3aed; /* Tím Violet */
+  margin-bottom: 12px;
+}
+
+.plan-desc-txt {
+  font-size: 13.5px;
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 28px;
+  flex-grow: 1;
+}
+
+.plan-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upgrade-btn {
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.trial-btn {
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.trial-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.buy-btn {
+  background: #7c3aed; /* Nút chính màu tím nổi bật */
+  color: #ffffff;
+}
+
+.buy-btn:hover {
+  background: #6d28d9;
+  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.2);
+}
+
+.disabled-btn {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border: 1px solid #e2e8f0;
+  cursor: not-allowed;
+}
+
+/* PHÂN CẢNH 2: MÀN HÌNH CHECKOUT CHIA 2 CỘT CHATGPT PLUS (LIGHT THEME) */
+.checkout-split-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.checkout-back-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.15s;
+  width: fit-content;
+}
+
+.checkout-back-header:hover {
+  color: #0f172a;
+}
+
+.checkout-split-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 40px;
+  align-items: start;
+}
+
+/* CỘT TRÁI: CONFIG THANH TOÁN (LIGHT THEME) */
+.checkout-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.checkout-section-box {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.checkout-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  color: #0f172a;
+}
+
+.trial-payment-hint {
+  background: rgba(124, 58, 237, 0.05);
+  border: 1px dashed rgba(124, 58, 237, 0.25);
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  color: #6d28d9;
+  line-height: 1.5;
+}
+
+.payment-options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 cột cho MOMO, VNPAY, STRIPE */
+  gap: 16px;
+}
+
+.payment-opt-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-items: center; /* Canh giua cac icon va text */
+  text-align: center;
+}
+
+.payment-opt-card:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.payment-opt-card.selected {
+  border-color: #7c3aed;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px #7c3aed;
+}
+
+.pay-opt-icon {
+  font-size: 20px;
+}
+
+.pay-opt-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.payment-detail-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.momo-logo-mini {
+  background: #a30065;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.2px;
+}
+
+.vnpay-logo-mini {
+  background: #005baa; /* Xanh VNPAY */
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.2px;
+}
+
+.visa-logo-mini {
+  background: #000000; /* Den Stripe */
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.2px;
+}
+
+
+.momo-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.momo-detail-info strong {
+  font-size: 13.5px;
+  color: #0f172a;
+}
+
+.momo-detail-info span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.billing-address-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.billing-address-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.billing-address-details strong {
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.billing-address-details span {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.btn-update-address {
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-update-address:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* CSS Form chinh sua dia chi lap hoa don */
+.billing-address-edit-form {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.billing-edit-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #0f172a;
+  font-size: 13.5px;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.billing-edit-input:focus {
+  border-color: #7c3aed;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+
+.billing-edit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn-save-address {
+  background: #7c3aed;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-save-address:hover {
+  background: #6d28d9;
+}
+
+.btn-cancel-address {
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel-address:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+
+/* CỘT PHẢI: BILL CHI TIẾT (ORDER SUMMARY - LIGHT THEME) */
+.order-summary-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.summary-plan-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0;
+  color: #0f172a;
+}
+
+.summary-features-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-feat-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.feat-bolt-icon {
+  stroke: #7c3aed;
+  fill: #7c3aed;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.price-breakdown-divider {
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  color: #64748b;
+}
+
+.total-divider {
+  height: 1px;
+  background: #cbd5e1;
+}
+
+.total-row {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.total-amount-txt {
+  font-size: 20px;
+  font-weight: 800;
+  color: #7c3aed; /* Hien thi gia tong cong mau tim */
+}
+
+.btn-checkout-submit {
+  width: 100%;
+  background: #7c3aed; /* Nut Checkout màu tím nổi bật */
+  color: #ffffff;
+  padding: 14px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.btn-checkout-submit:hover {
+  background: #6d28d9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.25);
+}
+
+.checkout-policy-text {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 16px 0 0 0;
+  text-align: center;
+}
+
+/* PHÂN CẢNH 3: QR CODE SCANNERS (LIGHT THEME) */
+.payment-qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 450px;
+  margin: 40px auto 0 auto;
+}
+
+.payment-guide {
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.qr-image-wrapper {
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qr-img {
+  width: 180px;
+  height: 180px;
+  display: block;
+}
+
+.qr-brand-label {
+  color: #a30065;
+  font-size: 13px;
+  font-weight: 800;
+  margin-top: 8px;
+}
+
+.sandbox-hint {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.payment-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.btn-pay-confirm {
+  flex: 2;
+  background: #a30065;
+  color: #ffffff;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-pay-confirm:hover {
+  background: #bd0277;
+  box-shadow: 0 4px 12px rgba(163, 0, 101, 0.25);
+}
+
+.btn-pay-cancel {
+  flex: 1;
+  background: #ffffff;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-pay-cancel:hover {
+  color: #0f172a;
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
