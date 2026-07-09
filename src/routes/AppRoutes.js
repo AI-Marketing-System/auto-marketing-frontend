@@ -13,6 +13,7 @@ import DashboardLayout from '../layouts/DashboardLayout/DashboardLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { AdminRoute } from '../components/ProtectedRoute';
 import AdminHomePage from "../modules/admin/home/pages/AdminHomePage";
+import AnalyticsDashboardV2 from '../modules/analyticsV2/pages/AnalyticsDashboardV2';
 
 function AppRoutes() {
   return (
@@ -72,6 +73,14 @@ function AppRoutes() {
               <PlanManagementPage />
             </DashboardLayout>
           </AdminRoute>
+        }
+      />
+      <Route
+        path="/analytics-v2"
+        element={
+          <ProtectedRoute>
+            <AnalyticsDashboardV2 />
+          </ProtectedRoute>
         }
       />
     </Routes>
