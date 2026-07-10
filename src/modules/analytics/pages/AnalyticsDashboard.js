@@ -1,5 +1,5 @@
 import React from 'react';
-import AnalyticsHeaderV2 from '../components/AnalyticsHeaderV2';
+import AnalyticsHeader from '../components/AnalyticsHeader';
 import HeatmapChart from '../components/HeatmapChart';
 import LineChartComponent from '../components/LineChartComponent';
 import { ViewsAreaChart, ReachAreaChart } from '../components/AreaChartComponent';
@@ -8,7 +8,7 @@ import '../styles/AnalyticsDashboardV2.css';
 const AnalyticsDashboardV2 = () => {
   return (
     <div className="analytics-v2-container">
-      <AnalyticsHeaderV2 />
+      <AnalyticsHeader />
       
       <main className="analytics-main">
         <div className="client-selector-bar">
