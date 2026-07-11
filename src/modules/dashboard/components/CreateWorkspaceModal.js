@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 
 function CreateWorkspaceModal({ isOpen, onClose, onSubmit }) {
     const [workspaceName, setWorkspaceName] = useState("");
+    const [description, setDescription] = useState("");
     const [timezone, setTimezone] = useState("(GMT+07:00) Hanoi");
     const [avatarPreview, setAvatarPreview] = useState(null);
     const fileInputRef = useRef(null);
@@ -29,12 +30,14 @@ function CreateWorkspaceModal({ isOpen, onClose, onSubmit }) {
 
         onSubmit && onSubmit({
             title: workspaceName.trim(),
+            description: description.trim(),
             timezone,
             avatar: avatarPreview
         });
         
         // Reset states
         setWorkspaceName("");
+        setDescription("");
         setTimezone("(GMT+07:00) Hanoi");
         setAvatarPreview(null);
     };
@@ -112,6 +115,19 @@ function CreateWorkspaceModal({ isOpen, onClose, onSubmit }) {
                                 value={workspaceName}
                                 onChange={(e) => setWorkspaceName(e.target.value)}
                                 required
+                            />
+                        </div>
+
+                        {/* Workspace Description Input */}
+                        <div className="modal-form-group">
+                            <label className="modal-form-label" htmlFor="ws-desc">Mô tả Workspace</label>
+                            <textarea 
+                                id="ws-desc" 
+                                className="modal-form-input" 
+                                placeholder="Nhập mô tả ngắn về workspace của bạn (tùy chọn)"
+                                style={{ minHeight: '80px', resize: 'vertical', fontFamily: 'inherit' }}
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
                             />
                         </div>
 
