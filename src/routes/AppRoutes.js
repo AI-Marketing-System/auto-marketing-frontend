@@ -4,6 +4,7 @@ import HomePage from '../public-site/pages/HomePage';
 import LoginPage from '../modules/auth/pages/LoginPage';
 import RegisterPage from '../modules/auth/pages/RegisterPage';
 import ForgotPasswordPage from '../modules/auth/pages/ForgotPasswordPage';
+import ResetPasswordPage from '../modules/auth/pages/ResetPasswordPage';
 import AuthApiLabPage from '../modules/auth/pages/AuthApiLabPage';
 import DashboardPage from '../modules/dashboard/pages/DashboardPage';
 import AnalyticsDashboard from '../modules/analytics/pages/AnalyticsDashboard';
@@ -21,6 +22,7 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/auth-lab" element={<AuthApiLabPage />} />
       <Route
         path="/unauthorized"

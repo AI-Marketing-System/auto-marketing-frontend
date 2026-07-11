@@ -9,33 +9,26 @@ import { authApi } from '../api/authApi';
 
 function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState(null);
-  const [responseBody, setResponseBody] = useState(null);
+  const [popup, setPopup] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setFeedback(null);
 
     try {
       const response = await authApi.forgotPassword({ email }, API_BASE_URL);
-      setIsSubmitted(true);
-      setResponseBody(response);
-      setFeedback({
+      setPopup({
         kind: 'success',
-        title: 'Yêu cầu đã gửi',
-        message: response?.message || 'Kiểm tra email nếu tài khoản tồn tại.',
+        title: 'Kiểm tra email của bạn',
+        message: response?.message || `Chúng tôi đã gửi liên kết đặt lại mật khẩu đến ${email}. Vui lòng kiểm tra hộp thư.`,
       });
     } catch (error) {
-      setResponseBody({
-        success: false,
+      setPopup({
+        kind: 'error',
+        title: 'Gửi thất bại',
         message: error.message,
-        status: error.status,
-        body: error.body,
       });
-      setFeedback({ kind: 'error', title: 'Gửi thất bại', message: error.message });
     } finally {
       setIsSubmitting(false);
     }
@@ -47,95 +40,66 @@ function ForgotPasswordPage() {
         {/* Logo & Brand Name */}
         <Brand className="forgot-header" textClassName="brand-name" />
 
-        {isSubmitted ? (
-          <div className="forgot-success-state">
-            <div className="success-icon-wrapper">
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle cx="12" cy="12" r="10" stroke="#22c55e" strokeWidth="2" fill="#f0fdf4" />
-                <path
-                  d="M8 12.5L11 15.5L16 9.5"
-                  stroke="#22c55e"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <h2 className="forgot-title">Kiểm tra email của bạn</h2>
-            <p className="forgot-subtitle">
-              Chúng tôi đã gửi liên kết đặt lại mật khẩu đến <strong>{email}</strong>. Vui lòng kiểm
-              tra hộp thư của bạn.
-            </p>
-            <button
-              type="button"
-              className="btn-submit"
-              onClick={() => {
-                setIsSubmitted(false);
-                setFeedback(null);
-                setResponseBody(null);
-              }}
-            >
-              Gửi lại yêu cầu
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* Form Title */}
-            <h1 className="forgot-title">Quên mật khẩu?</h1>
-            <p className="forgot-subtitle">
-              Nhập địa chỉ email đăng ký của bạn. Chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu.
-            </p>
+        {/* Form Title */}
+        <h1 className="forgot-title">Quên mật khẩu?</h1>
+        <p className="forgot-subtitle">
+          Nhập địa chỉ email đăng ký của bạn. Chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu.
+        </p>
 
-            {/* Forgot Password Form */}
-            <form className="forgot-form" onSubmit={handleSubmit}>
-              {/* Email Field */}
-              <InputField
-                label="Email đăng ký"
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Nhập email của bạn"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+        {/* Forgot Password Form */}
+        <form className="forgot-form" onSubmit={handleSubmit}>
+          {/* Email Field */}
+          <InputField
+            label="Email đăng ký"
+            id="email"
+            name="email"
+            type="email"
+            placeholder="Nhập email của bạn"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-              {/* Submit Button */}
-              <button type="submit" className="btn-submit">
-                {isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu đặt lại mật khẩu'}
-              </button>
-            </form>
-          </>
-        )}
+          {/* Submit Button */}
+          <button type="submit" className="btn-submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu đặt lại mật khẩu'}
+          </button>
+        </form>
 
-        {feedback ? (
-          <div
-            className={`auth-feedback auth-feedback--${feedback.kind}`}
-            style={{ marginTop: 18 }}
-          >
-            <div className="auth-feedback__title">{feedback.title}</div>
-            <div>{feedback.message}</div>
-          </div>
-        ) : null}
-
-        {responseBody ? (
-          <div className="auth-response-panel" style={{ marginTop: 18 }}>
-            <div className="auth-response-panel__header">
-              <h2 className="auth-response-panel__title">Response</h2>
-              <div className="auth-response-panel__meta">
-                <span className="auth-pill">POST</span>
-                <span className="auth-pill">/api/v1/auth/forgot-password</span>
+        {/* Popup Modal */}
+        {popup && (
+          <div className="popup-overlay">
+            <div className="popup-content">
+              <div className={`popup-icon ${popup.kind}`}>
+                {popup.kind === 'success' ? (
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="#22c55e" strokeWidth="2" fill="#f0fdf4" />
+                    <path d="M8 12.5L11 15.5L16 9.5" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : (
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="#ef4444" strokeWidth="2" fill="#fef2f2" />
+                    <path d="M15 9L9 15M9 9L15 15" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
               </div>
+              <h2 className="popup-title">{popup.title}</h2>
+              <p className="popup-message">{popup.message}</p>
+              <button
+                type="button"
+                className={`btn-submit popup-btn popup-btn-${popup.kind}`}
+                onClick={() => {
+                  setPopup(null);
+                  if (popup.kind === 'success') {
+                    setEmail('');
+                  }
+                }}
+              >
+                Đã hiểu
+              </button>
             </div>
-            <pre>{JSON.stringify(responseBody, null, 2)}</pre>
           </div>
-        ) : null}
+        )}
 
         {/* Footer Back Link */}
         <div className="forgot-footer">
