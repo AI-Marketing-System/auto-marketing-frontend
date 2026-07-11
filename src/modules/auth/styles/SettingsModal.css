@@ -1,0 +1,390 @@
+/* SettingsModal.css */
+.settings-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.45); /* Muted slate backdrop */
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.settings-modal-container {
+  width: 860px;
+  max-width: 90vw;
+  height: 520px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #e2e8f0;
+}
+
+/* Sidebar */
+.settings-modal-sidebar {
+  width: 200px;
+  background-color: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  padding: 24px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-modal-sidebar-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 12px 10px 12px;
+}
+
+.settings-modal-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #475569;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.settings-modal-tab-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.settings-modal-tab-btn.active {
+  background-color: #e2e8f0;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.settings-modal-tab-btn svg {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.settings-tab-btn.active svg {
+  color: #0f172a;
+}
+
+/* Content Pane */
+.settings-modal-content {
+  flex: 1;
+  padding: 24px 28px;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-modal-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-modal-close-btn:hover {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.settings-tab-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.settings-pane-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 24px 0;
+}
+
+/* Profile tab styles */
+.settings-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background-color: #f8fafc;
+  padding: 24px;
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+}
+
+.settings-profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+
+.settings-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.profile-info-row {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.profile-info-label {
+  color: #64748b;
+  font-weight: 500;
+  min-width: 100px;
+}
+
+.profile-info-value {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* Status Badge */
+.settings-status-badge {
+  display: inline-flex;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.settings-status-badge.paid {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.settings-status-badge.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.settings-status-badge.failed {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.settings-status-badge.refunded {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+/* Billing Table */
+.settings-table-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.settings-transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.settings-transactions-table th {
+  background-color: #f8fafc;
+  padding: 12px 16px;
+  color: #475569;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.settings-transactions-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.settings-transactions-table td:nth-child(2) {
+  white-space: normal;
+  min-width: 150px;
+}
+
+.settings-transactions-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.tx-plan-note {
+  font-weight: 500;
+}
+
+.tx-amount {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.tx-payment-method {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.tx-date {
+  color: #64748b;
+}
+
+/* Loading, Empty and Error states */
+.settings-loading-container,
+.settings-empty-container,
+.settings-error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 1;
+  color: #64748b;
+  font-size: 14px;
+  padding: 40px 0;
+}
+
+.settings-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.settings-error-container {
+  color: #ef4444;
+}
+
+.settings-error-container svg {
+  color: #ef4444;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Subscription info in profile tab */
+.settings-subscription-section {
+  margin-top: 24px;
+  text-align: left;
+}
+
+.settings-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.settings-subscription-card {
+  background-color: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-subscription-card .sub-details-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+  color: #475569;
+}
+
+.settings-subscription-card .sub-details-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.settings-subscription-card .sub-details-value {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.settings-subscription-card .sub-details-value.highlight {
+  color: #7c3aed;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.settings-cancel-sub-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.settings-cancel-sub-btn:hover {
+  background-color: #fca5a5;
+  color: #991b1b;
+}

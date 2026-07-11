@@ -9,11 +9,11 @@ const AnalyticsDashboardV2 = () => {
   return (
     <div className="analytics-v2-container">
       <AnalyticsHeader />
-      
+
       <main className="analytics-main">
         <div className="client-selector-bar">
           <div className="client-dropdown">
-            Client - Coffee House Brand 
+            Client - Coffee House Brand
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
           <div className="client-avatars">
@@ -44,7 +44,7 @@ const AnalyticsDashboardV2 = () => {
 
         <div className="filters-bar">
           <div className="timezone-info">
-            Dữ liệu hiển thị tại múi giờ <br/><strong>(GMT+07:00) Hanoi</strong>
+            Dữ liệu hiển thị tại múi giờ <br /><strong>(GMT+07:00) Hanoi</strong>
           </div>
           <div className="date-range-picker">
             <div className="date-range-label">Khoảng thời gian</div>
@@ -59,7 +59,7 @@ const AnalyticsDashboardV2 = () => {
         <LineChartComponent />
         <ViewsAreaChart />
         <ReachAreaChart />
-        
+
       </main>
     </div>
   );
