@@ -8,5 +8,5 @@ export const campaignApi = {
 };
 
 export const workspaceApi = {
-  myWorkspaces: (baseUrl) => requestJson('/workspaces/me', { method: 'GET' }, baseUrl),
+  myWorkspaces: (baseUrl) => requestJson('/workspaces', { method: 'GET' }, baseUrl),
 };
