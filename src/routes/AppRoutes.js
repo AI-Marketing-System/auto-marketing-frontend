@@ -6,6 +6,7 @@ import RegisterPage from '../modules/auth/pages/RegisterPage';
 import ForgotPasswordPage from '../modules/auth/pages/ForgotPasswordPage';
 import AuthApiLabPage from '../modules/auth/pages/AuthApiLabPage';
 import DashboardPage from '../modules/dashboard/pages/DashboardPage';
+import AnalyticsDashboard from '../modules/analytics/pages/AnalyticsDashboard';
 import CampaignListPage from '../modules/campaigns/pages/CampaignListPage';
 import PlanManagementPage from '../modules/admin/plans/pages/PlanManagementPage';
 import ErrorPage from '../public-site/pages/ErrorPage';
@@ -13,8 +14,6 @@ import DashboardLayout from '../layouts/DashboardLayout/DashboardLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { AdminRoute } from '../components/ProtectedRoute';
 import AdminHomePage from "../modules/admin/home/pages/AdminHomePage";
-import AnalyticsDashboardV2 from '../modules/analytics/pages/AnalyticsDashboard';
-
 function AppRoutes() {
   return (
     <Routes>
@@ -55,6 +54,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/analytics-v2"
+        element={
+          <ProtectedRoute>
+            <AnalyticsDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/campaigns"
         element={
           <ProtectedRoute>
@@ -64,8 +71,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-        <Route path="/admin" element={<AdminHomePage />} />
-        <Route
+      <Route path="/admin" element={<AdminHomePage />} />
+      <Route
         path="/admin/plans"
         element={
           <AdminRoute>
@@ -75,14 +82,7 @@ function AppRoutes() {
           </AdminRoute>
         }
       />
-      <Route
-        path="/analytics-v2"
-        element={
-          <ProtectedRoute>
-            <AnalyticsDashboardV2 />
-          </ProtectedRoute>
-        }
-      />
+
     </Routes>
   );
 }
