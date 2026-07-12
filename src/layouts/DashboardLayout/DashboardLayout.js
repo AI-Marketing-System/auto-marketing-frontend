@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import UserDropdown from './UserDropdown';
 import UpgradeModal from '../../modules/analytics/components/UpgradeModal';
+import SettingsModal from '../../modules/auth/components/SettingsModal';
 import './DashboardLayout.css';
 
 function CampaignTabs() {
@@ -52,6 +53,8 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
 
   const [subscription, setSubscription] = useState({ id: null, planName: 'Free', planPrice: 0, isTrial: false });
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsActiveTab, setSettingsActiveTab] = useState('account');
 
   const fetchSubscription = () => {
     const token = localStorage.getItem("marqops.authLab.accessToken");
@@ -123,6 +126,14 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
             <UserDropdown
               subscription={subscription}
               onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+              onProfileClick={() => {
+                setSettingsActiveTab('account');
+                setIsSettingsOpen(true);
+              }}
+              onSettingsClick={() => {
+                setSettingsActiveTab('billing');
+                setIsSettingsOpen(true);
+              }}
             />
           </div>
         </header>
@@ -134,6 +145,14 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
         onClose={() => setIsUpgradeModalOpen(false)}
         onUpgradeSuccess={fetchSubscription}
         currentSubscription={subscription}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        initialTab={settingsActiveTab}
+        subscription={subscription}
+        onCancelSuccess={fetchSubscription}
       />
     </div>
   );
