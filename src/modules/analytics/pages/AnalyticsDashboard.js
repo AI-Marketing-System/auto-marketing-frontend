@@ -8,8 +8,7 @@ import '../styles/AnalyticsDashboardV2.css';
 const AnalyticsDashboardV2 = () => {
   return (
     <div className="analytics-v2-container">
-      <AnalyticsHeader />
-
+      {/* <AnalyticsHeader /> */}
       <main className="analytics-main">
         <div className="client-selector-bar">
           <div className="client-dropdown">

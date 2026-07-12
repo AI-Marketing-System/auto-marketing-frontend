@@ -6,20 +6,31 @@ import UpgradeModal from '../../modules/analytics/components/UpgradeModal';
 import SettingsModal from '../../modules/auth/components/SettingsModal';
 import './DashboardLayout.css';
 
-/** Tabs hiển thị khi đang ở khu vực Chiến dịch / Lịch đăng */
 function CampaignTabs() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Extract workspaceId from pathname if present
+  const wsMatch = location.pathname.match(/\/workspaces\/([^/]+)/);
+  const workspaceId = wsMatch ? wsMatch[1] : null;
+
   // Xác định tab active dựa trên hash hoặc pathname
   const isSchedule = location.hash === '#schedule';
+
+  const navigateTo = (hash) => {
+    if (workspaceId) {
+      navigate(`/workspaces/${workspaceId}/campaigns${hash}`);
+    } else {
+      navigate(`/campaigns${hash}`);
+    }
+  };
 
   return (
     <div className="topbar__campaign-tabs">
       <button
         type="button"
         className={`topbar__tab-btn${!isSchedule ? ' topbar__tab-btn--active' : ''}`}
-        onClick={() => navigate('/campaigns')}
+        onClick={() => navigateTo('')}
         id="tab-chien-dich"
       >
         Chiến dịch
@@ -27,7 +38,7 @@ function CampaignTabs() {
       <button
         type="button"
         className={`topbar__tab-btn${isSchedule ? ' topbar__tab-btn--active' : ''}`}
-        onClick={() => navigate('/campaigns#schedule')}
+        onClick={() => navigateTo('#schedule')}
         id="tab-lich-dang"
       >
         Lịch đăng
@@ -38,25 +49,31 @@ function CampaignTabs() {
 
 export default function DashboardLayout({ children, variant = 'dashboard' }) {
   const location = useLocation();
-  const isCampaignArea = location.pathname === '/campaigns';
+  const isCampaignArea = location.pathname.includes('/campaigns');
+  const isSocialAccounts = location.pathname === '/social-accounts';
 
-  const [subscription, setSubscription] = useState({ id: null, planName: 'Free', planPrice: 0, isTrial: false });
+  const [subscription, setSubscription] = useState({
+    id: null,
+    planName: 'Free',
+    planPrice: 0,
+    isTrial: false,
+  });
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsActiveTab, setSettingsActiveTab] = useState('account');
 
   const fetchSubscription = () => {
-    const token = localStorage.getItem("marqops.authLab.accessToken");
+    const token = localStorage.getItem('marqops.authLab.accessToken');
     if (!token) return;
 
-    fetch("http://localhost:8080/api/v1/subscriptions/me", {
+    fetch('http://localhost:8080/api/v1/subscriptions/me', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
       .then((res) => {
         if (!res.ok) {
-          throw new Error("No subscription");
+          throw new Error('No subscription');
         }
         return res.json();
       })
@@ -88,7 +105,11 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
         <header className="topbar">
           <div className="topbar__left">
             <span className="topbar__title">
-              {variant === 'admin' ? 'Admin' : 'Dashboard'}
+              {isSocialAccounts
+                ? 'Tài khoản mạng xã hội'
+                : variant === 'admin'
+                  ? 'Admin'
+                  : 'Dashboard'}
             </span>
           </div>
 
