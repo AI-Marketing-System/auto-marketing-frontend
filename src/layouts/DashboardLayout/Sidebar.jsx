@@ -1,4 +1,7 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { workspaceApi } from '../../modules/campaigns/api/campaignApi';
+import { API_BASE_URL } from '../../config/env';
 import './DashboardLayout.css';
 
 const DASHBOARD_ITEMS = [
@@ -6,16 +9,7 @@ const DASHBOARD_ITEMS = [
     to: '/dashboard',
     label: 'Dashboard',
     icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="7" height="7" />
         <rect x="14" y="3" width="7" height="7" />
         <rect x="14" y="14" width="7" height="7" />
@@ -24,21 +18,13 @@ const DASHBOARD_ITEMS = [
     ),
   },
   {
-    to: '/campaigns',
-    label: 'Campaigns',
+    to: '/analytics',
+    label: 'Phân tích',
     icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-        <polyline points="22,6 12,13 2,6" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
       </svg>
     ),
   },
@@ -69,6 +55,36 @@ const ADMIN_ITEMS = [
 
 export default function Sidebar({ variant = 'dashboard' }) {
   const items = variant === 'admin' ? ADMIN_ITEMS : DASHBOARD_ITEMS;
+  const [workspaces, setWorkspaces] = useState([]);
+  const [expandedWs, setExpandedWs] = useState({});
+  const location = useLocation();
+
+  useEffect(() => {
+    if (variant === 'admin') return;
+    let cancelled = false;
+    workspaceApi
+      .myWorkspaces(API_BASE_URL)
+      .then((res) => {
+        if (!cancelled && res && Array.isArray(res.data)) {
+          setWorkspaces(res.data);
+          
+          // Optionally auto-expand the workspace if we are currently viewing it
+          const wsIdMatch = location.pathname.match(/\/workspaces\/([^/]+)/);
+          if (wsIdMatch && wsIdMatch[1]) {
+            setExpandedWs(prev => ({ ...prev, [wsIdMatch[1]]: true }));
+          }
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [variant, location.pathname]);
+
+  const toggleWorkspace = (id, e) => {
+    e.preventDefault();
+    setExpandedWs((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   return (
     <aside className="sidebar">
@@ -87,6 +103,44 @@ export default function Sidebar({ variant = 'dashboard' }) {
             <span>{item.label}</span>
           </NavLink>
         ))}
+
+        {variant !== 'admin' && workspaces.length > 0 && (
+          <div className="sidebar__section">
+            <div className="sidebar__section-title">WORKSPACES CỦA TÔI</div>
+            {workspaces.map((ws) => (
+              <div key={ws.id} className="sidebar__ws-item">
+                <div 
+                  className={`sidebar__ws-header ${location.pathname.includes(`/workspaces/${ws.id}`) ? 'sidebar__ws-header--active' : ''}`}
+                >
+                  <NavLink 
+                    to={`/workspaces/${ws.id}/campaigns`}
+                    className={({ isActive }) => `sidebar__ws-link${isActive ? ' sidebar__ws-link--active' : ''}`}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    </svg>
+                    <span>{ws.name}</span>
+                  </NavLink>
+                  {/* Future chevron for nested campaigns/topics */}
+                  {/* <button className="sidebar__ws-toggle" onClick={(e) => toggleWorkspace(ws.id, e)}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={expandedWs[ws.id] ? 'open' : ''}>
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button> */}
+                </div>
+                
+                {/* Future nested content (e.g. Campaigns list) */}
+                {/* {expandedWs[ws.id] && (
+                  <div className="sidebar__ws-nested">
+                    <NavLink to={`/workspaces/${ws.id}/campaigns/1`} className="sidebar__nested-link">
+                      <span className="sidebar__nested-dot"></span> Campaign 1
+                    </NavLink>
+                  </div>
+                )} */}
+              </div>
+            ))}
+          </div>
+        )}
       </nav>
 
       <div className="sidebar__footer">

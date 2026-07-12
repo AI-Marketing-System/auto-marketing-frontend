@@ -6,6 +6,7 @@ import RegisterPage from '../modules/auth/pages/RegisterPage';
 import ForgotPasswordPage from '../modules/auth/pages/ForgotPasswordPage';
 import AuthApiLabPage from '../modules/auth/pages/AuthApiLabPage';
 import AnalyticsDashboard from '../modules/analytics/pages/AnalyticsDashboard';
+import DashboardPage from '../modules/dashboard/pages/DashboardPage';
 import CampaignListPage from '../modules/campaigns/pages/CampaignListPage';
 import PlanManagementPage from '../modules/admin/plans/pages/PlanManagementPage';
 import ErrorPage from '../public-site/pages/ErrorPage';
@@ -49,6 +50,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <DashboardLayout>
+              <DashboardPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
               <AnalyticsDashboard />
             </DashboardLayout>
           </ProtectedRoute>
@@ -56,6 +67,16 @@ function AppRoutes() {
       />
       <Route
         path="/campaigns"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <CampaignListPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/workspaces/:workspaceId/campaigns"
         element={
           <ProtectedRoute>
             <DashboardLayout>
