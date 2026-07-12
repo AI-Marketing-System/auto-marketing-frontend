@@ -63,8 +63,11 @@ function CampaignListPage() {
     workspaceApi
       .myWorkspaces(API_BASE_URL)
       .then((res) => {
-        if (!cancelled && res && Array.isArray(res.data)) {
-          setWorkspaces(res.data);
+        const wsList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+        if (!cancelled && wsList.length > 0) {
+          setWorkspaces(wsList);
+        } else if (!cancelled) {
+          setWorkspaces([]);
         }
       })
       .catch(() => {});

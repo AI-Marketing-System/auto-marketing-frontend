@@ -65,17 +65,24 @@ export default function Sidebar({ variant = 'dashboard' }) {
     workspaceApi
       .myWorkspaces(API_BASE_URL)
       .then((res) => {
-        if (!cancelled && res && Array.isArray(res.data)) {
-          setWorkspaces(res.data);
+        console.log('Workspaces API Response:', res);
+        const wsList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+        if (!cancelled && wsList.length > 0) {
+          setWorkspaces(wsList);
           
           // Optionally auto-expand the workspace if we are currently viewing it
           const wsIdMatch = location.pathname.match(/\/workspaces\/([^/]+)/);
           if (wsIdMatch && wsIdMatch[1]) {
             setExpandedWs(prev => ({ ...prev, [wsIdMatch[1]]: true }));
           }
+        } else if (!cancelled) {
+          setWorkspaces([]);
+          console.error('Workspaces list is empty or format unexpected:', res);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error('Workspaces API Error:', err);
+      });
     return () => {
       cancelled = true;
     };
@@ -104,41 +111,33 @@ export default function Sidebar({ variant = 'dashboard' }) {
           </NavLink>
         ))}
 
-        {variant !== 'admin' && workspaces.length > 0 && (
+        {variant !== 'admin' && (
           <div className="sidebar__section">
             <div className="sidebar__section-title">WORKSPACES CỦA TÔI</div>
-            {workspaces.map((ws) => (
-              <div key={ws.id} className="sidebar__ws-item">
-                <div 
-                  className={`sidebar__ws-header ${location.pathname.includes(`/workspaces/${ws.id}`) ? 'sidebar__ws-header--active' : ''}`}
-                >
-                  <NavLink 
-                    to={`/workspaces/${ws.id}/campaigns`}
-                    className={({ isActive }) => `sidebar__ws-link${isActive ? ' sidebar__ws-link--active' : ''}`}
+            
+            {workspaces.length === 0 ? (
+              <div style={{ padding: '8px 12px', fontSize: '13px', color: '#94a3b8' }}>
+                Không có dữ liệu...
+              </div>
+            ) : (
+              workspaces.map((ws) => (
+                <div key={ws.id} className="sidebar__ws-item">
+                  <div 
+                    className={`sidebar__ws-header ${location.pathname.includes(`/workspaces/${ws.id}`) ? 'sidebar__ws-header--active' : ''}`}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                    </svg>
-                    <span>{ws.name}</span>
-                  </NavLink>
-                  {/* Future chevron for nested campaigns/topics */}
-                  {/* <button className="sidebar__ws-toggle" onClick={(e) => toggleWorkspace(ws.id, e)}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={expandedWs[ws.id] ? 'open' : ''}>
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button> */}
-                </div>
-                
-                {/* Future nested content (e.g. Campaigns list) */}
-                {/* {expandedWs[ws.id] && (
-                  <div className="sidebar__ws-nested">
-                    <NavLink to={`/workspaces/${ws.id}/campaigns/1`} className="sidebar__nested-link">
-                      <span className="sidebar__nested-dot"></span> Campaign 1
+                    <NavLink 
+                      to={`/workspaces/${ws.id}/campaigns`}
+                      className={({ isActive }) => `sidebar__ws-link${isActive ? ' sidebar__ws-link--active' : ''}`}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                      </svg>
+                      <span>{ws.name}</span>
                     </NavLink>
                   </div>
-                )} */}
-              </div>
-            ))}
+                </div>
+              ))
+            )}
           </div>
         )}
       </nav>
