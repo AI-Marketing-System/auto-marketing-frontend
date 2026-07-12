@@ -13,14 +13,14 @@ export default function SocialAccountsPage() {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [isFanpageModalOpen, setIsFanpageModalOpen] = useState(false);
 
-  const fetchAccounts = useCallback(async () => {
+  const fetchAccounts = useCallback(async (preserveError = false) => {
     setLoading(true);
-    setError(null);
+    if (!preserveError) setError(null);
     try {
       const data = await listSocialAccounts();
       setAccounts(data || []);
     } catch (err) {
-      setError(err.message || 'Không thể tải danh sách tài khoản');
+      if (!preserveError) setError(err.message || 'Không thể tải danh sách tài khoản');
     } finally {
       setLoading(false);
     }
@@ -39,6 +39,7 @@ export default function SocialAccountsPage() {
         fetchAccounts();
       } else if (status === 'error') {
         setError(decoded);
+        fetchAccounts(true); // preserveError=true để không xoá error message từ callback
       }
       // Xoá query params khỏi URL để không hiển thị lại khi refresh
       window.history.replaceState({}, '', '/social-accounts');
