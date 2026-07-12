@@ -9,7 +9,16 @@ const DASHBOARD_ITEMS = [
     to: '/dashboard',
     label: 'Dashboard',
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <rect x="3" y="3" width="7" height="7" />
         <rect x="14" y="3" width="7" height="7" />
         <rect x="14" y="14" width="7" height="7" />
@@ -18,10 +27,37 @@ const DASHBOARD_ITEMS = [
     ),
   },
   {
+    to: '/social-accounts',
+    label: 'Social Accounts',
+    icon: (
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+      </svg>
+    ),
+  },
+  {
     to: '/analytics',
     label: 'Phân tích',
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <line x1="18" y1="20" x2="18" y2="10" />
         <line x1="12" y1="20" x2="12" y2="4" />
         <line x1="6" y1="20" x2="6" y2="14" />
@@ -66,14 +102,14 @@ export default function Sidebar({ variant = 'dashboard' }) {
       .myWorkspaces(API_BASE_URL)
       .then((res) => {
         console.log('Workspaces API Response:', res);
-        const wsList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+        const wsList = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
         if (!cancelled && wsList.length > 0) {
           setWorkspaces(wsList);
-          
+
           // Optionally auto-expand the workspace if we are currently viewing it
           const wsIdMatch = location.pathname.match(/\/workspaces\/([^/]+)/);
           if (wsIdMatch && wsIdMatch[1]) {
-            setExpandedWs(prev => ({ ...prev, [wsIdMatch[1]]: true }));
+            setExpandedWs((prev) => ({ ...prev, [wsIdMatch[1]]: true }));
           }
         } else if (!cancelled) {
           setWorkspaces([]);
@@ -114,7 +150,7 @@ export default function Sidebar({ variant = 'dashboard' }) {
         {variant !== 'admin' && (
           <div className="sidebar__section">
             <div className="sidebar__section-title">WORKSPACES CỦA TÔI</div>
-            
+
             {workspaces.length === 0 ? (
               <div style={{ padding: '8px 12px', fontSize: '13px', color: '#94a3b8' }}>
                 Không có dữ liệu...
@@ -122,14 +158,25 @@ export default function Sidebar({ variant = 'dashboard' }) {
             ) : (
               workspaces.map((ws) => (
                 <div key={ws.id} className="sidebar__ws-item">
-                  <div 
+                  <div
                     className={`sidebar__ws-header ${location.pathname.includes(`/workspaces/${ws.id}`) ? 'sidebar__ws-header--active' : ''}`}
                   >
-                    <NavLink 
+                    <NavLink
                       to={`/workspaces/${ws.id}/campaigns`}
-                      className={({ isActive }) => `sidebar__ws-link${isActive ? ' sidebar__ws-link--active' : ''}`}
+                      className={({ isActive }) =>
+                        `sidebar__ws-link${isActive ? ' sidebar__ws-link--active' : ''}`
+                      }
                     >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                       </svg>
                       <span>{ws.name}</span>

@@ -50,24 +50,30 @@ function CampaignTabs() {
 export default function DashboardLayout({ children, variant = 'dashboard' }) {
   const location = useLocation();
   const isCampaignArea = location.pathname.includes('/campaigns');
+  const isSocialAccounts = location.pathname === '/social-accounts';
 
-  const [subscription, setSubscription] = useState({ id: null, planName: 'Free', planPrice: 0, isTrial: false });
+  const [subscription, setSubscription] = useState({
+    id: null,
+    planName: 'Free',
+    planPrice: 0,
+    isTrial: false,
+  });
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsActiveTab, setSettingsActiveTab] = useState('account');
 
   const fetchSubscription = () => {
-    const token = localStorage.getItem("marqops.authLab.accessToken");
+    const token = localStorage.getItem('marqops.authLab.accessToken');
     if (!token) return;
 
-    fetch("http://localhost:8080/api/v1/subscriptions/me", {
+    fetch('http://localhost:8080/api/v1/subscriptions/me', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
       .then((res) => {
         if (!res.ok) {
-          throw new Error("No subscription");
+          throw new Error('No subscription');
         }
         return res.json();
       })
@@ -99,7 +105,11 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
         <header className="topbar">
           <div className="topbar__left">
             <span className="topbar__title">
-              {variant === 'admin' ? 'Admin' : 'Dashboard'}
+              {isSocialAccounts
+                ? 'Tài khoản mạng xã hội'
+                : variant === 'admin'
+                  ? 'Admin'
+                  : 'Dashboard'}
             </span>
           </div>
 
