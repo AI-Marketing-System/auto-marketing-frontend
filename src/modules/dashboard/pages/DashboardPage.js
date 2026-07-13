@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import '../styles/DashboardPage.css';
 import WorkspaceCard from '../components/WorkspaceCard';
@@ -7,10 +7,8 @@ import CreateWorkspaceModal from '../components/CreateWorkspaceModal';
 
 function DashboardPage() {
   const { user } = useAuth();
-  const [workspaces, setWorkspaces] = useState([
-    { id: 1, title: 'Client – Coffee House Brand', accountsCount: 2 },
-    { id: 2, title: 'Thương hiệu của Nguyễn Gia Kiệt', accountsCount: 1 },
-  ]);
+  const [workspaces, setWorkspaces] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [sharedWorkspaces] = useState([
     {
       id: 3,
@@ -22,15 +20,81 @@ function DashboardPage() {
   ]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const fetchWorkspaces = () => {
+    setLoading(true);
+    const token = localStorage.getItem("marqops.authLab.accessToken");
+    fetch("http://localhost:8080/api/v1/workspaces", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Không thể tải danh sách workspace");
+        return res.json();
+      })
+      .then(resJson => {
+        if (resJson && resJson.success && resJson.data) {
+          const mapped = resJson.data.map(ws => ({
+            id: ws.id,
+            title: ws.name,
+            description: ws.description,
+            slug: ws.slug,
+            accountsCount: 0
+          }));
+          setWorkspaces(mapped);
+        }
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchWorkspaces();
+  }, []);
+
   const handleCreateWorkspace = () => {
     console.log('Opening create workspace modal');
     setIsModalOpen(true);
   };
 
   const handleModalSubmit = (data) => {
-    console.log('Creating workspace with data:', data);
-    setWorkspaces([...workspaces, { id: Date.now(), title: data.title, accountsCount: 0 }]);
-    setIsModalOpen(false);
+    const token = localStorage.getItem("marqops.authLab.accessToken");
+    fetch("http://localhost:8080/api/v1/workspaces", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        name: data.title,
+        description: data.description || ""
+      })
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Không thể tạo workspace mới");
+        return res.json();
+      })
+      .then(resJson => {
+        if (resJson && resJson.success && resJson.data) {
+          const newWs = resJson.data;
+          setWorkspaces(prev => [
+            ...prev,
+            {
+              id: newWs.id,
+              title: newWs.name,
+              description: newWs.description,
+              slug: newWs.slug,
+              accountsCount: 0
+            }
+          ]);
+          setIsModalOpen(false);
+        } else {
+          alert(resJson.message || "Tạo workspace thất bại");
+        }
+      })
+      .catch(err => {
+        alert(err.message || "Đã xảy ra lỗi khi tạo workspace");
+      });
   };
 
   const handleSettingsClick = (workspace) => {
@@ -118,16 +182,21 @@ function DashboardPage() {
               {/* Creator Card */}
               <WorkspaceCard isCreator={true} onCardClick={handleCreateWorkspace} />
 
-              {/* Normal Workspace Cards */}
-              {workspaces.map((ws) => (
-                <WorkspaceCard
-                  key={ws.id}
-                  title={ws.title}
-                  accountsCount={ws.accountsCount}
-                  onSettingsClick={() => handleSettingsClick(ws)}
-                  onCardClick={() => handleCardClick(ws)}
-                />
-              ))}
+              {loading ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', gridColumn: 'span 3', color: '#64748b', fontSize: '14px', fontWeight: '500' }}>
+                  Đang tải danh sách Workspace...
+                </div>
+              ) : (
+                workspaces.map((ws) => (
+                  <WorkspaceCard
+                    key={ws.id}
+                    title={ws.title}
+                    accountsCount={ws.accountsCount}
+                    onSettingsClick={() => handleSettingsClick(ws)}
+                    onCardClick={() => handleCardClick(ws)}
+                  />
+                ))
+              )}
             </div>
           </section>
 

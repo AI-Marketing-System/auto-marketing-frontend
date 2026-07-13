@@ -1,10 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../styles/CampaignListPage.css';
+import '../../../modules/social-accounts/styles/SocialAccountsPage.css';
 import CampaignCard from '../components/CampaignCard';
 import CreateCampaignModal from '../components/CreateCampaignModal';
+import WorkspaceFanpageBar from '../components/WorkspaceFanpageBar';
 import { campaignApi, workspaceApi } from '../api/campaignApi';
 import { API_BASE_URL } from '../../../config/env';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import SchedulePage from '../../schedule/pages/SchedulePage';
 
 const mapStatusToVietnamese = (status) => {
@@ -47,6 +49,10 @@ function CampaignListPage() {
   const location = useLocation();
   const isScheduleTab = location.hash === '#schedule';
 
+  const navigate = useNavigate();
+  const { workspaceId } = useParams();
+  const currentWorkspaceId = workspaceId ? Number(workspaceId) : null;
+
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Tất cả');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,32 +60,18 @@ function CampaignListPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [workspaces, setWorkspaces] = useState([]);
-  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  const [wsDropdownOpen, setWsDropdownOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     workspaceApi
       .myWorkspaces(API_BASE_URL)
       .then((res) => {
-        if (!cancelled && res && Array.isArray(res.data)) {
-          setWorkspaces(res.data);
-          if (res.data.length > 0) {
-            setSelectedWorkspaceId(res.data[0].id);
-          }
+        const wsList = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+        if (!cancelled && wsList.length > 0) {
+          setWorkspaces(wsList);
+        } else if (!cancelled) {
+          setWorkspaces([]);
         }
       })
       .catch(() => {});
@@ -89,12 +81,12 @@ function CampaignListPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedWorkspaceId == null) return;
+    if (currentWorkspaceId == null) return;
     async function loadCampaigns() {
       setLoading(true);
       setError(null);
       try {
-        const response = await campaignApi.list(API_BASE_URL, selectedWorkspaceId);
+        const response = await campaignApi.list(API_BASE_URL, currentWorkspaceId);
         const data = Array.isArray(response) ? response : response?.data || [];
         if (Array.isArray(data)) {
           setCampaigns(
@@ -121,7 +113,7 @@ function CampaignListPage() {
     }
 
     loadCampaigns();
-  }, [selectedWorkspaceId]);
+  }, [currentWorkspaceId]);
 
   const getInitialBgColor = (id) => {
     const schemes = ['#f3e8ff', '#ffedd5', '#dcfce7', '#e0f2fe'];
@@ -149,7 +141,7 @@ function CampaignListPage() {
     try {
       const response = await campaignApi.create(data, API_BASE_URL);
       const created = response?.data || response;
-      if (Number(created.workspaceId || data.workspaceId) === selectedWorkspaceId) {
+      if (Number(created.workspaceId || data.workspaceId) === currentWorkspaceId) {
         setCampaigns((prev) => [
           {
             id: created.id || Date.now(),
@@ -158,7 +150,10 @@ function CampaignListPage() {
             initialsColor: getInitialTextColor(created.id || prev.length),
             status: mapStatusToVietnamese(created.status || data.status),
             title: created.name || data.title,
-            dateRange: formatRange(created.startDate || data.startDate, created.endDate || data.endDate),
+            dateRange: formatRange(
+              created.startDate || data.startDate,
+              created.endDate || data.endDate
+            ),
             topicsCount: created.topicsCount ?? 0,
             postsCount: created.postsCount ?? 0,
           },
@@ -171,7 +166,7 @@ function CampaignListPage() {
     }
   };
 
-  const selectedWorkspace = workspaces.find((ws) => ws.id === selectedWorkspaceId);
+  const selectedWorkspace = workspaces.find((ws) => ws.id === currentWorkspaceId);
 
   const filteredCampaigns = campaigns.filter((camp) => {
     const matchesSearch = camp.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -190,16 +185,18 @@ function CampaignListPage() {
       <main className="campaign-main-content">
         {/* Workspace Selector Bar */}
         <div className="workspace-selector-card">
-          <div className="workspace-selector-dropdown" ref={dropdownRef}>
+          <div className="workspace-selector-dropdown">
             <div
               className="workspace-dropdown-trigger"
-              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              onClick={() => setWsDropdownOpen(!wsDropdownOpen)}
+              onBlur={() => setTimeout(() => setWsDropdownOpen(false), 200)}
+              tabIndex={0}
             >
               <span className="selected-workspace-name">
-                {selectedWorkspace ? selectedWorkspace.name : 'Chọn workspace'}
+                {selectedWorkspace ? selectedWorkspace.name : 'Vui lòng chọn Workspace'}
               </span>
               <svg
-                className={`dropdown-chevron ${isDropdownOpen ? 'open' : ''}`}
+                className={`dropdown-chevron ${wsDropdownOpen ? 'open' : ''}`}
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
@@ -209,38 +206,38 @@ function CampaignListPage() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <polyline points="6 9 12 15 18 9"></polyline>
+                <polyline points="6 9 12 15 18 9" />
               </svg>
             </div>
 
-            {isDropdownOpen && (
+            {wsDropdownOpen && (
               <div className="workspace-dropdown-menu">
                 {workspaces.length === 0 ? (
-                  <div className="workspace-dropdown-item empty">Không có workspace</div>
+                  <div className="workspace-dropdown-item empty">Không có Workspace</div>
                 ) : (
                   workspaces.map((ws) => (
                     <div
                       key={ws.id}
-                      className={`workspace-dropdown-item ${ws.id === selectedWorkspaceId ? 'active' : ''}`}
+                      className={`workspace-dropdown-item ${ws.id === currentWorkspaceId ? 'active' : ''}`}
                       onClick={() => {
-                        setSelectedWorkspaceId(ws.id);
-                        setIsDropdownOpen(false);
+                        setWsDropdownOpen(false);
+                        navigate(`/workspaces/${ws.id}/campaigns`);
                       }}
                     >
-                      <span className="workspace-item-name">{ws.name}</span>
-                      {ws.id === selectedWorkspaceId && (
+                      <span>{ws.name}</span>
+                      {ws.id === currentWorkspaceId && (
                         <svg
                           className="check-icon"
-                          width="14"
-                          height="14"
+                          width="16"
+                          height="16"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
-                          strokeWidth="2"
+                          strokeWidth="2.5"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         >
-                          <polyline points="20 6 9 17 4 12"></polyline>
+                          <polyline points="20 6 9 17 4 12" />
                         </svg>
                       )}
                     </div>
@@ -250,47 +247,8 @@ function CampaignListPage() {
             )}
           </div>
 
-          {/* Connected Social Accounts */}
-          <div className="connected-accounts-section">
-            <div className="connected-avatar-wrapper">
-              <div className="avatar-img-circle bg-blue">
-                <span className="avatar-initial">CH</span>
-              </div>
-              <div className="social-badge facebook-badge">
-                <span>f</span>
-              </div>
-            </div>
-
-            <div className="connected-avatar-wrapper">
-              <div className="avatar-img-circle bg-orange">
-                <span className="avatar-initial">PL</span>
-              </div>
-              <div className="social-badge facebook-badge">
-                <span>f</span>
-              </div>
-            </div>
-
-            {/* Add Account Button */}
-            <button
-              type="button"
-              className="add-account-circle-btn"
-              onClick={() => alert('Kết nối tài khoản mạng xã hội mới')}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-            </button>
-          </div>
+          {/* Fanpage Avatar Stack */}
+          {currentWorkspaceId && <WorkspaceFanpageBar workspaceId={currentWorkspaceId} />}
         </div>
 
         {/* Workspace Title & Create Campaign Button */}
@@ -298,7 +256,7 @@ function CampaignListPage() {
           <div className="title-left">
             <span className="workspace-label">Workspace</span>
             <h1 className="workspace-title-main">
-              {selectedWorkspace ? selectedWorkspace.name : 'Chọn workspace'}
+              {selectedWorkspace ? selectedWorkspace.name : 'Chọn Workspace'}
             </h1>
             <h2 className="section-subtitle">Chiến dịch</h2>
           </div>

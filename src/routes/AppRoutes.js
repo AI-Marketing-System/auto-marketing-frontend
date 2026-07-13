@@ -4,17 +4,18 @@ import HomePage from '../public-site/pages/HomePage';
 import LoginPage from '../modules/auth/pages/LoginPage';
 import RegisterPage from '../modules/auth/pages/RegisterPage';
 import ForgotPasswordPage from '../modules/auth/pages/ForgotPasswordPage';
+import ResetPasswordPage from '../modules/auth/pages/ResetPasswordPage';
 import AuthApiLabPage from '../modules/auth/pages/AuthApiLabPage';
-import DashboardPage from '../modules/analytics/pages/DashboardPage';
+import DashboardPage from '../modules/dashboard/pages/DashboardPage';
+import SocialAccountsPage from '../modules/social-accounts/pages/SocialAccountsPage';
+import AnalyticsDashboard from '../modules/analytics/pages/AnalyticsDashboard';
 import CampaignListPage from '../modules/campaigns/pages/CampaignListPage';
 import PlanManagementPage from '../modules/admin/plans/pages/PlanManagementPage';
 import ErrorPage from '../public-site/pages/ErrorPage';
 import DashboardLayout from '../layouts/DashboardLayout/DashboardLayout';
-import CreatePostPage from '../modules/post/pages/CreatePostPage';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { AdminRoute } from '../components/ProtectedRoute';
-import AdminHomePage from "../modules/admin/home/pages/AdminHomePage";
-
+import AdminHomePage from '../modules/admin/home/pages/AdminHomePage';
 function AppRoutes() {
   return (
     <Routes>
@@ -22,6 +23,7 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/auth-lab" element={<AuthApiLabPage />} />
       <Route
         path="/unauthorized"
@@ -55,6 +57,34 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/social-accounts"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <SocialAccountsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <AnalyticsDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analytics-v2"
+        element={
+          <ProtectedRoute>
+            <AnalyticsDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/campaigns"
         element={
           <ProtectedRoute>
@@ -65,17 +95,17 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/posts/create"
+        path="/workspaces/:workspaceId/campaigns"
         element={
           <ProtectedRoute>
             <DashboardLayout>
-              <CreatePostPage />
+              <CampaignListPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
       />
-        <Route path="/admin" element={<AdminHomePage />} />
-        <Route
+      <Route path="/admin" element={<AdminHomePage />} />
+      <Route
         path="/admin/plans"
         element={
           <AdminRoute>
