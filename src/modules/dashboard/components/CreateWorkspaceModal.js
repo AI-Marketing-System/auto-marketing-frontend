@@ -1,11 +1,21 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
-function CreateWorkspaceModal({ isOpen, onClose, onSubmit }) {
+function CreateWorkspaceModal({ isOpen, onClose, onSubmit, workspaceData }) {
     const [workspaceName, setWorkspaceName] = useState("");
     const [description, setDescription] = useState("");
     const [timezone, setTimezone] = useState("(GMT+07:00) Hanoi");
     const [avatarPreview, setAvatarPreview] = useState(null);
     const fileInputRef = useRef(null);
+
+    useEffect(() => {
+        if (workspaceData) {
+            setWorkspaceName(workspaceData.title || "");
+            setDescription(workspaceData.description || "");
+        } else {
+            setWorkspaceName("");
+            setDescription("");
+        }
+    }, [workspaceData, isOpen]);
 
     if (!isOpen) return null;
 
@@ -47,7 +57,7 @@ function CreateWorkspaceModal({ isOpen, onClose, onSubmit }) {
             <div className="modal-container" onClick={(e) => e.stopPropagation()}>
                 {/* Modal Header */}
                 <div className="modal-header">
-                    <h3 className="modal-title-text">Tạo workspace mới</h3>
+                    <h3 className="modal-title-text">{workspaceData ? "Chỉnh sửa workspace" : "Tạo workspace mới"}</h3>
                     <button type="button" className="close-modal-btn" onClick={onClose}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -157,7 +167,7 @@ function CreateWorkspaceModal({ isOpen, onClose, onSubmit }) {
                     {/* Modal Footer Action Button */}
                     <div className="modal-footer-actions">
                         <button type="submit" className="btn-submit-modal">
-                            Tiếp theo
+                            {workspaceData ? "Lưu thay đổi" : "Tiếp theo"}
                         </button>
                     </div>
                 </form>
