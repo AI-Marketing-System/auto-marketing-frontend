@@ -6,6 +6,7 @@ import ScheduleFilters  from '../components/ScheduleFilters';
 import WeekNavigation   from '../components/WeekNavigation';
 import CalendarGrid     from '../components/CalendarGrid';
 import NewPostModal     from '../components/NewPostModal';
+import CreatePostModal  from '../../post/components/CreatePostModal';
 
 import {
   getWeekDays,
@@ -102,12 +103,22 @@ export default function SchedulePage() {
         currentTimePercent={currentTimePercent}
       />
 
-      {/* 5. Modal tạo bài mới */}
-      <NewPostModal
+      {/* 5. Modal tạo bài mới (mới – component hoá) */}
+      <CreatePostModal
         isOpen={showNewPostModal}
         onClose={() => setShowNewPostModal(false)}
         onSubmit={handleNewPostSubmit}
+        onDraft={(data) => console.log('Lưu nháp:', data)}
       />
+
+      {/* Legacy modal (giữ lại để tham khảo, không render) */}
+      {false && (
+        <NewPostModal
+          isOpen={showNewPostModal}
+          onClose={() => setShowNewPostModal(false)}
+          onSubmit={handleNewPostSubmit}
+        />
+      )}
     </div>
   );
 }

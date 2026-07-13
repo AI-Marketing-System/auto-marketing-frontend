@@ -10,6 +10,7 @@ import CampaignListPage from '../modules/campaigns/pages/CampaignListPage';
 import PlanManagementPage from '../modules/admin/plans/pages/PlanManagementPage';
 import ErrorPage from '../public-site/pages/ErrorPage';
 import DashboardLayout from '../layouts/DashboardLayout/DashboardLayout';
+import CreatePostPage from '../modules/post/pages/CreatePostPage';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { AdminRoute } from '../components/ProtectedRoute';
 import AdminHomePage from "../modules/admin/home/pages/AdminHomePage";
@@ -59,6 +60,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <CampaignListPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/posts/create"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <CreatePostPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
