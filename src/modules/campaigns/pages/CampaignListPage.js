@@ -87,10 +87,19 @@ function CampaignListPage() {
       setError(null);
       try {
         const response = await campaignApi.list(API_BASE_URL, currentWorkspaceId);
-        const data = Array.isArray(response) ? response : response?.data || [];
-        if (Array.isArray(data)) {
+        // Backend returns ApiResponse<PageResponse<CampaignResponse>> when filtering
+        // PageResponse has: content, totalElements, totalPages, etc.
+        let campaignsData = [];
+        if (Array.isArray(response)) {
+          campaignsData = response;
+        } else if (response?.data?.content && Array.isArray(response.data.content)) {
+          campaignsData = response.data.content;
+        } else if (Array.isArray(response?.data)) {
+          campaignsData = response.data;
+        }
+        if (Array.isArray(campaignsData)) {
           setCampaigns(
-            data.map((campaign) => ({
+            campaignsData.map((campaign) => ({
               id: campaign.id,
               initials: generateInitials(campaign.name || campaign.title || 'CD'),
               initialsBg: getInitialBgColor(campaign.id),
