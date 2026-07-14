@@ -736,6 +736,7 @@
   z-index: 1000;
   backdrop-filter: blur(2px);
   animation: modalFadeIn 0.2s ease-out;
+  padding: 20px;
 }
 
 .modal-container {
@@ -743,6 +744,7 @@
   border-radius: 12px;
   width: 100%;
   max-width: 500px;
+  max-height: calc(100vh - 40px);
   box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -758,6 +760,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .modal-title-text {
@@ -785,11 +788,19 @@
   color: #475569;
 }
 
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
 .modal-body-form {
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .modal-form-group {
@@ -865,6 +876,37 @@
   padding-right: 30px;
 }
 
+/* Fanpage Status Badge Styles */
+.fanpage-status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-top: 4px;
+}
+
+.fanpage-status-badge--active {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.fanpage-status-badge--revoked {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.fanpage-status-badge--expired {
+  background-color: #ffedd5;
+  color: #c2410c;
+}
+
+.fanpage-status-badge--default {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
 /* Modal Footer Actions */
 .modal-footer-actions {
   display: flex;
@@ -936,6 +978,8 @@
 /* AddFanpageToWorkspaceModal - add fanpage modal */
 .fanpage-add-modal {
   max-width: 820px !important;
+  overflow-y: auto;
+  max-height: calc(100vh - 40px);
 }
 
 .fanpage-add-accounts-list {
