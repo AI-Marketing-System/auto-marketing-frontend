@@ -185,7 +185,13 @@ function CampaignListPage() {
 
   // Nếu đang ở tab Lịch đăng, render SchedulePage toàn màn hình
   if (isScheduleTab) {
-    return <SchedulePage />;
+    return (
+      <SchedulePage
+        workspaceId={currentWorkspaceId}
+        workspaces={workspaces}
+        campaigns={campaigns}
+      />
+    );
   }
 
   return (
