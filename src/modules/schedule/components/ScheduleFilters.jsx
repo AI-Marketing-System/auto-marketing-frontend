@@ -19,20 +19,25 @@ export default function ScheduleFilters({
   onCampaignChange,
   onTopicChange,
   onStatusChange,
+  campaigns = [],
 }) {
   return (
     <div className="sc-filters">
       {/* Lọc theo chiến dịch */}
       <div className="sc-filter-group">
-        <input
+        <select
           id="filter-campaign"
-          className="sc-filter-input"
-          type="text"
+          className="sc-filter-select"
           value={campaignFilter}
           onChange={(e) => onCampaignChange(e.target.value)}
-          placeholder="Tất cả chiến dịch"
-          readOnly
-        />
+        >
+          <option value="Tất cả chiến dịch">Tất cả chiến dịch</option>
+          {campaigns.map((camp) => (
+            <option key={camp.id} value={String(camp.id)}>
+              {camp.title || camp.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Lọc theo chủ đề */}
