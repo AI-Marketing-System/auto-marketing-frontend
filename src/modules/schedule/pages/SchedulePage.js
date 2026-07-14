@@ -24,7 +24,11 @@ function mapSchedulesToCalendarPosts(schedules, weekDays) {
   const colors = ['#7c3aed', '#10b981', '#ef4444', '#f59e0b', '#3b82f6'];
 
   return schedules.map((sch) => {
-    const publishDate = new Date(sch.publishTime);
+    let dateStr = sch.publishTime;
+    if (typeof dateStr === 'string' && !dateStr.endsWith('Z') && !dateStr.includes('+')) {
+      dateStr += 'Z';
+    }
+    const publishDate = new Date(dateStr);
     const hour = publishDate.getHours();
     const minute = publishDate.getMinutes();
 
@@ -37,8 +41,27 @@ function mapSchedulesToCalendarPosts(schedules, weekDays) {
       }
     }
 
-    // Determine color based on scheduleId
-    const color = colors[sch.scheduleId % colors.length];
+    // Determine color based on status
+    let color = '#7c3aed'; // default Purple
+    switch (sch.status) {
+      case 'WAITING':
+        color = '#3b82f6'; // Xanh dương (Blue) - Chờ đăng
+        break;
+      case 'RUNNING':
+        color = '#f59e0b'; // Vàng cam (Amber) - Đang đăng
+        break;
+      case 'SUCCESS':
+        color = '#10b981'; // Xanh lá (Green) - Thành công
+        break;
+      case 'FAILED':
+        color = '#ef4444'; // Đỏ (Red) - Lỗi
+        break;
+      case 'CANCELLED':
+        color = '#94a3b8'; // Xám (Gray) - Hủy
+        break;
+      default:
+        color = '#7c3aed';
+    }
 
     // Determine platform (we default to Facebook as per current structure of fanpages)
     let platform = 'Facebook';

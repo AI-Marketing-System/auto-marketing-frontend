@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import PostCard from './PostCard';
 import { formatDayLabel, isSameDay, formatHour, HOURS } from '../utils/scheduleHelpers';
 
@@ -14,7 +14,7 @@ import { formatDayLabel, isSameDay, formatHour, HOURS } from '../utils/scheduleH
 export default function CalendarGrid({ weekDays, posts, currentTimePercent }) {
   const gridRef = useRef(null);
   const today = new Date();
-  const currentTimeTopPercent = currentTimePercent * 100;
+  const [lineTop, setLineTop] = useState(0);
 
   // Tự động cuộn đến giờ hiện tại khi weekDays thay đổi (đổi tuần / mount)
   useEffect(() => {
@@ -23,6 +23,30 @@ export default function CalendarGrid({ weekDays, posts, currentTimePercent }) {
       gridRef.current.scrollTop = Math.max(0, scrollTarget);
     }
   }, [weekDays]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Tính toán vị trí đường thời gian dựa trên vị trí thực tế của các hàng trong DOM
+  useEffect(() => {
+    const updateLinePosition = () => {
+      if (!gridRef.current) return;
+      const now = new Date();
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+
+      const rows = gridRef.current.querySelectorAll('.sc-hour-row');
+      const activeRow = rows[hour];
+      if (activeRow) {
+        const rowTop = activeRow.offsetTop;
+        const rowHeight = activeRow.offsetHeight;
+        const computedTop = rowTop + (minute / 60) * rowHeight;
+        setLineTop(computedTop);
+      }
+    };
+
+    updateLinePosition();
+    // Đợi layout DOM ổn định sau render để lấy offset chính xác
+    const timeoutId = setTimeout(updateLinePosition, 50);
+    return () => clearTimeout(timeoutId);
+  }, [posts, weekDays, currentTimePercent]);
 
   /** Lấy danh sách bài đăng cho một ô (dayIdx, hour) */
   function getPostsForCell(dayIdx, hour) {
@@ -54,7 +78,7 @@ export default function CalendarGrid({ weekDays, posts, currentTimePercent }) {
         {/* Đường thời gian hiện tại */}
         <div
           className="sc-current-time-line"
-          style={{ top: `${currentTimeTopPercent}%` }}
+          style={{ top: `${lineTop}px` }}
         >
           <div className="sc-current-time-line__dot" />
           <div className="sc-current-time-line__label">
