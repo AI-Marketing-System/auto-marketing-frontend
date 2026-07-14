@@ -19,6 +19,7 @@ function DashboardPage() {
     { id: 4, title: 'TechVista Solutions', role: 'ADMIN', campaigns: ['TechVista Marketing'] },
   ]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState(null);
 
   const fetchWorkspaces = () => {
     setLoading(true);
@@ -59,47 +60,111 @@ function DashboardPage() {
 
   const handleModalSubmit = (data) => {
     const token = localStorage.getItem("marqops.authLab.accessToken");
-    fetch("http://localhost:8080/api/v1/workspaces", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        name: data.title,
-        description: data.description || ""
+    if (editingWorkspace) {
+      // Edit Workspace
+      fetch(`http://localhost:8080/api/v1/workspaces/${editingWorkspace.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: data.title,
+          description: data.description || ""
+        })
       })
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("Không thể tạo workspace mới");
-        return res.json();
+        .then(res => {
+          if (!res.ok) throw new Error("Không thể cập nhật thông tin workspace");
+          return res.json();
+        })
+        .then(resJson => {
+          if (resJson && resJson.success && resJson.data) {
+            const updated = resJson.data;
+            setWorkspaces(prev => prev.map(ws =>
+              ws.id === updated.id
+                ? { ...ws, title: updated.name, description: updated.description, slug: updated.slug }
+                : ws
+            ));
+            setEditingWorkspace(null);
+            setIsModalOpen(false);
+          } else {
+            alert(resJson.message || "Cập nhật workspace thất bại");
+          }
+        })
+        .catch(err => {
+          alert(err.message || "Đã xảy ra lỗi khi cập nhật workspace");
+        });
+    } else {
+      // Create Workspace
+      fetch("http://localhost:8080/api/v1/workspaces", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: data.title,
+          description: data.description || ""
+        })
       })
-      .then(resJson => {
-        if (resJson && resJson.success && resJson.data) {
-          const newWs = resJson.data;
-          setWorkspaces(prev => [
-            ...prev,
-            {
-              id: newWs.id,
-              title: newWs.name,
-              description: newWs.description,
-              slug: newWs.slug,
-              accountsCount: 0
-            }
-          ]);
-          setIsModalOpen(false);
-        } else {
-          alert(resJson.message || "Tạo workspace thất bại");
-        }
-      })
-      .catch(err => {
-        alert(err.message || "Đã xảy ra lỗi khi tạo workspace");
-      });
+        .then(res => {
+          if (!res.ok) throw new Error("Không thể tạo workspace mới");
+          return res.json();
+        })
+        .then(resJson => {
+          if (resJson && resJson.success && resJson.data) {
+            const newWs = resJson.data;
+            setWorkspaces(prev => [
+              ...prev,
+              {
+                id: newWs.id,
+                title: newWs.name,
+                description: newWs.description,
+                slug: newWs.slug,
+                accountsCount: 0
+              }
+            ]);
+            setIsModalOpen(false);
+          } else {
+            alert(resJson.message || "Tạo workspace thất bại");
+          }
+        })
+        .catch(err => {
+          alert(err.message || "Đã xảy ra lỗi khi tạo workspace");
+        });
+    }
   };
 
   const handleSettingsClick = (workspace) => {
     console.log('Settings clicked for workspace:', workspace.title);
-    alert(`Cài đặt Workspace: ${workspace.title}`);
+    setEditingWorkspace(workspace);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteWorkspace = (workspaceId) => {
+    const token = localStorage.getItem("marqops.authLab.accessToken");
+    fetch(`http://localhost:8080/api/v1/workspaces/${workspaceId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Không thể xóa workspace này");
+        return res.json();
+      })
+      .then(resJson => {
+        if (resJson && resJson.success) {
+          setWorkspaces(prev => prev.filter(ws => ws.id !== workspaceId));
+          setEditingWorkspace(null);
+          setIsModalOpen(false);
+        } else {
+          alert(resJson.message || "Xóa workspace thất bại");
+        }
+      })
+      .catch(err => {
+        alert(err.message || "Đã xảy ra lỗi khi xóa workspace");
+      });
   };
 
   const handleCardClick = (workspace) => {
@@ -192,7 +257,8 @@ function DashboardPage() {
                     key={ws.id}
                     title={ws.title}
                     accountsCount={ws.accountsCount}
-                    onSettingsClick={() => handleSettingsClick(ws)}
+                    onEditClick={() => handleSettingsClick(ws)}
+                    onDeleteClick={() => handleDeleteWorkspace(ws.id)}
                     onCardClick={() => handleCardClick(ws)}
                   />
                 ))
@@ -245,8 +311,13 @@ function DashboardPage() {
 
       <CreateWorkspaceModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setEditingWorkspace(null);
+          setIsModalOpen(false);
+        }}
         onSubmit={handleModalSubmit}
+        workspaceData={editingWorkspace}
+        onDelete={handleDeleteWorkspace}
       />
     </div>
   );
