@@ -124,7 +124,7 @@ export default function SettingsModal({
     return 'Khác';
   };
 
-  const filteredTransactions = transactions.filter(tx => {
+  const filteredTransactions = transactions.filter((tx) => {
     const matchStatus = statusFilter === 'ALL' || tx.status === statusFilter;
     const matchPlan = planFilter === 'ALL' || getPlanNameFromNote(tx.note) === planFilter;
     return matchStatus && matchPlan;
@@ -301,13 +301,11 @@ export default function SettingsModal({
           {activeTab === 'billing' && (
             <div className="settings-tab-pane">
               <h2 className="settings-pane-title">Lịch sử thanh toán</h2>
-<<<<<<< HEAD
-              
               {!loading && !error && transactions.length > 0 && (
                 <div className="settings-filters-row">
                   <div className="settings-filter-group">
                     <label htmlFor="status-filter">Trạng thái:</label>
-                    <select 
+                    <select
                       id="status-filter"
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
@@ -322,7 +320,7 @@ export default function SettingsModal({
                   </div>
                   <div className="settings-filter-group">
                     <label htmlFor="plan-filter">Gói dịch vụ:</label>
-                    <select 
+                    <select
                       id="plan-filter"
                       value={planFilter}
                       onChange={(e) => setPlanFilter(e.target.value)}
@@ -338,9 +336,6 @@ export default function SettingsModal({
                   </div>
                 </div>
               )}
-=======
->>>>>>> 56c61e4 (refactor(api): standardize API base URL using REACT_APP_API_BASE_URL from env)
-
               {loading ? (
                 <div className="settings-loading-container">
                   <div className="settings-spinner"></div>
@@ -384,7 +379,20 @@ export default function SettingsModal({
                 </div>
               ) : filteredTransactions.length === 0 ? (
                 <div className="settings-empty-container">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
                   <span>Không tìm thấy giao dịch nào khớp với bộ lọc đã chọn.</span>
                 </div>
               ) : (
