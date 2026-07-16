@@ -6,6 +6,7 @@ import ScheduleFilters  from '../components/ScheduleFilters';
 import WeekNavigation   from '../components/WeekNavigation';
 import CalendarGrid     from '../components/CalendarGrid';
 import CreatePostModal  from '../../post/components/CreatePostModal';
+import SelectPostToScheduleModal from '../components/SelectPostToScheduleModal';
 
 import {
   getWeekDays,
@@ -106,6 +107,9 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
 
   // ── State modal ──
   const [showNewPostModal, setShowNewPostModal] = useState(false);
+  const [showSelectPostModal, setShowSelectPostModal] = useState(false);
+  const [selectedCellDate, setSelectedCellDate] = useState(null);
+  const [selectedCellHour, setSelectedCellHour] = useState(null);
 
   // ── State thời gian thực ──
   const [currentTimePercent, setCurrentTimePercent] = useState(getCurrentTimePercent());
@@ -127,26 +131,26 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
     return () => clearInterval(timer);
   }, []);
 
+  // Fetch function reused across schedule listings and creation successes
+  const triggerFetchSchedules = async () => {
+    if (!workspaceId) return;
+    try {
+      let res;
+      if (campaignFilter && campaignFilter !== 'Tất cả chiến dịch') {
+        res = await scheduleApi.listByCampaign(API_BASE_URL, Number(campaignFilter));
+      } else {
+        res = await scheduleApi.listByWorkspace(API_BASE_URL, workspaceId);
+      }
+      const data = Array.isArray(res) ? res : res?.data || [];
+      setSchedules(data);
+    } catch (err) {
+      console.error('Error fetching schedules:', err);
+    }
+  };
+
   // Fetch schedules from backend when workspaceId or campaignFilter changes
   useEffect(() => {
-    if (!workspaceId) return;
-
-    async function fetchSchedules() {
-      try {
-        let res;
-        if (campaignFilter && campaignFilter !== 'Tất cả chiến dịch') {
-          res = await scheduleApi.listByCampaign(API_BASE_URL, Number(campaignFilter));
-        } else {
-          res = await scheduleApi.listByWorkspace(API_BASE_URL, workspaceId);
-        }
-        const data = Array.isArray(res) ? res : res?.data || [];
-        setSchedules(data);
-      } catch (err) {
-        console.error('Error fetching schedules:', err);
-      }
-    }
-
-    fetchSchedules();
+    triggerFetchSchedules();
   }, [workspaceId, campaignFilter]);
 
   // Map schedules to posts inside current week view
@@ -165,6 +169,13 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
     setCurrentDate((d) => { const nd = new Date(d); nd.setDate(nd.getDate() + 7); return nd; });
 
   const goToToday = () => setCurrentDate(new Date());
+
+  // ── Handler click ô lịch ──
+  const handleCellClick = (date, hour) => {
+    setSelectedCellDate(date);
+    setSelectedCellHour(hour);
+    setShowSelectPostModal(true);
+  };
 
   // ── Handler tạo bài mới ──
   const handleNewPostSubmit = (data) => {
@@ -204,6 +215,7 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
         weekDays={weekDays}
         posts={posts}
         currentTimePercent={currentTimePercent}
+        onCellClick={handleCellClick}
       />
 
       {/* 5. Modal tạo bài mới */}
@@ -212,6 +224,16 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
         onClose={() => setShowNewPostModal(false)}
         onSubmit={handleNewPostSubmit}
         onDraft={(data) => console.log('Lưu nháp:', data)}
+      />
+
+      {/* 6. Modal lên lịch bài viết có sẵn khi click vào ô lịch */}
+      <SelectPostToScheduleModal
+        isOpen={showSelectPostModal}
+        onClose={() => setShowSelectPostModal(false)}
+        workspaceId={workspaceId}
+        selectedDate={selectedCellDate}
+        selectedHour={selectedCellHour}
+        onSuccess={triggerFetchSchedules}
       />
     </div>
   );

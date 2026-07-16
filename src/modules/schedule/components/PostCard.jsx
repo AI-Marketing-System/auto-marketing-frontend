@@ -17,7 +17,11 @@ export default function PostCard({ post }) {
   const timeLabel = `${String(post.hour).padStart(2, '0')}:${String(post.minute).padStart(2, '0')}`;
 
   return (
-    <div className="sc-post-card" style={{ borderLeftColor: post.color }}>
+    <div
+      className="sc-post-card"
+      style={{ borderLeftColor: post.color }}
+      onClick={(e) => e.stopPropagation()}
+    >
       {/* Giờ đăng */}
       <div className="sc-post-card__time">{timeLabel}</div>
 

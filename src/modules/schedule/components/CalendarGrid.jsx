@@ -11,7 +11,7 @@ import { formatDayLabel, isSameDay, formatHour, HOURS } from '../utils/scheduleH
  *   currentTimePercent: number,   // 0–1
  * }} props
  */
-export default function CalendarGrid({ weekDays, posts, currentTimePercent }) {
+export default function CalendarGrid({ weekDays, posts, currentTimePercent, onCellClick }) {
   const gridRef = useRef(null);
   const today = new Date();
   const [lineTop, setLineTop] = useState(0);
@@ -103,6 +103,8 @@ export default function CalendarGrid({ weekDays, posts, currentTimePercent }) {
                 <div
                   key={dayIdx}
                   className={`sc-cell${isToday ? ' sc-cell--today' : ''}`}
+                  onClick={() => onCellClick?.(day, hour)}
+                  style={{ cursor: 'pointer' }}
                 >
                   {cellPosts.map((post) => (
                     <PostCard key={post.id} post={post} />
