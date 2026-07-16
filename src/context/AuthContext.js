@@ -117,7 +117,10 @@ export function AuthProvider({ children }) {
       try {
         const res = await fetch(`${apiBaseUrl}/auth/login`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true'
+          },
           body: JSON.stringify(credentials),
         });
         const body = await res.json().catch(() => ({}));
@@ -149,7 +152,10 @@ export function AuthProvider({ children }) {
       try {
         const res = await fetch(`${apiBaseUrl}/auth/refresh-token`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true'
+          },
           body: JSON.stringify({ refreshToken }),
         });
         const body = await res.json().catch(() => ({}));

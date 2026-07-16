@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config/env';
 import Sidebar from './Sidebar';
 import UserDropdown from './UserDropdown';
 import UpgradeModal from '../../modules/analytics/components/UpgradeModal';
@@ -66,7 +67,7 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
     const token = localStorage.getItem('marqops.authLab.accessToken');
     if (!token) return;
 
-    fetch('http://localhost:8080/api/v1/subscriptions/me', {
+    fetch(`${API_BASE_URL}/subscriptions/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
