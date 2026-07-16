@@ -45,17 +45,24 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft }) 
   if (!isOpen) return null;
 
   // ── Submit ────────────────────────────────────────────
-  const buildPayload = () => ({
-    platforms: selectedPlatforms,
-    content,
-    media: mediaFiles.map((f) => f.name),
-    topic,
-    evergreen,
-    scheduleMode,
-    scheduledAt: scheduleMode === 'schedule'
-      ? `${selectedDate.toISOString().slice(0, 10)} ${time}`
-      : null,
-  });
+  const buildPayload = () => {
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+
+    return {
+      platforms: selectedPlatforms,
+      content,
+      media: mediaFiles.map((f) => f.name),
+      topic,
+      evergreen,
+      scheduleMode,
+      scheduledAt: scheduleMode === 'schedule'
+        ? `${dateStr} ${time}`
+        : null,
+    };
+  };
 
   const handleSubmit = () => {
     onSubmit?.(buildPayload());
