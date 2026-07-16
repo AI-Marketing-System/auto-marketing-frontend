@@ -7,6 +7,8 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'account',
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [planFilter, setPlanFilter] = useState('ALL');
   const { user } = useAuth();
 
   const handleCancelSubscription = (subId) => {
@@ -93,8 +95,29 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'account',
     if (note.includes('Renew subscription for plan:')) {
       return `Gia hạn gói ${note.split(':').pop().trim()}`;
     }
+    if (note.includes('Renew (Reset Cycle) subscription for plan:')) {
+      return `Gia hạn Reset gói ${note.split(':').pop().trim()}`;
+    }
+    if (note.includes('Renew (Stack Cycle) subscription for plan:')) {
+      return `Gia hạn tiếp nối gói ${note.split(':').pop().trim()}`;
+    }
     return note;
   };
+
+  const getPlanNameFromNote = (note) => {
+    if (!note) return 'Khác';
+    if (note.toLowerCase().includes('free')) return 'Free';
+    if (note.toLowerCase().includes('starter')) return 'Starter';
+    if (note.toLowerCase().includes('pro')) return 'Pro';
+    if (note.toLowerCase().includes('business')) return 'Business';
+    return 'Khác';
+  };
+
+  const filteredTransactions = transactions.filter(tx => {
+    const matchStatus = statusFilter === 'ALL' || tx.status === statusFilter;
+    const matchPlan = planFilter === 'ALL' || getPlanNameFromNote(tx.note) === planFilter;
+    return matchStatus && matchPlan;
+  });
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
@@ -221,6 +244,42 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'account',
             <div className="settings-tab-pane">
               <h2 className="settings-pane-title">Lịch sử thanh toán</h2>
               
+              {!loading && !error && transactions.length > 0 && (
+                <div className="settings-filters-row">
+                  <div className="settings-filter-group">
+                    <label htmlFor="status-filter">Trạng thái:</label>
+                    <select 
+                      id="status-filter"
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="settings-filter-select"
+                    >
+                      <option value="ALL">Tất cả trạng thái</option>
+                      <option value="PAID">Đã thanh toán</option>
+                      <option value="PENDING">Chờ thanh toán</option>
+                      <option value="FAILED">Thất bại</option>
+                      <option value="REFUNDED">Đã hoàn tiền</option>
+                    </select>
+                  </div>
+                  <div className="settings-filter-group">
+                    <label htmlFor="plan-filter">Gói dịch vụ:</label>
+                    <select 
+                      id="plan-filter"
+                      value={planFilter}
+                      onChange={(e) => setPlanFilter(e.target.value)}
+                      className="settings-filter-select"
+                    >
+                      <option value="ALL">Tất cả gói</option>
+                      <option value="Free">Gói Free</option>
+                      <option value="Starter">Gói Starter</option>
+                      <option value="Pro">Gói Pro</option>
+                      <option value="Business">Gói Business</option>
+                      <option value="Khác">Khác</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
               {loading ? (
                 <div className="settings-loading-container">
                   <div className="settings-spinner"></div>
@@ -236,6 +295,11 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'account',
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
                   <span>Bạn chưa thực hiện giao dịch thanh toán nào.</span>
                 </div>
+              ) : filteredTransactions.length === 0 ? (
+                <div className="settings-empty-container">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <span>Không tìm thấy giao dịch nào khớp với bộ lọc đã chọn.</span>
+                </div>
               ) : (
                 <div className="settings-table-wrapper">
                   <table className="settings-transactions-table">
@@ -250,7 +314,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'account',
                       </tr>
                     </thead>
                     <tbody>
-                      {transactions.map((tx) => (
+                      {filteredTransactions.map((tx) => (
                         <tr key={tx.id}>
                           <td><strong>#{tx.id}</strong></td>
                           <td>
