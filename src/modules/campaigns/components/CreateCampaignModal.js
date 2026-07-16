@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { workspaceApi } from '../api/campaignApi';
+import { parseWorkspacesResponse, workspaceApi } from '../api/campaignApi';
 import { API_BASE_URL } from '../../../config/env';
 
-function CreateCampaignModal({ isOpen, onClose, onSubmit }) {
+function CreateCampaignModal({ isOpen, onClose, onSubmit, defaultWorkspaceId = null }) {
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -11,36 +11,64 @@ function CreateCampaignModal({ isOpen, onClose, onSubmit }) {
   const [workspaceId, setWorkspaceId] = useState('');
   const [workspaces, setWorkspaces] = useState([]);
   const [loadingWorkspaces, setLoadingWorkspaces] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const resetForm = () => {
+    setTitle('');
+    setStartDate('');
+    setEndDate('');
+    setDescription('');
+    setStatus('ACTIVE');
+  };
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      resetForm();
+      return undefined;
+    }
+
     let cancelled = false;
     setLoadingWorkspaces(true);
     workspaceApi
       .myWorkspaces(API_BASE_URL)
       .then((res) => {
-        if (!cancelled && res && res.data && Array.isArray(res.data)) {
-          setWorkspaces(res.data);
-          if (res.data.length > 0) setWorkspaceId(String(res.data[0].id));
+        if (cancelled) return;
+        const wsList = parseWorkspacesResponse(res);
+        setWorkspaces(wsList);
+
+        if (wsList.length === 0) {
+          setWorkspaceId('');
+          return;
+        }
+
+        const preferredId = defaultWorkspaceId != null ? String(defaultWorkspaceId) : '';
+        const hasPreferred = preferredId && wsList.some((ws) => String(ws.id) === preferredId);
+        setWorkspaceId(hasPreferred ? preferredId : String(wsList[0].id));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setWorkspaces([]);
+          setWorkspaceId('');
         }
       })
-      .catch(() => {})
       .finally(() => {
         if (!cancelled) setLoadingWorkspaces(false);
       });
+
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [isOpen, defaultWorkspaceId]);
 
   if (!isOpen) return null;
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (!title.trim() || !workspaceId || !startDate || !endDate) return;
+    if (!title.trim() || !workspaceId || !startDate || !endDate || submitting) return;
 
-    onSubmit &&
-      onSubmit({
+    setSubmitting(true);
+    try {
+      await onSubmit?.({
         workspaceId: Number(workspaceId),
         title: title.trim(),
         description: description.trim(),
@@ -48,12 +76,10 @@ function CreateCampaignModal({ isOpen, onClose, onSubmit }) {
         startDate: new Date(startDate).toISOString(),
         endDate: new Date(endDate).toISOString(),
       });
-
-    setTitle('');
-    setStartDate('');
-    setEndDate('');
-    setDescription('');
-    setStatus('ACTIVE');
+      resetForm();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const statusOptions = [
@@ -64,7 +90,7 @@ function CreateCampaignModal({ isOpen, onClose, onSubmit }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-container" onClick={(event) => event.stopPropagation()}>
         <div className="modal-header">
           <h3 className="modal-title-text">Tạo chiến dịch mới</h3>
           <button type="button" className="close-modal-btn" onClick={onClose}>
@@ -94,7 +120,7 @@ function CreateCampaignModal({ isOpen, onClose, onSubmit }) {
                 id="workspace"
                 className="modal-form-select"
                 value={workspaceId}
-                onChange={(e) => setWorkspaceId(e.target.value)}
+                onChange={(event) => setWorkspaceId(event.target.value)}
                 disabled={loadingWorkspaces || workspaces.length === 0}
               >
                 {workspaces.length === 0 && <option value="">Không có workspace</option>}
@@ -117,7 +143,7 @@ function CreateCampaignModal({ isOpen, onClose, onSubmit }) {
               className="modal-form-input"
               placeholder="Ví dụ: Khai trương cửa hàng mới"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(event) => setTitle(event.target.value)}
               required
             />
           </div>
@@ -132,7 +158,7 @@ function CreateCampaignModal({ isOpen, onClose, onSubmit }) {
                 id="start-date"
                 className="modal-form-input"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(event) => setStartDate(event.target.value)}
                 required
               />
             </div>
@@ -145,7 +171,7 @@ function CreateCampaignModal({ isOpen, onClose, onSubmit }) {
                 id="end-date"
                 className="modal-form-input"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(event) => setEndDate(event.target.value)}
                 required
               />
             </div>
@@ -160,7 +186,7 @@ function CreateCampaignModal({ isOpen, onClose, onSubmit }) {
                 id="campaign-status"
                 className="modal-form-select"
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
+                onChange={(event) => setStatus(event.target.value)}
               >
                 {statusOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -181,16 +207,16 @@ function CreateCampaignModal({ isOpen, onClose, onSubmit }) {
               placeholder="Nhập mô tả hoặc ghi chú ngắn..."
               rows="3"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(event) => setDescription(event.target.value)}
             />
           </div>
 
           <div className="modal-footer-actions">
-            <button type="button" className="btn-cancel-modal" onClick={onClose}>
+            <button type="button" className="btn-cancel-modal" onClick={onClose} disabled={submitting}>
               Hủy bỏ
             </button>
-            <button type="submit" className="btn-submit-modal">
-              Tạo mới
+            <button type="submit" className="btn-submit-modal" disabled={submitting || workspaces.length === 0}>
+              {submitting ? 'Đang tạo...' : 'Tạo mới'}
             </button>
           </div>
         </form>
