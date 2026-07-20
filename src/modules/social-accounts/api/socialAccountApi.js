@@ -1,5 +1,4 @@
-import { requestJson, getAccessToken } from '../../../services/Api';
-import { API_BASE_URL } from '../../../config/env';
+import { requestJson } from '../../../services/Api';
 
 const BASE_PATH = '/social-accounts';
 

@@ -46,7 +46,7 @@ export default function SocialAccountsPage() {
     } else {
       fetchAccounts();
     }
-  }, []);
+  }, [fetchAccounts]);
 
   // Tự động ẩn thông báo sau 5 giây
   useEffect(() => {

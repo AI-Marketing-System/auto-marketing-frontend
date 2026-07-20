@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getFanpages, syncFanpages } from '../api/socialAccountApi';
 
 export default function FanpageListModal({ isOpen, onClose, account }) {
@@ -7,7 +7,7 @@ export default function FanpageListModal({ isOpen, onClose, account }) {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchFanpages = async () => {
+  const fetchFanpages = useCallback(async () => {
     if (!account) return;
     setLoading(true);
     setError(null);
@@ -19,13 +19,13 @@ export default function FanpageListModal({ isOpen, onClose, account }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [account]);
 
   useEffect(() => {
     if (isOpen && account) {
       fetchFanpages();
     }
-  }, [isOpen, account]);
+  }, [isOpen, account, fetchFanpages]);
 
   const handleSync = async () => {
     if (!account) return;
