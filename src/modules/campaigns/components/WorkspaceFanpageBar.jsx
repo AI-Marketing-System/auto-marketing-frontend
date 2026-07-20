@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getWorkspaceFanpages, removeFanpageFromWorkspace } from '../api/workspaceFanpageApi';
 import AddFanpageToWorkspaceModal from './AddFanpageToWorkspaceModal';
 
@@ -7,7 +7,7 @@ export default function WorkspaceFanpageBar({ workspaceId }) {
   const [loading, setLoading] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const fetchFanpages = async () => {
+  const fetchFanpages = useCallback(async () => {
     if (!workspaceId) return;
     setLoading(true);
     try {
@@ -18,11 +18,11 @@ export default function WorkspaceFanpageBar({ workspaceId }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [workspaceId]);
 
   useEffect(() => {
     fetchFanpages();
-  }, [workspaceId]);
+  }, [fetchFanpages, workspaceId]);
 
   const handleAddSuccess = (newFanpage) => {
     setIsAddModalOpen(false);
