@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { workspaceApi } from '../../modules/campaigns/api/campaignApi';
 import { API_BASE_URL } from '../../config/env';
 import './DashboardLayout.css';
@@ -92,7 +92,7 @@ const ADMIN_ITEMS = [
 export default function Sidebar({ variant = 'dashboard' }) {
   const items = variant === 'admin' ? ADMIN_ITEMS : DASHBOARD_ITEMS;
   const [workspaces, setWorkspaces] = useState([]);
-  const [expandedWs, setExpandedWs] = useState({});
+  const expandedWsRef = useRef({});
   const location = useLocation();
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function Sidebar({ variant = 'dashboard' }) {
           // Optionally auto-expand the workspace if we are currently viewing it
           const wsIdMatch = location.pathname.match(/\/workspaces\/([^/]+)/);
           if (wsIdMatch && wsIdMatch[1]) {
-            setExpandedWs((prev) => ({ ...prev, [wsIdMatch[1]]: true }));
+            expandedWsRef.current = { ...expandedWsRef.current, [wsIdMatch[1]]: true };
           }
         } else if (!cancelled) {
           setWorkspaces([]);
@@ -123,11 +123,6 @@ export default function Sidebar({ variant = 'dashboard' }) {
       cancelled = true;
     };
   }, [variant, location.pathname]);
-
-  const toggleWorkspace = (id, e) => {
-    e.preventDefault();
-    setExpandedWs((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
 
   return (
     <aside className="sidebar">

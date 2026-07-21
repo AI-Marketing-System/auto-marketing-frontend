@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { API_BASE_URL } from '../../../config/env';
 import '../styles/DashboardPage.css';
 import WorkspaceCard from '../components/WorkspaceCard';
 import SharedWorkspaceCard from '../components/SharedWorkspaceCard';
@@ -24,7 +25,7 @@ function DashboardPage() {
   const fetchWorkspaces = () => {
     setLoading(true);
     const token = localStorage.getItem('marqops.authLab.accessToken');
-    fetch('http://localhost:8080/api/v1/workspaces', {
+    fetch(`${API_BASE_URL}/workspaces`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -62,7 +63,7 @@ function DashboardPage() {
     const token = localStorage.getItem('marqops.authLab.accessToken');
     if (editingWorkspace) {
       // Edit Workspace
-      fetch(`http://localhost:8080/api/v1/workspaces/${editingWorkspace.id}`, {
+      fetch(`${API_BASE_URL}/workspaces/${editingWorkspace.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -103,7 +104,7 @@ function DashboardPage() {
         });
     } else {
       // Create Workspace
-      fetch('http://localhost:8080/api/v1/workspaces', {
+      fetch(`${API_BASE_URL}/workspaces`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -150,7 +151,7 @@ function DashboardPage() {
 
   const handleDeleteWorkspace = (workspaceId) => {
     const token = localStorage.getItem('marqops.authLab.accessToken');
-    fetch(`http://localhost:8080/api/v1/workspaces/${workspaceId}`, {
+    fetch(`${API_BASE_URL}/workspaces/${workspaceId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import "../styles/UpgradeModal.css"; // Import tu thu muc styles dung quy chuan
+import { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../../../config/env';
+import '../styles/UpgradeModal.css'; // Import tu thu muc styles dung quy chuan
 
 export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, currentSubscription }) {
   const [plans, setPlans] = useState([]);
@@ -13,11 +14,11 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
 
   // States quản lý cập nhật địa chỉ lập hóa đơn ở FE
   const [isEditingAddress, setIsEditingAddress] = useState(false);
-  const [billingName, setBillingName] = useState("Kiệt Nguyễn Gia");
-  const [billingStreet, setBillingStreet] = useState("Ngũ Hành Sơn, Đà Nẵng");
-  const [billingCityZip, setBillingCityZip] = useState("Đà Nẵng 550000 VN");
+  const [billingName, setBillingName] = useState('Kiệt Nguyễn Gia');
+  const [billingStreet, setBillingStreet] = useState('Ngũ Hành Sơn, Đà Nẵng');
+  const [billingCityZip, setBillingCityZip] = useState('Đà Nẵng 550000 VN');
 
-  const token = localStorage.getItem("marqops.authLab.accessToken");
+  const token = localStorage.getItem('marqops.authLab.accessToken');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -26,7 +27,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
     setCheckoutPlan(null);
     setCheckoutIsRenew(false);
 
-    fetch("http://localhost:8080/api/v1/plans")
+    fetch(`${API_BASE_URL}/plans`)
       .then((res) => res.json())
       .then((resJson) => {
         if (resJson && resJson.success && Array.isArray(resJson.data)) {
@@ -36,7 +37,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Lỗi tải plans:", err);
+        console.error('Lỗi tải plans:', err);
         setLoading(false);
       });
   }, [isOpen]);
@@ -45,36 +46,36 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
 
   const getPlanFeatures = (planName) => {
     const name = planName.toLowerCase();
-    if (name === "starter") {
+    if (name === 'starter') {
       return [
-        "Tối đa 5 Workspace quản lý chiến dịch",
-        "Kết nối 3 tài khoản mạng xã hội đồng thời",
-        "5,000 từ khóa AI tạo content hàng tháng",
-        "Hỗ trợ qua Email trong 24h",
+        'Tối đa 5 Workspace quản lý chiến dịch',
+        'Kết nối 3 tài khoản mạng xã hội đồng thời',
+        '5,000 từ khóa AI tạo content hàng tháng',
+        'Hỗ trợ qua Email trong 24h',
       ];
-    } else if (name === "pro") {
+    } else if (name === 'pro') {
       return [
-        "Phản hồi AI thông minh hơn, nhanh hơn",
-        "Tối đa 15 Workspace làm việc nhóm",
-        "Kết nối 10 tài khoản mạng xã hội đa nền tảng",
-        "50,000 từ khóa AI và phân tích đối thủ",
-        "Thêm bộ nhớ ngữ cảnh thương hiệu nâng cao",
+        'Phản hồi AI thông minh hơn, nhanh hơn',
+        'Tối đa 15 Workspace làm việc nhóm',
+        'Kết nối 10 tài khoản mạng xã hội đa nền tảng',
+        '50,000 từ khóa AI và phân tích đối thủ',
+        'Thêm bộ nhớ ngữ cảnh thương hiệu nâng cao',
       ];
-    } else if (name === "business") {
+    } else if (name === 'business') {
       return [
-        "Tất cả tính năng cao cấp của gói Pro",
-        "Tối đa 99 Workspace cho doanh nghiệp lớn",
-        "Không giới hạn tài khoản mạng xã hội",
-        "500,000 từ khóa AI tạo nội dung tự động",
-        "Hỗ trợ kỹ thuật 24/7 ưu tiên riêng biệt",
+        'Tất cả tính năng cao cấp của gói Pro',
+        'Tối đa 99 Workspace cho doanh nghiệp lớn',
+        'Không giới hạn tài khoản mạng xã hội',
+        '500,000 từ khóa AI tạo nội dung tự động',
+        'Hỗ trợ kỹ thuật 24/7 ưu tiên riêng biệt',
       ];
     }
-    return ["Tính năng cơ bản của hệ thống"];
+    return ['Tính năng cơ bản của hệ thống'];
   };
 
   const handleGoToCheckout = (plan, isTrial, isRenew = false) => {
     if (!token) {
-      alert("Vui lòng đăng nhập để thực hiện giao dịch.");
+      alert('Vui lòng đăng nhập để thực hiện giao dịch.');
       return;
     }
     setCheckoutPlan(plan);
@@ -94,14 +95,14 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
 
     try {
       const url = checkoutIsRenew
-        ? `http://localhost:8080/api/v1/subscriptions/${currentSubscription.id}`
-        : "http://localhost:8080/api/v1/subscriptions";
-      const method = checkoutIsRenew ? "PUT" : "POST";
+        ? `${API_BASE_URL}/subscriptions/${currentSubscription.id}`
+        : `${API_BASE_URL}/subscriptions`;
+      const method = checkoutIsRenew ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method: method,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(checkoutIsRenew ? { paymentMethod } : payload),
@@ -110,7 +111,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
       const resJson = await response.json();
 
       if (!response.ok) {
-        throw new Error(resJson.message || "Giao dịch thất bại.");
+        throw new Error(resJson.message || 'Giao dịch thất bại.');
       }
 
       if (checkoutIsTrial) {
@@ -139,9 +140,9 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/v1/subscriptions/${paymentTx.transactionId}/confirm`,
+        `${API_BASE_URL}/subscriptions/${paymentTx.transactionId}/confirm`,
         {
-          method: "PUT",
+          method: 'PUT',
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -151,7 +152,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
       const resJson = await response.json();
 
       if (!response.ok) {
-        throw new Error(resJson.message || "Xác nhận thanh toán thất bại.");
+        throw new Error(resJson.message || 'Xác nhận thanh toán thất bại.');
       }
 
       alert(`Thanh toán thành công! Gói ${paymentTx.planName} của bạn đã được kích hoạt.`);
@@ -165,10 +166,10 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
   };
 
   const formatPrice = (price) => {
-    if (price === 0) return "Miễn phí";
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
+    if (price === 0) return 'Miễn phí';
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
     }).format(price);
   };
 
@@ -192,13 +193,18 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
             ) : (
               <div className="plans-grid">
                 {plans.map((plan) => {
-                  const isActive = currentSubscription && currentSubscription.planName === plan.name;
+                  const isActive =
+                    currentSubscription && currentSubscription.planName === plan.name;
                   const isFree = plan.price === 0;
-                  const isStarter = plan.name.toLowerCase() === "starter";
-                  const isLowerPlan = currentSubscription && (currentSubscription.planPrice > plan.price);
+                  const isStarter = plan.name.toLowerCase() === 'starter';
+                  const isLowerPlan =
+                    currentSubscription && currentSubscription.planPrice > plan.price;
 
                   return (
-                    <div key={plan.id} className={`plan-card-item ${isActive ? "active-plan" : ""}`}>
+                    <div
+                      key={plan.id}
+                      className={`plan-card-item ${isActive ? 'active-plan' : ''}`}
+                    >
                       {isStarter && !currentSubscription?.isTrial && (
                         <div className="starter-badge">🎁 CÓ GÓI DÙNG THỬ</div>
                       )}
@@ -266,7 +272,16 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
         {checkoutPlan && !paymentTx && (
           <div className="checkout-split-container">
             <div className="checkout-back-header" onClick={() => setCheckoutPlan(null)}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="15 18 9 12 15 6"></polyline>
               </svg>
               <span>Định cấu hình gói đăng ký của bạn</span>
@@ -279,12 +294,14 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
 
                   {checkoutIsTrial ? (
                     <div className="trial-payment-hint">
-                      🎁 Gói dùng thử 14 ngày hoàn toàn miễn phí ($0). Không yêu cầu phương thức thanh toán.
+                      🎁 Gói dùng thử 14 ngày hoàn toàn miễn phí ($0). Không yêu cầu phương thức
+                      thanh toán.
                     </div>
                   ) : (
                     <>
                       <div className="payment-options-grid">
                         <div
+<<<<<<< HEAD
                           className={`payment-opt-card ${paymentMethod === "QR" ? "selected" : ""}`}
                           onClick={() => setPaymentMethod("QR")}
                         >
@@ -294,26 +311,31 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                         <div
                           className={`payment-opt-card ${paymentMethod === "MOMO" ? "selected" : ""}`}
                           onClick={() => setPaymentMethod("MOMO")}
+=======
+                          className={`payment-opt-card ${paymentMethod === 'MOMO' ? 'selected' : ''}`}
+                          onClick={() => setPaymentMethod('MOMO')}
+>>>>>>> develop
                         >
                           <span className="pay-opt-icon">📱</span>
                           <span className="pay-opt-label">Ví MoMo</span>
                         </div>
                         <div
-                          className={`payment-opt-card ${paymentMethod === "VNPAY" ? "selected" : ""}`}
-                          onClick={() => setPaymentMethod("VNPAY")}
+                          className={`payment-opt-card ${paymentMethod === 'VNPAY' ? 'selected' : ''}`}
+                          onClick={() => setPaymentMethod('VNPAY')}
                         >
                           <span className="pay-opt-icon">🏦</span>
                           <span className="pay-opt-label">Cổng VNPAY</span>
                         </div>
                         <div
-                          className={`payment-opt-card ${paymentMethod === "STRIPE" ? "selected" : ""}`}
-                          onClick={() => setPaymentMethod("STRIPE")}
+                          className={`payment-opt-card ${paymentMethod === 'STRIPE' ? 'selected' : ''}`}
+                          onClick={() => setPaymentMethod('STRIPE')}
                         >
                           <span className="pay-opt-icon">💳</span>
                           <span className="pay-opt-label">Thẻ Stripe</span>
                         </div>
                       </div>
 
+<<<<<<< HEAD
                       {paymentMethod === "QR" && (
                         <div className="payment-detail-card">
                           <span className="vietqr-logo-mini">VietQR</span>
@@ -325,6 +347,9 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                       )}
 
                       {paymentMethod === "MOMO" && (
+=======
+                      {paymentMethod === 'MOMO' && (
+>>>>>>> develop
                         <div className="payment-detail-card">
                           <span className="momo-logo-mini">MoMo</span>
                           <div className="momo-detail-info">
@@ -334,7 +359,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                         </div>
                       )}
 
-                      {paymentMethod === "VNPAY" && (
+                      {paymentMethod === 'VNPAY' && (
                         <div className="payment-detail-card">
                           <span className="vnpay-logo-mini">VNPAY</span>
                           <div className="momo-detail-info">
@@ -344,7 +369,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                         </div>
                       )}
 
-                      {paymentMethod === "STRIPE" && (
+                      {paymentMethod === 'STRIPE' && (
                         <div className="payment-detail-card">
                           <span className="visa-logo-mini">STRIPE</span>
                           <div className="momo-detail-info">
@@ -353,12 +378,11 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                           </div>
                         </div>
                       )}
-
                     </>
                   )}
                 </div>
 
-                {!checkoutIsTrial && paymentMethod === "STRIPE" && (
+                {!checkoutIsTrial && paymentMethod === 'STRIPE' && (
                   <div className="checkout-section-box">
                     <h4 className="checkout-section-title">Địa chỉ lập hóa đơn</h4>
                     {isEditingAddress ? (
@@ -385,10 +409,16 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                           placeholder="Thành phố, Tỉnh, Mã Zip"
                         />
                         <div className="billing-edit-actions">
-                          <button className="btn-save-address" onClick={() => setIsEditingAddress(false)}>
+                          <button
+                            className="btn-save-address"
+                            onClick={() => setIsEditingAddress(false)}
+                          >
                             Lưu lại
                           </button>
-                          <button className="btn-cancel-address" onClick={() => setIsEditingAddress(false)}>
+                          <button
+                            className="btn-cancel-address"
+                            onClick={() => setIsEditingAddress(false)}
+                          >
                             Hủy bỏ
                           </button>
                         </div>
@@ -400,7 +430,10 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                           <span>{billingStreet}</span>
                           <span>{billingCityZip}</span>
                         </div>
-                        <button className="btn-update-address" onClick={() => setIsEditingAddress(true)}>
+                        <button
+                          className="btn-update-address"
+                          onClick={() => setIsEditingAddress(true)}
+                        >
                           Cập nhật
                         </button>
                       </div>
@@ -417,7 +450,15 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                   <ul className="summary-features-list">
                     {getPlanFeatures(checkoutPlan.name).map((feat, idx) => (
                       <li key={idx} className="summary-feat-item">
-                        <svg className="feat-bolt-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <svg
+                          className="feat-bolt-icon"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
                           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                         </svg>
                         <span>{feat}</span>
@@ -429,11 +470,15 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
 
                   <div className="price-row">
                     <span>Gói đăng ký Hàng tháng</span>
-                    <span>{checkoutIsTrial ? formatPrice(0) : formatPrice(checkoutPlan.price * 0.9)}</span>
+                    <span>
+                      {checkoutIsTrial ? formatPrice(0) : formatPrice(checkoutPlan.price * 0.9)}
+                    </span>
                   </div>
                   <div className="price-row">
                     <span>Thuế VAT (10%)</span>
-                    <span>{checkoutIsTrial ? formatPrice(0) : formatPrice(checkoutPlan.price * 0.1)}</span>
+                    <span>
+                      {checkoutIsTrial ? formatPrice(0) : formatPrice(checkoutPlan.price * 0.1)}
+                    </span>
                   </div>
 
                   <div className="total-divider"></div>
@@ -446,12 +491,21 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                   </div>
 
                   <button className="btn-checkout-submit" onClick={handleRegisterSubscription}>
-                    {checkoutIsTrial ? "Kích hoạt dùng thử" : checkoutIsRenew ? "Xác nhận gia hạn" : "Đăng ký"}
+                    {checkoutIsTrial
+                      ? 'Kích hoạt dùng thử'
+                      : checkoutIsRenew
+                        ? 'Xác nhận gia hạn'
+                        : 'Đăng ký'}
                   </button>
                 </div>
 
                 <p className="checkout-policy-text">
-                  Gia hạn hàng tháng cho đến khi hủy. Sẽ tính phí {checkoutIsTrial ? formatPrice(checkoutPlan.price) : formatPrice(checkoutPlan.price)}/tháng sau khi hết hạn. Hủy bất cứ lúc nào trong phần Cài đặt. Khi đăng ký, bạn đồng ý với Điều khoản sử dụng.
+                  Gia hạn hàng tháng cho đến khi hủy. Sẽ tính phí{' '}
+                  {checkoutIsTrial
+                    ? formatPrice(checkoutPlan.price)
+                    : formatPrice(checkoutPlan.price)}
+                  /tháng sau khi hết hạn. Hủy bất cứ lúc nào trong phần Cài đặt. Khi đăng ký, bạn
+                  đồng ý với Điều khoản sử dụng.
                 </p>
               </div>
             </div>
@@ -463,7 +517,8 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
           <div className="payment-qr-container">
             <h2 className="modal-title">Quét mã QR để thanh toán</h2>
             <p className="payment-guide">
-              Mã giao dịch: <strong>#{paymentTx.transactionId}</strong>. Vui lòng quét mã QR dưới đây bằng ứng dụng MoMo để thanh toán <strong>{formatPrice(paymentTx.amount)}</strong>.
+              Mã giao dịch: <strong>#{paymentTx.transactionId}</strong>. Vui lòng quét mã QR dưới
+              đây bằng ứng dụng MoMo để thanh toán <strong>{formatPrice(paymentTx.amount)}</strong>.
             </p>
 
             <div className="qr-image-wrapper">
@@ -476,7 +531,8 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
             </div>
 
             <p className="sandbox-hint">
-              * Đây là môi trường thử nghiệm (Sandbox). Bạn nhấn vào nút bên dưới để hoàn tất việc xác nhận nhận tiền từ cổng thanh toán.
+              * Đây là môi trường thử nghiệm (Sandbox). Bạn nhấn vào nút bên dưới để hoàn tất việc
+              xác nhận nhận tiền từ cổng thanh toán.
             </p>
 
             <div className="payment-actions">
@@ -485,7 +541,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                 onClick={handleConfirmPayment}
                 disabled={confirming}
               >
-                {confirming ? "Đang xác nhận..." : "Tôi đã thanh toán thành công"}
+                {confirming ? 'Đang xác nhận...' : 'Tôi đã thanh toán thành công'}
               </button>
               <button className="btn-pay-cancel" onClick={() => setPaymentTx(null)}>
                 Quay lại
