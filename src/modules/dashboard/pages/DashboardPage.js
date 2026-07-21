@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { API_BASE_URL } from '../../../config/env';
 import '../styles/DashboardPage.css';
 import WorkspaceCard from '../components/WorkspaceCard';
 import SharedWorkspaceCard from '../components/SharedWorkspaceCard';
@@ -23,29 +24,29 @@ function DashboardPage() {
 
   const fetchWorkspaces = () => {
     setLoading(true);
-    const token = localStorage.getItem("marqops.authLab.accessToken");
-    fetch("http://localhost:8080/api/v1/workspaces", {
+    const token = localStorage.getItem('marqops.authLab.accessToken');
+    fetch(`${API_BASE_URL}/workspaces`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     })
-      .then(res => {
-        if (!res.ok) throw new Error("Không thể tải danh sách workspace");
+      .then((res) => {
+        if (!res.ok) throw new Error('Không thể tải danh sách workspace');
         return res.json();
       })
-      .then(resJson => {
+      .then((resJson) => {
         if (resJson && resJson.success && resJson.data) {
-          const mapped = resJson.data.map(ws => ({
+          const mapped = resJson.data.map((ws) => ({
             id: ws.id,
             title: ws.name,
             description: ws.description,
             slug: ws.slug,
-            accountsCount: 0
+            accountsCount: ws.fanpageCount || 0,
           }));
           setWorkspaces(mapped);
         }
       })
-      .catch(err => console.error(err))
+      .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   };
 
@@ -59,78 +60,85 @@ function DashboardPage() {
   };
 
   const handleModalSubmit = (data) => {
-    const token = localStorage.getItem("marqops.authLab.accessToken");
+    const token = localStorage.getItem('marqops.authLab.accessToken');
     if (editingWorkspace) {
       // Edit Workspace
-      fetch(`http://localhost:8080/api/v1/workspaces/${editingWorkspace.id}`, {
-        method: "PUT",
+      fetch(`${API_BASE_URL}/workspaces/${editingWorkspace.id}`, {
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: data.title,
-          description: data.description || ""
-        })
+          description: data.description || '',
+        }),
       })
-        .then(res => {
-          if (!res.ok) throw new Error("Không thể cập nhật thông tin workspace");
+        .then((res) => {
+          if (!res.ok) throw new Error('Không thể cập nhật thông tin workspace');
           return res.json();
         })
-        .then(resJson => {
+        .then((resJson) => {
           if (resJson && resJson.success && resJson.data) {
             const updated = resJson.data;
-            setWorkspaces(prev => prev.map(ws =>
-              ws.id === updated.id
-                ? { ...ws, title: updated.name, description: updated.description, slug: updated.slug }
-                : ws
-            ));
+            setWorkspaces((prev) =>
+              prev.map((ws) =>
+                ws.id === updated.id
+                  ? {
+                      ...ws,
+                      title: updated.name,
+                      description: updated.description,
+                      slug: updated.slug,
+                    }
+                  : ws
+              )
+            );
             setEditingWorkspace(null);
             setIsModalOpen(false);
           } else {
-            alert(resJson.message || "Cập nhật workspace thất bại");
+            alert(resJson.message || 'Cập nhật workspace thất bại');
           }
         })
-        .catch(err => {
-          alert(err.message || "Đã xảy ra lỗi khi cập nhật workspace");
+        .catch((err) => {
+          alert(err.message || 'Đã xảy ra lỗi khi cập nhật workspace');
         });
     } else {
       // Create Workspace
-      fetch("http://localhost:8080/api/v1/workspaces", {
-        method: "POST",
+      fetch(`${API_BASE_URL}/workspaces`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: data.title,
-          description: data.description || ""
-        })
+          description: data.description || '',
+        }),
       })
-        .then(res => {
-          if (!res.ok) throw new Error("Không thể tạo workspace mới");
+        .then((res) => {
+          if (!res.ok) throw new Error('Không thể tạo workspace mới');
           return res.json();
         })
-        .then(resJson => {
+        .then((resJson) => {
           if (resJson && resJson.success && resJson.data) {
             const newWs = resJson.data;
-            setWorkspaces(prev => [
+            setWorkspaces((prev) => [
               ...prev,
               {
                 id: newWs.id,
                 title: newWs.name,
                 description: newWs.description,
                 slug: newWs.slug,
-                accountsCount: 0
-              }
+                accountsCount: 0,
+              },
             ]);
             setIsModalOpen(false);
           } else {
-            alert(resJson.message || "Tạo workspace thất bại");
+            alert(resJson.message || 'Tạo workspace thất bại');
           }
         })
-        .catch(err => {
-          alert(err.message || "Đã xảy ra lỗi khi tạo workspace");
+        .catch((err) => {
+          alert(err.message || 'Đã xảy ra lỗi khi tạo workspace');
         });
     }
   };
@@ -142,28 +150,28 @@ function DashboardPage() {
   };
 
   const handleDeleteWorkspace = (workspaceId) => {
-    const token = localStorage.getItem("marqops.authLab.accessToken");
-    fetch(`http://localhost:8080/api/v1/workspaces/${workspaceId}`, {
-      method: "DELETE",
+    const token = localStorage.getItem('marqops.authLab.accessToken');
+    fetch(`${API_BASE_URL}/workspaces/${workspaceId}`, {
+      method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     })
-      .then(res => {
-        if (!res.ok) throw new Error("Không thể xóa workspace này");
+      .then((res) => {
+        if (!res.ok) throw new Error('Không thể xóa workspace này');
         return res.json();
       })
-      .then(resJson => {
+      .then((resJson) => {
         if (resJson && resJson.success) {
-          setWorkspaces(prev => prev.filter(ws => ws.id !== workspaceId));
+          setWorkspaces((prev) => prev.filter((ws) => ws.id !== workspaceId));
           setEditingWorkspace(null);
           setIsModalOpen(false);
         } else {
-          alert(resJson.message || "Xóa workspace thất bại");
+          alert(resJson.message || 'Xóa workspace thất bại');
         }
       })
-      .catch(err => {
-        alert(err.message || "Đã xảy ra lỗi khi xóa workspace");
+      .catch((err) => {
+        alert(err.message || 'Đã xảy ra lỗi khi xóa workspace');
       });
   };
 
@@ -248,7 +256,18 @@ function DashboardPage() {
               <WorkspaceCard isCreator={true} onCardClick={handleCreateWorkspace} />
 
               {loading ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', gridColumn: 'span 3', color: '#64748b', fontSize: '14px', fontWeight: '500' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px',
+                    gridColumn: 'span 3',
+                    color: '#64748b',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                  }}
+                >
                   Đang tải danh sách Workspace...
                 </div>
               ) : (

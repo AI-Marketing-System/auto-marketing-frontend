@@ -84,6 +84,7 @@ function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            autoComplete="current-password"
           />
           <div className="form-options">
             <label className="remember-me">
