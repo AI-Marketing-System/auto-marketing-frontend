@@ -7,6 +7,7 @@ import WeekNavigation   from '../components/WeekNavigation';
 import CalendarGrid     from '../components/CalendarGrid';
 import CreatePostModal  from '../../post/components/CreatePostModal';
 import SelectPostToScheduleModal from '../components/SelectPostToScheduleModal';
+import ScheduleDetailModal from '../components/ScheduleDetailModal';
 
 import {
   getWeekDays,
@@ -76,6 +77,7 @@ function mapSchedulesToCalendarPosts(schedules, weekDays) {
       hour,
       minute,
       title: sch.postTitle || 'Bài viết không có tiêu đề',
+      postContent: sch.postContent || '',
       platform: platform,
       color,
       image: null,
@@ -110,6 +112,10 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
   const [showSelectPostModal, setShowSelectPostModal] = useState(false);
   const [selectedCellDate, setSelectedCellDate] = useState(null);
   const [selectedCellHour, setSelectedCellHour] = useState(null);
+
+  // ── State detail modal (US-36/37/38) ──
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
 
   // ── State thời gian thực ──
   const [currentTimePercent, setCurrentTimePercent] = useState(getCurrentTimePercent());
@@ -170,11 +176,23 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
 
   const goToToday = () => setCurrentDate(new Date());
 
-  // ── Handler click ô lịch ──
+  // ── Handler click ô lịch (tạo lịch mới) ──
   const handleCellClick = (date, hour) => {
     setSelectedCellDate(date);
     setSelectedCellHour(hour);
     setShowSelectPostModal(true);
+  };
+
+  // ── Handler click PostCard (xem chi tiết / US-36/37/38) ──
+  const handleCardClick = (post) => {
+    setSelectedSchedule({
+      id: post.id,
+      postTitle: post.title,
+      postContent: post.postContent,
+      publishTime: post.publishTime,
+      status: post.status,
+    });
+    setShowDetailModal(true);
   };
 
   // ── Handler tạo bài mới ──
@@ -216,6 +234,7 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
         posts={posts}
         currentTimePercent={currentTimePercent}
         onCellClick={handleCellClick}
+        onCardClick={handleCardClick}
       />
 
       {/* 5. Modal tạo bài mới */}
@@ -233,6 +252,15 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
         workspaceId={workspaceId}
         selectedDate={selectedCellDate}
         selectedHour={selectedCellHour}
+        onSuccess={triggerFetchSchedules}
+      />
+
+      {/* 7. Modal chi tiết lịch đăng (US-36/37/38) */}
+      <ScheduleDetailModal
+        isOpen={showDetailModal}
+        onClose={() => { setShowDetailModal(false); setSelectedSchedule(null); }}
+        schedule={selectedSchedule}
+        workspaceId={workspaceId}
         onSuccess={triggerFetchSchedules}
       />
     </div>

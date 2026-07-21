@@ -3,24 +3,24 @@ import PlatformIcon from './PlatformIcon';
 
 /**
  * Card hiển thị thông tin bài đăng trên lịch
- *
- * @param {{ post: {
- *   id: number,
- *   hour: number,
- *   minute: number,
- *   title: string,
- *   platform: string,
- *   color: string,
- * } }} props
+ * Props:
+ *  - post: { id, hour, minute, title, platform, color, status, publishTime, postContent }
+ *  - onCardClick: (post) => void – mở ScheduleDetailModal
  */
-export default function PostCard({ post }) {
+export default function PostCard({ post, onCardClick }) {
   const timeLabel = `${String(post.hour).padStart(2, '0')}:${String(post.minute).padStart(2, '0')}`;
+
+  const handleClick = (e) => {
+    e.stopPropagation(); // Không lan sang ô lịch
+    onCardClick?.(post);
+  };
 
   return (
     <div
       className="sc-post-card"
       style={{ borderLeftColor: post.color }}
-      onClick={(e) => e.stopPropagation()}
+      onClick={handleClick}
+      title="Nhấn để xem chi tiết và quản lý lịch đăng"
     >
       {/* Giờ đăng */}
       <div className="sc-post-card__time">{timeLabel}</div>
