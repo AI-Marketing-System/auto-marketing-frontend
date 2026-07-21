@@ -301,7 +301,6 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                     <>
                       <div className="payment-options-grid">
                         <div
-<<<<<<< HEAD
                           className={`payment-opt-card ${paymentMethod === "QR" ? "selected" : ""}`}
                           onClick={() => setPaymentMethod("QR")}
                         >
@@ -311,10 +310,6 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                         <div
                           className={`payment-opt-card ${paymentMethod === "MOMO" ? "selected" : ""}`}
                           onClick={() => setPaymentMethod("MOMO")}
-=======
-                          className={`payment-opt-card ${paymentMethod === 'MOMO' ? 'selected' : ''}`}
-                          onClick={() => setPaymentMethod('MOMO')}
->>>>>>> develop
                         >
                           <span className="pay-opt-icon">📱</span>
                           <span className="pay-opt-label">Ví MoMo</span>
@@ -335,7 +330,6 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                         </div>
                       </div>
 
-<<<<<<< HEAD
                       {paymentMethod === "QR" && (
                         <div className="payment-detail-card">
                           <span className="vietqr-logo-mini">VietQR</span>
@@ -347,9 +341,6 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                       )}
 
                       {paymentMethod === "MOMO" && (
-=======
-                      {paymentMethod === 'MOMO' && (
->>>>>>> develop
                         <div className="payment-detail-card">
                           <span className="momo-logo-mini">MoMo</span>
                           <div className="momo-detail-info">
