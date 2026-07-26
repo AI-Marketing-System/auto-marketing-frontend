@@ -1,63 +1,38 @@
 /**
- * Lưu bản nháp kế hoạch vào localStorage.
+ * Dọn bản nháp còn sót trong localStorage của phiên bản trước.
  *
- * Backend KHÔNG lưu kế hoạch (không có bảng DB, không có endpoint save/get), nên bản nháp trên máy
- * người dùng là thứ duy nhất giữ được kết quả qua một lần F5. Mất nó nghĩa là phải gọi lại Gemini —
- * vừa mất thời gian chờ vừa tốn tiền.
+ * Bản nháp giờ nằm trên máy chủ (bảng `workspace_plan_drafts`), mỗi workspace một bản. Phiên bản cũ
+ * lưu ở localStorage theo key `marqops.planner.draft.v1.<workspaceId>`.
+ *
+ * XOÁ chứ không đẩy lên máy chủ. Lý do: bug của bản cũ (effect tự lưu phụ thuộc [plan, workspaceId])
+ * đã COPY nháp của workspace A sang key của workspace B, và hàm lưu ghi field `workspaceId` bằng id
+ * của route HIỆN TẠI — nghĩa là chính field tự khai chủ sở hữu trong dữ liệu cũng đã bị ghi thành id
+ * đích. Blob sai và blob đúng vì thế không thể phân biệt được. Đẩy chúng lên DB sẽ biến dữ liệu bẩn
+ * cục bộ thành dữ liệu bẩn dùng chung và lâu dài. Bản nháp thì luôn tạo lại được bằng cách phân tích
+ * lại, nên xoá là lựa chọn an toàn duy nhất.
  */
 
-export const DRAFT_VERSION = 1;
+const LEGACY_DRAFT_KEY_PREFIX = 'marqops.planner.draft.v';
+const PURGE_FLAG_KEY = 'marqops.planner.draft.purged.v1';
 
-/**
- * Version xuất hiện hai lần có chủ đích: trong KEY để một shape tương lai không đụng vào dữ liệu v1
- * (key cũ chỉ bị bỏ mồ côi, không gây crash), và trong VALUE để reader tương lai có thể migrate mềm.
- */
-export const draftKey = (workspaceId) => `marqops.planner.draft.v${DRAFT_VERSION}.${workspaceId}`;
-
-export function loadDraft(workspaceId) {
+/** @returns {number} số key đã xoá */
+export function purgeLegacyLocalDrafts() {
   try {
-    const raw = window.localStorage.getItem(draftKey(workspaceId));
-    if (!raw) return null;
+    if (window.localStorage.getItem(PURGE_FLAG_KEY)) return 0;
 
-    const parsed = JSON.parse(raw);
-    if (!parsed || parsed.version !== DRAFT_VERSION || !parsed.plan) return null;
-    if (!Array.isArray(parsed.plan.campaigns)) return null;
+    // Thu key trước rồi mới xoá: removeItem giữa lúc duyệt theo index làm các index dịch lại và
+    // âm thầm bỏ sót key.
+    const keys = [];
+    for (let i = 0; i < window.localStorage.length; i += 1) {
+      const key = window.localStorage.key(i);
+      if (key && key.startsWith(LEGACY_DRAFT_KEY_PREFIX)) keys.push(key);
+    }
+    keys.forEach((key) => window.localStorage.removeItem(key));
 
-    return parsed;
+    window.localStorage.setItem(PURGE_FLAG_KEY, new Date().toISOString());
+    return keys.length;
   } catch (err) {
-    // JSON hỏng, Safari private mode, hoặc localStorage bị tắt: coi như không có nháp.
-    return null;
-  }
-}
-
-export function saveDraft(workspaceId, { plan, analyzedAt, source }) {
-  try {
-    const savedAt = new Date().toISOString();
-    window.localStorage.setItem(
-      draftKey(workspaceId),
-      JSON.stringify({
-        version: DRAFT_VERSION,
-        workspaceId: String(workspaceId),
-        savedAt,
-        analyzedAt: analyzedAt || savedAt,
-        // File objects không serialize được nên chỉ lưu tên để hiển thị. Sau khi F5, thanh nháp mời
-        // "Phân tích lại" thay vì âm thầm gửi lại một request nó không thể tái tạo.
-        source: source || { documentIds: [], fileNames: [] },
-        plan,
-      })
-    );
-    return savedAt;
-  } catch (err) {
-    // QuotaExceededError: kế hoạch quá lớn hoặc bộ nhớ trình duyệt đã đầy.
-    return null;
-  }
-}
-
-export function clearDraft(workspaceId) {
-  try {
-    window.localStorage.removeItem(draftKey(workspaceId));
-    return true;
-  } catch (err) {
-    return false;
+    // localStorage bị tắt hoặc Safari private mode: không có gì để dọn.
+    return 0;
   }
 }

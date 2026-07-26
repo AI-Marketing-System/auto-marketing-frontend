@@ -38,7 +38,7 @@ export const PLANNER_INTRO = {
     'Một lần phân tích thường mất 15–90 giây vì AI phải đọc toàn bộ tài liệu. ' +
     'Bạn có thể huỷ giữa chừng bất cứ lúc nào.',
   draftNote:
-    'Kết quả và mọi chỉnh sửa của bạn được lưu nháp ngay trên máy bạn, ' +
+    'Kết quả và mọi chỉnh sửa của bạn được tự động lưu nháp trên máy chủ theo từng workspace, ' +
     'nên tải lại trang (F5) sẽ không mất dữ liệu.',
 
   steps: [
@@ -137,7 +137,14 @@ export const PLANNER_PROGRESS_COPY = {
 export const PLANNER_DRAFT_COPY = {
   pending: 'Đang lưu nháp…',
   saved: (time) => `● Đã lưu nháp lúc ${time}`,
-  failed: '⚠ Không lưu được nháp — bộ nhớ trình duyệt đã đầy. Hãy sao chép kế hoạch ra ngoài.',
+  // Nháp giờ lưu trên máy chủ nên "bộ nhớ trình duyệt đã đầy" là chẩn đoán sai.
+  failed:
+    '⚠ Không lưu được nháp lên máy chủ — chỉnh sửa của bạn vẫn còn trên trang này. ' +
+    'Hãy kiểm tra kết nối rồi sửa tiếp để lưu lại.',
+  loading: 'Đang tải bản nháp đã lưu…',
+  loadFailed:
+    'Không tải được bản nháp đã lưu từ máy chủ. Bạn vẫn có thể chọn tài liệu và phân tích lại.',
+  discardFailed: 'Không xoá được bản nháp trên máy chủ. Bản nháp vẫn còn — vui lòng thử lại.',
   restored: (time) => `Đã phục hồi bản nháp lưu lúc ${time}.`,
   discardConfirm:
     'Xoá bản nháp đã lưu? Mọi chỉnh sửa của bạn sẽ mất và bạn cần phân tích lại từ đầu.',
@@ -181,7 +188,7 @@ export const PLANNER_ERROR_COPY = {
   },
   401: {
     title: 'Phiên đăng nhập đã hết hạn',
-    body: 'Bạn cần đăng nhập lại để tiếp tục. Bản nháp (nếu có) vẫn được giữ trên máy bạn.',
+    body: 'Bạn cần đăng nhập lại để tiếp tục. Bản nháp (nếu có) vẫn được giữ trên máy chủ.',
     actions: ['login'],
   },
   403: {

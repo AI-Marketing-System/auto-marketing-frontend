@@ -54,3 +54,30 @@ export const plannerApi = {
       baseUrl
     ),
 };
+
+/**
+ * Bản nháp đang lưu trên máy chủ.
+ *
+ * `data` rỗng nghĩa là workspace này chưa có nháp — đó là trạng thái bình thường, không phải lỗi,
+ * nên backend trả 200 chứ không 404.
+ */
+export const parsePlanDraftResponse = (response) => {
+  assertApiSuccess(response, 'Không thể tải bản nháp');
+  return response?.data ?? null;
+};
+
+export const planDraftApi = {
+  get: (baseUrl, workspaceId, signal) =>
+    requestJson(`/workspaces/${workspaceId}/planner/draft`, { method: 'GET', signal }, baseUrl),
+
+  /** @param {{plan: object, source?: object, analyzedAt?: string}} body */
+  save: (baseUrl, workspaceId, body, signal) =>
+    requestJson(
+      `/workspaces/${workspaceId}/planner/draft`,
+      { method: 'PUT', body: JSON.stringify(body), signal },
+      baseUrl
+    ),
+
+  remove: (baseUrl, workspaceId) =>
+    requestJson(`/workspaces/${workspaceId}/planner/draft`, { method: 'DELETE' }, baseUrl),
+};

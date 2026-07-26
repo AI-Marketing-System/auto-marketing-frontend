@@ -8,7 +8,13 @@ import PlannerProgressPanel from '../components/PlannerProgressPanel';
 import PlannerResultView from '../components/PlannerResultView';
 import PlannerSourcePanel from '../components/PlannerSourcePanel';
 import { ArrowLeftIcon, SparkleIcon } from '../components/PlannerIcons';
-import { buildAnalyzeFormData, parseWorkspacePlanResponse, plannerApi } from '../api/plannerApi';
+import {
+  buildAnalyzeFormData,
+  parsePlanDraftResponse,
+  parseWorkspacePlanResponse,
+  planDraftApi,
+  plannerApi,
+} from '../api/plannerApi';
 import { documentApi, parseDocumentsResponse } from '../../campaigns/api/documentApi';
 import { API_BASE_URL } from '../../../config/env';
 import { detectDocumentType, downloadDocument, formatTime } from '../utils/documentFormat';
@@ -26,27 +32,46 @@ import {
   PLANNER_UPLOAD_ERROR_COPY,
   resolvePlannerError,
 } from '../utils/plannerCopy';
-import { clearDraft, loadDraft, saveDraft } from '../utils/plannerDraft';
-import {
-  collectAllNodeIds,
-  defaultExpanded,
-  normalizePlan,
-} from '../utils/plannerPlanModel';
+import { purgeLegacyLocalDrafts } from '../utils/plannerDraft';
+import { collectAllNodeIds, defaultExpanded, normalizePlan } from '../utils/plannerPlanModel';
 import '../styles/WorkspacePlannerPage.css';
 import '../styles/PlannerDocuments.css';
 
-const DRAFT_DEBOUNCE_MS = 800;
+const DRAFT_DEBOUNCE_MS = 1500;
 
 let pendingFileCounter = 0;
 
 /**
- * Trang AI Workspace Planner. Giữ TOÀN BỘ state; các component con đều không có state server.
+ * Toàn bộ trạng thái liên quan tới bản nháp, gộp vào MỘT object.
+ *
+ * `workspaceId` ở đây là chủ sở hữu của `plan`, và luôn là string vì `useParams()` trả string —
+ * lưu số vào đây sẽ làm mọi phép so sánh `'10' === 10` thành false và chặn im lặng việc lưu.
+ *
+ * Gộp lại như vậy để "xoá nháp" là một lần set duy nhất, không thể thực hiện nửa vời, và để không
+ * còn `sourceRef` nằm ngoài state mà không ai reset.
+ */
+const EMPTY_PLAN_STATE = {
+  workspaceId: null,
+  plan: null,
+  analyzedAt: null,
+  source: { documentIds: [], fileNames: [] },
+  savedAt: null,
+  saveState: 'idle', // 'idle' | 'pending' | 'saved' | 'failed'
+  restoredAt: null,
+  expanded: {},
+};
+
+/**
+ * Trang AI Workspace Planner của một workspace. Giữ TOÀN BỘ state; component con không có state
+ * server nào.
  *
  * Trang này cũng thay thế popup Knowledge Assets: việc xem / thêm / xoá tài liệu nguồn giờ nằm ngay
  * ở đây, cạnh bước chọn tài liệu cho AI.
+ *
+ * Nhận `workspaceId` qua prop (không tự gọi useParams) để giá trị component dùng và `key` ở vỏ ngoài
+ * chắc chắn cùng một nguồn, không thể lệch nhau.
  */
-function WorkspacePlannerPage() {
-  const { workspaceId } = useParams();
+function PlannerWorkspaceView({ workspaceId }) {
   const navigate = useNavigate();
 
   // ----- máy trạng thái -----
@@ -75,18 +100,29 @@ function WorkspacePlannerPage() {
   const abortRef = useRef(null);
   const runIdRef = useRef(0);
 
-  // ----- kết quả / nháp -----
-  const [plan, setPlan] = useState(null);
-  const [analyzedAt, setAnalyzedAt] = useState(null);
-  const [draftSavedAt, setDraftSavedAt] = useState(null);
-  const [draftSaveState, setDraftSaveState] = useState('idle');
-  const [restoredAt, setRestoredAt] = useState(null);
-  const [expanded, setExpanded] = useState({});
-  const sourceRef = useRef({ documentIds: [], fileNames: [] });
+  // ----- nháp -----
+  const [planState, setPlanState] = useState(EMPTY_PLAN_STATE);
+  const [draftLoading, setDraftLoading] = useState(true);
+  const [draftLoadError, setDraftLoadError] = useState(null);
+  /** Bản plan đã nằm trên máy chủ, để không PUT lại đúng cái vừa tải về hoặc vừa lưu xong. */
+  const savedPlanRef = useRef(null);
+
+  /**
+   * Kế hoạch của workspace khác là KHÔNG RENDER ĐƯỢC, chứ không phải "sẽ được reset ở effect sau".
+   * Đây là điều duy nhất chặn được frame đầu tiên hiển thị nháp của workspace trước, vì useEffect
+   * chạy SAU khi trình duyệt đã paint.
+   */
+  const isOwnPlan = planState.workspaceId === workspaceId;
+  const plan = isOwnPlan ? planState.plan : null;
+  const expanded = isOwnPlan ? planState.expanded : {};
 
   const loadDocuments = useCallback(async () => {
     if (!workspaceId) return;
 
+    // Xoá danh sách cũ trước khi gọi, để tên tài liệu của workspace trước không hiện dưới workspace
+    // hiện tại trong lúc chờ response.
+    setDocuments([]);
+    setTotalCount(0);
     setDocsLoading(true);
     setDocsError(null);
     try {
@@ -110,43 +146,115 @@ function WorkspacePlannerPage() {
     loadDocuments();
   }, [loadDocuments]);
 
-  // Phục hồi nháp: người dùng F5 không mất kết quả (backend không lưu gì).
+  // Nạp bản nháp từ máy chủ. `draftLoading` khởi tạo là true nên frame đầu tiên là khối đang tải,
+  // không bao giờ là panel chọn tài liệu rồi mới nhảy sang màn kết quả.
   useEffect(() => {
-    if (!workspaceId) return;
-    const draft = loadDraft(workspaceId);
-    if (!draft) return;
+    if (!workspaceId) {
+      setDraftLoading(false);
+      return undefined;
+    }
 
-    setPlan(draft.plan);
-    setAnalyzedAt(draft.analyzedAt);
-    setDraftSavedAt(draft.savedAt);
-    setRestoredAt(draft.savedAt);
-    sourceRef.current = draft.source || { documentIds: [], fileNames: [] };
-    setExpanded(defaultExpanded(draft.plan));
-    setPhase('result');
-    setIntroCollapsed(true);
+    const controller = new AbortController();
+    let alive = true;
+
+    planDraftApi
+      .get(API_BASE_URL, workspaceId, controller.signal)
+      .then((response) => {
+        if (!alive) return;
+
+        const draft = parsePlanDraftResponse(response);
+        if (!draft || !draft.plan) return; // chưa có nháp -> ở lại bước chọn tài liệu
+
+        // Kiểm tra chéo: nếu máy chủ (hoặc một proxy) trả nháp của workspace khác thì BỎ, không
+        // render. Rẻ, và đánh trực diện vào yêu cầu "nháp workspace này không lọt sang workspace kia".
+        if (draft.workspaceId != null && String(draft.workspaceId) !== String(workspaceId)) return;
+
+        setPlanState({
+          workspaceId, // gắn chủ sở hữu ngay tại điểm dữ liệu vào state
+          plan: draft.plan,
+          analyzedAt: draft.analyzedAt || null,
+          source: draft.source || { documentIds: [], fileNames: [] },
+          savedAt: draft.updatedAt || null,
+          saveState: 'saved',
+          restoredAt: draft.updatedAt || null,
+          expanded: defaultExpanded(draft.plan),
+        });
+        // Nháp vừa tải về ĐÃ nằm trên máy chủ nên không PUT lại ngay. So sánh bằng tham chiếu là
+        // chính xác vì mọi mutator trong plannerPlanModel đều thuần và bất biến.
+        savedPlanRef.current = draft.plan;
+        setPhase('result');
+        setIntroCollapsed(true);
+      })
+      .catch((err) => {
+        if (!alive || err?.name === 'AbortError') return;
+        setDraftLoadError(err.message || PLANNER_DRAFT_COPY.loadFailed);
+      })
+      .finally(() => {
+        if (alive) setDraftLoading(false);
+      });
+
+    return () => {
+      alive = false;
+      controller.abort();
+    };
   }, [workspaceId]);
 
-  // Tự lưu nháp, có debounce.
+  // Tự lưu nháp lên máy chủ, có debounce.
   useEffect(() => {
-    if (!plan || !workspaceId) return undefined;
+    const owner = planState.workspaceId;
+    const current = planState.plan;
 
-    setDraftSaveState('pending');
+    if (!owner || !current) return undefined;
+    // Kế hoạch này thuộc workspace khác (route vừa đổi): KHÔNG lưu. Đây chính là chỗ bug cũ ghi nháp
+    // của workspace trước vào workspace hiện tại.
+    if (owner !== workspaceId) return undefined;
+    // Không PUT lại đúng cái vừa tải về hoặc vừa lưu xong.
+    if (current === savedPlanRef.current) return undefined;
+
+    setPlanState((prev) => (prev.saveState === 'pending' ? prev : { ...prev, saveState: 'pending' }));
+
+    const controller = new AbortController();
     const timer = setTimeout(() => {
-      const savedAt = saveDraft(workspaceId, {
-        plan,
-        analyzedAt,
-        source: sourceRef.current,
-      });
-      if (savedAt) {
-        setDraftSavedAt(savedAt);
-        setDraftSaveState('saved');
-      } else {
-        setDraftSaveState('failed');
-      }
+      planDraftApi
+        .save(
+          API_BASE_URL,
+          // owner, KHÔNG phải tham số route: id trong URL luôn đến từ cùng object với plan, nên kể
+          // cả khi câu guard ở trên bị xoá thì cũng chỉ ghi nháp về đúng workspace của nó.
+          owner,
+          { plan: current, source: planState.source, analyzedAt: planState.analyzedAt },
+          controller.signal
+        )
+        .then((response) => {
+          const saved = parsePlanDraftResponse(response);
+          savedPlanRef.current = current;
+          setPlanState((prev) =>
+            prev.plan === current && prev.workspaceId === owner
+              ? {
+                  ...prev,
+                  savedAt: saved?.updatedAt || new Date().toISOString(),
+                  saveState: 'saved',
+                }
+              : prev
+          );
+        })
+        .catch((err) => {
+          if (err?.name === 'AbortError') return; // route đổi giữa lúc lưu: im lặng
+          // KHÔNG xoá `plan`: chỉnh sửa của người dùng phải còn trên màn hình khi lưu thất bại.
+          setPlanState((prev) =>
+            prev.plan === current && prev.workspaceId === owner
+              ? { ...prev, saveState: 'failed' }
+              : prev
+          );
+        });
     }, DRAFT_DEBOUNCE_MS);
 
-    return () => clearTimeout(timer);
-  }, [plan, workspaceId, analyzedAt]);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+    // Dependency chỉ gồm những field định danh "cần lưu cái gì". Đưa cả `planState` vào đây sẽ lặp
+    // vô hạn: effect gọi setPlanState -> planState là object mới -> effect chạy lại.
+  }, [planState.plan, planState.source, planState.analyzedAt, planState.workspaceId, workspaceId]);
 
   // Đồng hồ đếm thời gian chờ.
   useEffect(() => {
@@ -276,6 +384,7 @@ function WorkspacePlannerPage() {
   const runAnalyze = async () => {
     if (!validation.canSubmit) return;
 
+    const owner = workspaceId; // chốt trước khi await
     const runId = runIdRef.current + 1;
     runIdRef.current = runId;
     const controller = new AbortController();
@@ -302,21 +411,26 @@ function WorkspacePlannerPage() {
 
       // Luôn dựng lại FormData mỗi lần gọi; không giữ nó trong state.
       const formData = buildAnalyzeFormData({ files, documentIds: selectedDocIds });
-      const response = await plannerApi.analyze(API_BASE_URL, workspaceId, formData, controller.signal);
+      const response = await plannerApi.analyze(API_BASE_URL, owner, formData, controller.signal);
 
       if (runId !== runIdRef.current) return; // một lần chạy mới hơn đã bắt đầu
 
       const normalized = normalizePlan(parseWorkspacePlanResponse(response));
-      const now = new Date().toISOString();
 
-      sourceRef.current = {
-        documentIds: selectedDocIds,
-        fileNames: pendingFiles.map((item) => item.name),
-      };
-      setPlan(normalized);
-      setAnalyzedAt(now);
-      setRestoredAt(null);
-      setExpanded(defaultExpanded(normalized));
+      savedPlanRef.current = null; // kế hoạch mới -> phải lưu
+      setPlanState({
+        workspaceId: owner,
+        plan: normalized,
+        analyzedAt: new Date().toISOString(),
+        source: {
+          documentIds: selectedDocIds,
+          fileNames: pendingFiles.map((item) => item.name),
+        },
+        savedAt: null,
+        saveState: 'idle',
+        restoredAt: null,
+        expanded: defaultExpanded(normalized),
+      });
       setPhase('result');
       setIntroCollapsed(true);
     } catch (err) {
@@ -344,32 +458,60 @@ function WorkspacePlannerPage() {
     setAnalyzeError(null);
   };
 
-  const handleDiscardDraft = () => {
+  /**
+   * Phải chờ máy chủ và chỉ xoá state khi thành công: bản localStorage cũ không thể lỗi, còn HTTP
+   * DELETE thì có. Xoá lạc quan sẽ hiện "đã xoá" trong khi tải lại trang là nháp quay về.
+   */
+  const handleDiscardDraft = async () => {
     if (!window.confirm(PLANNER_DRAFT_COPY.discardConfirm)) return;
-    clearDraft(workspaceId);
-    setPlan(null);
-    setDraftSavedAt(null);
-    setDraftSaveState('idle');
-    setRestoredAt(null);
+
+    const owner = planState.workspaceId;
+    if (owner) {
+      try {
+        await planDraftApi.remove(API_BASE_URL, owner);
+      } catch (err) {
+        setDraftLoadError(err.message || PLANNER_DRAFT_COPY.discardFailed);
+        return; // giữ nguyên bản nháp trên màn hình
+      }
+    }
+    savedPlanRef.current = null;
+    setPlanState(EMPTY_PLAN_STATE);
     setPhase('idle');
   };
 
   // ----- cây kết quả -----
 
   const handlePlanChange = (mutator, ...args) => {
-    setPlan((current) => (current ? mutator(current, ...args) : current));
+    setPlanState((prev) =>
+      prev.plan && prev.workspaceId === workspaceId
+        ? { ...prev, plan: mutator(prev.plan, ...args) }
+        : prev
+    );
   };
 
   const handleToggleExpand = (nodeId) => {
-    setExpanded((prev) => ({ ...prev, [nodeId]: !prev[nodeId] }));
+    setPlanState((prev) =>
+      prev.workspaceId === workspaceId
+        ? { ...prev, expanded: { ...prev.expanded, [nodeId]: !prev.expanded[nodeId] } }
+        : prev
+    );
   };
 
   const handleExpandAll = () => {
-    const next = {};
-    collectAllNodeIds(plan).forEach((id) => {
-      next[id] = true;
+    setPlanState((prev) => {
+      if (prev.workspaceId !== workspaceId || !prev.plan) return prev;
+      const next = {};
+      collectAllNodeIds(prev.plan).forEach((id) => {
+        next[id] = true;
+      });
+      return { ...prev, expanded: next };
     });
-    setExpanded(next);
+  };
+
+  const handleCollapseAll = () => {
+    setPlanState((prev) =>
+      prev.workspaceId === workspaceId ? { ...prev, expanded: {} } : prev
+    );
   };
 
   const errorHandlers = {
@@ -426,13 +568,21 @@ function WorkspacePlannerPage() {
         onToggle={() => setIntroCollapsed((value) => !value)}
       />
 
-      {restoredAt && phase === 'result' && (
+      {draftLoadError && (
+        <PlannerAlert
+          tone="warning"
+          message={draftLoadError}
+          onDismiss={() => setDraftLoadError(null)}
+        />
+      )}
+
+      {planState.restoredAt && isOwnPlan && phase === 'result' && (
         <PlannerAlert
           tone="info"
-          message={PLANNER_DRAFT_COPY.restored(formatTime(restoredAt))}
+          message={PLANNER_DRAFT_COPY.restored(formatTime(planState.restoredAt))}
           onRetry={handleReanalyze}
           retryLabel={PLANNER_SECTION_LABELS.reanalyze}
-          onDismiss={() => setRestoredAt(null)}
+          onDismiss={() => setPlanState((prev) => ({ ...prev, restoredAt: null }))}
         />
       )}
 
@@ -450,17 +600,24 @@ function WorkspacePlannerPage() {
 
       {phase === 'error' && <PlannerErrorPanel error={analyzeError} handlers={errorHandlers} />}
 
-      {phase === 'result' && plan ? (
+      {draftLoading ? (
+        <section className="wp-card">
+          <div className="wp-loading">
+            <div className="wp-spinner" />
+            <p>{PLANNER_DRAFT_COPY.loading}</p>
+          </div>
+        </section>
+      ) : phase === 'result' && plan ? (
         <PlannerResultView
           plan={plan}
           workspaceId={workspaceId}
           expanded={expanded}
           onToggleExpand={handleToggleExpand}
           onExpandAll={handleExpandAll}
-          onCollapseAll={() => setExpanded({})}
+          onCollapseAll={handleCollapseAll}
           onChange={handlePlanChange}
-          draftSavedAt={draftSavedAt}
-          draftSaveState={draftSaveState}
+          draftSavedAt={planState.savedAt}
+          draftSaveState={planState.saveState}
           onReanalyze={handleReanalyze}
           onDiscardDraft={handleDiscardDraft}
         />
@@ -503,6 +660,29 @@ function WorkspacePlannerPage() {
       />
     </div>
   );
+}
+
+/**
+ * Vỏ ngoài của route.
+ *
+ * React Router dùng LẠI cùng một component instance khi chỉ `:workspaceId` đổi (vẫn là một route
+ * pattern), nên toàn bộ state và ref của workspace cũ sống sót qua điều hướng
+ * /workspaces/10/planner -> /workspaces/1/planner. Đó chính là lý do bản nháp của workspace này từng
+ * hiện ở workspace khác.
+ *
+ * `key` buộc React unmount rồi mount lại: mọi state, ref, timer và AbortController đều mới, và mọi
+ * cleanup của workspace cũ được chạy — không có danh sách reset nào phải bảo trì bằng tay.
+ */
+function WorkspacePlannerPage() {
+  const { workspaceId } = useParams();
+
+  // Dọn nháp localStorage của phiên bản cũ. Đặt ở vỏ ngoài (không phải component có key) để chỉ chạy
+  // một lần cho mỗi lần vào route, không chạy lại mỗi lần đổi workspace.
+  useEffect(() => {
+    purgeLegacyLocalDrafts();
+  }, []);
+
+  return <PlannerWorkspaceView key={workspaceId ?? 'none'} workspaceId={workspaceId} />;
 }
 
 export default WorkspacePlannerPage;
