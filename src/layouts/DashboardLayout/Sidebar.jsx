@@ -115,6 +115,16 @@ export default function Sidebar({ variant = 'dashboard' }) {
   const expandedWsRef = useRef({});
   const location = useLocation();
 
+  /**
+   * Id workspace đang mở, lấy bằng cách tách ĐÚNG một segment của URL.
+   *
+   * KHÔNG dùng `pathname.includes('/workspaces/' + ws.id)`: đó là so khớp chuỗi con, nên khi đang ở
+   * /workspaces/10/campaigns thì workspace id 1 cũng khớp (vì "/workspaces/10..." có chứa
+   * "/workspaces/1"). Hậu quả là hai card cùng sáng và hiện hai link "AI Planner".
+   */
+  const activeWorkspaceId = location.pathname.match(/\/workspaces\/([^/]+)/)?.[1] ?? null;
+  const isActiveWorkspace = (ws) => activeWorkspaceId === String(ws.id);
+
   useEffect(() => {
     if (variant === 'admin') return;
     let cancelled = false;
@@ -159,7 +169,7 @@ export default function Sidebar({ variant = 'dashboard' }) {
       key={ws.id}
       to={`/workspaces/${ws.id}/campaigns`}
       className={({ isActive }) =>
-        `sidebar__ws-card ${isActive || location.pathname.includes(`/workspaces/${ws.id}`) ? 'sidebar__ws-card--active' : ''}`
+        `sidebar__ws-card ${isActive || isActiveWorkspace(ws) ? 'sidebar__ws-card--active' : ''}`
       }
       style={{ textDecoration: 'none' }}
     >
@@ -181,7 +191,7 @@ export default function Sidebar({ variant = 'dashboard' }) {
       key={ws.id}
       to={`/workspaces/${ws.id}/campaigns`}
       className={({ isActive }) =>
-        `sidebar__ws-card ${isActive || location.pathname.includes(`/workspaces/${ws.id}`) ? 'sidebar__ws-card--active' : ''}`
+        `sidebar__ws-card ${isActive || isActiveWorkspace(ws) ? 'sidebar__ws-card--active' : ''}`
       }
       style={{ textDecoration: 'none' }}
     >
@@ -236,7 +246,10 @@ export default function Sidebar({ variant = 'dashboard' }) {
   );
 
   const renderPlannerSublink = (ws) => {
-    if (!location.pathname.includes(`/workspaces/${ws.id}`)) return null;
+    // Chỉ hiện cho workspace ĐANG mở, và chỉ với workspace mình sở hữu: AI Planner ở backend dùng
+    // WorkspaceAccessGuard vốn chỉ cho phép chủ workspace, nên hiện link ở mục "được mời" sẽ dẫn
+    // thẳng tới lỗi 403.
+    if (!isActiveWorkspace(ws)) return null;
     return (
       <NavLink
         key={`planner-${ws.id}`}
@@ -290,8 +303,15 @@ export default function Sidebar({ variant = 'dashboard' }) {
               </div>
             ) : (
               <div className="sidebar__ws-list">
-                {workspaces.map(renderWorkspaceCard)}
-                {workspaces.map(renderPlannerSublink)}
+                {/* Card và link con của cùng một workspace phải nằm chung một khối. Trước đây dùng
+                    hai .map() tách rời nên toàn bộ card render trước rồi mới tới toàn bộ link con,
+                    khiến "AI Planner" luôn rơi xuống đáy danh sách thay vì nằm dưới workspace. */}
+                {workspaces.map((ws) => (
+                  <div key={ws.id} className="sidebar__ws-item">
+                    {renderWorkspaceCard(ws)}
+                    {renderPlannerSublink(ws)}
+                  </div>
+                ))}
               </div>
             )}
 
