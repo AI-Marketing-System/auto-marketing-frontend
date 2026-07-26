@@ -1,14 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/SchedulePage.css';
 
-import ScheduleTopBar from '../components/ScheduleTopBar';
-import ScheduleFilters from '../components/ScheduleFilters';
-import WeekNavigation from '../components/WeekNavigation';
-import CalendarGrid from '../components/CalendarGrid';
-import CreatePostModal from '../../post/components/CreatePostModal';
+import ScheduleTopBar   from '../components/ScheduleTopBar';
+import ScheduleFilters  from '../components/ScheduleFilters';
+import WeekNavigation   from '../components/WeekNavigation';
+import CalendarGrid     from '../components/CalendarGrid';
+import CreatePostModal  from '../../post/components/CreatePostModal';
 import SelectPostToScheduleModal from '../components/SelectPostToScheduleModal';
+import ScheduleDetailModal from '../components/ScheduleDetailModal';
 
-import { getWeekDays, getCurrentTimePercent, isSameDay } from '../utils/scheduleHelpers';
+import {
+  getWeekDays,
+  getCurrentTimePercent,
+  isSameDay,
+} from '../utils/scheduleHelpers';
 
 import { scheduleApi } from '../api/scheduleApi';
 import { API_BASE_URL } from '../../../config/env';
@@ -17,67 +22,69 @@ import { API_BASE_URL } from '../../../config/env';
  * Maps the API schedules data list to the calendar posts structure
  */
 function mapSchedulesToCalendarPosts(schedules, weekDays) {
-  return schedules
-    .map((sch) => {
-      let dateStr = sch.publishTime;
-      if (typeof dateStr === 'string' && !dateStr.endsWith('Z') && !dateStr.includes('+')) {
-        dateStr += 'Z';
-      }
-      const publishDate = new Date(dateStr);
-      const hour = publishDate.getHours();
-      const minute = publishDate.getMinutes();
+  const platforms = ['Facebook', 'Instagram', 'TikTok'];
+  const colors = ['#7c3aed', '#10b981', '#ef4444', '#f59e0b', '#3b82f6'];
 
-      // Find which day in weekDays matches publishDate
-      let dayIdx = -1;
-      for (let i = 0; i < weekDays.length; i++) {
-        if (isSameDay(weekDays[i], publishDate)) {
-          dayIdx = i;
-          break;
-        }
-      }
+  return schedules.map((sch) => {
+    let dateStr = sch.publishTime;
+    if (typeof dateStr === 'string' && !dateStr.endsWith('Z') && !dateStr.includes('+')) {
+      dateStr += 'Z';
+    }
+    const publishDate = new Date(dateStr);
+    const hour = publishDate.getHours();
+    const minute = publishDate.getMinutes();
 
-      // Determine color based on status
-      let color = '#7c3aed'; // default Purple
-      switch (sch.status) {
-        case 'WAITING':
-          color = '#3b82f6'; // Xanh dương (Blue) - Chờ đăng
-          break;
-        case 'RUNNING':
-          color = '#f59e0b'; // Vàng cam (Amber) - Đang đăng
-          break;
-        case 'SUCCESS':
-          color = '#10b981'; // Xanh lá (Green) - Thành công
-          break;
-        case 'FAILED':
-          color = '#ef4444'; // Đỏ (Red) - Lỗi
-          break;
-        case 'CANCELLED':
-          color = '#94a3b8'; // Xám (Gray) - Hủy
-          break;
-        default:
-          color = '#7c3aed';
+    // Find which day in weekDays matches publishDate
+    let dayIdx = -1;
+    for (let i = 0; i < weekDays.length; i++) {
+      if (isSameDay(weekDays[i], publishDate)) {
+        dayIdx = i;
+        break;
       }
+    }
 
-      // Determine platform (we default to Facebook as per current structure of fanpages)
-      let platform = 'Facebook';
-      if (sch.targets && sch.targets.length > 0) {
-        // Future mapping logic from targets...
-      }
+    // Determine color based on status
+    let color = '#7c3aed'; // default Purple
+    switch (sch.status) {
+      case 'WAITING':
+        color = '#3b82f6'; // Xanh dương (Blue) - Chờ đăng
+        break;
+      case 'RUNNING':
+        color = '#f59e0b'; // Vàng cam (Amber) - Đang đăng
+        break;
+      case 'SUCCESS':
+        color = '#10b981'; // Xanh lá (Green) - Thành công
+        break;
+      case 'FAILED':
+        color = '#ef4444'; // Đỏ (Red) - Lỗi
+        break;
+      case 'CANCELLED':
+        color = '#94a3b8'; // Xám (Gray) - Hủy
+        break;
+      default:
+        color = '#7c3aed';
+    }
 
-      return {
-        id: sch.scheduleId,
-        dayIdx, // will be -1 if it's not in the current visible week
-        hour,
-        minute,
-        title: sch.postTitle || 'Bài viết không có tiêu đề',
-        platform: platform,
-        color,
-        image: null,
-        publishTime: sch.publishTime,
-        status: sch.status,
-      };
-    })
-    .filter((p) => p.dayIdx !== -1);
+    // Determine platform (we default to Facebook as per current structure of fanpages)
+    let platform = 'Facebook';
+    if (sch.targets && sch.targets.length > 0) {
+      // Future mapping logic from targets...
+    }
+
+    return {
+      id: sch.scheduleId,
+      dayIdx, // will be -1 if it's not in the current visible week
+      hour,
+      minute,
+      title: sch.postTitle || 'Bài viết không có tiêu đề',
+      postContent: sch.postContent || '',
+      platform: platform,
+      color,
+      image: null,
+      publishTime: sch.publishTime,
+      status: sch.status,
+    };
+  }).filter((p) => p.dayIdx !== -1);
 }
 
 /**
@@ -91,14 +98,14 @@ function mapSchedulesToCalendarPosts(schedules, weekDays) {
 export default function SchedulePage({ workspaceId, workspaces = [], campaigns = [] }) {
   // ── State tuần & dữ liệu ──
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [weekDays, setWeekDays] = useState([]);
-  const [posts, setPosts] = useState([]);
-  const [schedules, setSchedules] = useState([]);
+  const [weekDays, setWeekDays]       = useState([]);
+  const [posts, setPosts]             = useState([]);
+  const [schedules, setSchedules]     = useState([]);
 
   // ── State bộ lọc ──
   const [campaignFilter, setCampaignFilter] = useState('Tất cả chiến dịch');
-  const [topicFilter, setTopicFilter] = useState('Tất cả chủ đề');
-  const [statusFilter, setStatusFilter] = useState('Tất cả trạng thái');
+  const [topicFilter, setTopicFilter]       = useState('Tất cả chủ đề');
+  const [statusFilter, setStatusFilter]     = useState('Tất cả trạng thái');
 
   // ── State modal ──
   const [showNewPostModal, setShowNewPostModal] = useState(false);
@@ -106,7 +113,11 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
   const [selectedCellDate, setSelectedCellDate] = useState(null);
   const [selectedCellHour, setSelectedCellHour] = useState(null);
 
-  // ── State thời gian thực ─
+  // ── State detail modal (US-36/37/38) ──
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
+
+  // ── State thời gian thực ──
   const [currentTimePercent, setCurrentTimePercent] = useState(getCurrentTimePercent());
 
   const selectedWorkspace = workspaces.find((ws) => ws.id === workspaceId);
@@ -127,7 +138,7 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
   }, []);
 
   // Fetch function reused across schedule listings and creation successes
-  const triggerFetchSchedules = useCallback(async () => {
+  const triggerFetchSchedules = async () => {
     if (!workspaceId) return;
     try {
       let res;
@@ -141,12 +152,12 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
     } catch (err) {
       console.error('Error fetching schedules:', err);
     }
-  }, [workspaceId, campaignFilter]);
+  };
 
   // Fetch schedules from backend when workspaceId or campaignFilter changes
   useEffect(() => {
     triggerFetchSchedules();
-  }, [workspaceId, campaignFilter, triggerFetchSchedules]);
+  }, [workspaceId, campaignFilter]);
 
   // Map schedules to posts inside current week view
   useEffect(() => {
@@ -158,26 +169,30 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
 
   // ── Handlers điều hướng tuần ──
   const goToPrevWeek = () =>
-    setCurrentDate((d) => {
-      const nd = new Date(d);
-      nd.setDate(nd.getDate() - 7);
-      return nd;
-    });
+    setCurrentDate((d) => { const nd = new Date(d); nd.setDate(nd.getDate() - 7); return nd; });
 
   const goToNextWeek = () =>
-    setCurrentDate((d) => {
-      const nd = new Date(d);
-      nd.setDate(nd.getDate() + 7);
-      return nd;
-    });
+    setCurrentDate((d) => { const nd = new Date(d); nd.setDate(nd.getDate() + 7); return nd; });
 
   const goToToday = () => setCurrentDate(new Date());
 
-  // ── Handler click ô lịch ──
+  // ── Handler click ô lịch (tạo lịch mới) ──
   const handleCellClick = (date, hour) => {
     setSelectedCellDate(date);
     setSelectedCellHour(hour);
     setShowSelectPostModal(true);
+  };
+
+  // ── Handler click PostCard (xem chi tiết / US-36/37/38) ──
+  const handleCardClick = (post) => {
+    setSelectedSchedule({
+      id: post.id,
+      postTitle: post.title,
+      postContent: post.postContent,
+      publishTime: post.publishTime,
+      status: post.status,
+    });
+    setShowDetailModal(true);
   };
 
   // ── Handler tạo bài mới ──
@@ -219,6 +234,7 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
         posts={posts}
         currentTimePercent={currentTimePercent}
         onCellClick={handleCellClick}
+        onCardClick={handleCardClick}
       />
 
       {/* 5. Modal tạo bài mới */}
@@ -236,6 +252,15 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
         workspaceId={workspaceId}
         selectedDate={selectedCellDate}
         selectedHour={selectedCellHour}
+        onSuccess={triggerFetchSchedules}
+      />
+
+      {/* 7. Modal chi tiết lịch đăng (US-36/37/38) */}
+      <ScheduleDetailModal
+        isOpen={showDetailModal}
+        onClose={() => { setShowDetailModal(false); setSelectedSchedule(null); }}
+        schedule={selectedSchedule}
+        workspaceId={workspaceId}
         onSuccess={triggerFetchSchedules}
       />
     </div>
