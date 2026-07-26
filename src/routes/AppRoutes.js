@@ -12,6 +12,7 @@ import AnalyticsDashboard from '../modules/analytics/pages/AnalyticsDashboard';
 import CampaignListPage from '../modules/campaigns/pages/CampaignListPage';
 import PlanManagementPage from '../modules/admin/plans/pages/PlanManagementPage';
 import ErrorPage from '../public-site/pages/ErrorPage';
+import InvitationsPage from '../modules/workspace/pages/InvitationsPage';
 import DashboardLayout from '../layouts/DashboardLayout/DashboardLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { AdminRoute } from '../components/ProtectedRoute';
@@ -105,6 +106,16 @@ function AppRoutes() {
         }
       />
       <Route path="/admin" element={<AdminHomePage />} />
+      <Route
+        path="/invitations"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <InvitationsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/admin/plans"
         element={
