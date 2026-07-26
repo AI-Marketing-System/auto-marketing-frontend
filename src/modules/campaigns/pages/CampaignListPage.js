@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import '../styles/CampaignListPage.css';
 import '../../../modules/social-accounts/styles/SocialAccountsPage.css';
 import CreateCampaignModal from '../components/CreateCampaignModal';
+import InviteMemberModal from '../components/InviteMemberModal';
 import CampaignCard from '../components/CampaignCard';
 import CampaignActions from '../components/CampaignActions';
 import WorkspaceFanpageBar from '../components/WorkspaceFanpageBar';
@@ -55,6 +56,7 @@ function CampaignListPage() {
   const [pageSize, setPageSize] = useState(8);
   const [viewMode, setViewMode] = useState('cards');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [campaigns, setCampaigns] = useState([]);
   const [allCampaigns, setAllCampaigns] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -73,15 +75,19 @@ function CampaignListPage() {
 
   useEffect(() => {
     let cancelled = false;
-    workspaceApi
-      .myWorkspaces(API_BASE_URL)
-      .then((res) => {
-        const wsList = parseWorkspacesResponse(res);
-        if (!cancelled) setWorkspaces(wsList);
-      })
-      .catch(() => {
-        if (!cancelled) setWorkspaces([]);
+
+    Promise.all([
+      workspaceApi.myWorkspaces(API_BASE_URL).catch(() => []),
+      workspaceApi.memberWorkspaces(API_BASE_URL).catch(() => [])
+    ])
+      .then(([myRes, memberRes]) => {
+        if (cancelled) return;
+        const myWs = parseWorkspacesResponse(myRes);
+        const memberWs = parseWorkspacesResponse(memberRes);
+        const combined = [...myWs, ...memberWs];
+        setWorkspaces(combined);
       });
+
     return () => {
       cancelled = true;
     };
@@ -370,13 +376,44 @@ function CampaignListPage() {
         <section className="campaign-hero-panel">
           <div className="campaign-hero-copy">
             <span className="workspace-label">Quản lý chiến dịch</span>
-            <h1 className="workspace-title-main">
-              {workspaceFilter === 'ALL'
-                ? 'Tất cả workspace'
-                : selectedWorkspace
-                  ? selectedWorkspace.name
-                  : 'Chọn workspace'}
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h1 className="workspace-title-main" style={{ margin: 0 }}>
+                {workspaceFilter === 'ALL'
+                  ? 'Tất cả workspace'
+                  : selectedWorkspace
+                    ? selectedWorkspace.name
+                    : 'Chọn workspace'}
+              </h1>
+              {workspaceFilter !== 'ALL' && selectedWorkspace && (
+                <button
+                  type="button"
+                  className="btn-invite-member"
+                  onClick={() => setIsInviteModalOpen(true)}
+                  title="Mời thành viên"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '4px',
+                    borderRadius: '6px',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#e2e8f0'; e.currentTarget.style.color = '#0f172a'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#64748b'; }}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                  </svg>
+                </button>
+              )}
+            </div>
             <p className="campaign-hero-subtitle">
               Theo dõi trạng thái, người tạo và thao tác chiến dịch trong một nơi.
             </p>
@@ -794,6 +831,12 @@ function CampaignListPage() {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleModalSubmit}
         defaultWorkspaceId={activeWorkspaceId ?? currentWorkspaceId}
+      />
+
+      <InviteMemberModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        workspaceId={activeWorkspaceId ?? currentWorkspaceId}
       />
     </div>
   );
