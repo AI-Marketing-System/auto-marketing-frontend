@@ -158,6 +158,14 @@
   gap: 4px;
 }
 
+/* Bo mot workspace: card + cac link con cua no.
+   Nho wrapper nay ma link con bam sat card cua chinh no, thay vi bi gap 8px cua
+   .sidebar__ws-list day ra xa nhu mot muc rieng. */
+.sidebar__ws-item {
+  display: flex;
+  flex-direction: column;
+}
+
 /* Link con AI Planner, chi hien cho workspace dang mo */
 .sidebar__ws-sublink {
   display: flex;
