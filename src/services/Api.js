@@ -19,11 +19,19 @@ function joinUrl(baseUrl, path) {
 }
 
 function getAuthHeaders(path, options = {}) {
+  const isFormData =
+    options.isFormData || (typeof FormData !== 'undefined' && options.body instanceof FormData);
+
   const headers = {
-    'Content-Type': 'application/json',
     'ngrok-skip-browser-warning': 'true',
     ...(options.headers || {}),
   };
+
+  if (!isFormData && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  } else if (isFormData) {
+    delete headers['Content-Type'];
+  }
 
   const isPublicAuthRoute =
     typeof path === 'string' && (path.startsWith('/auth/') || path === '/auth');
