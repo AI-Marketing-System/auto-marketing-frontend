@@ -24,7 +24,7 @@ import {
 } from '../utils/campaignUtils';
 import { API_BASE_URL } from '../../../config/env';
 import { useAuth } from '../../../context/AuthContext';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import SchedulePage from '../../schedule/pages/SchedulePage';
 
 const SUMMARY_ITEMS = [
@@ -38,6 +38,8 @@ function CampaignListPage() {
   const { user } = useAuth();
   const location = useLocation();
   const isScheduleTab = location.hash === '#schedule';
+
+  const navigate = useNavigate();
 
   const { workspaceId } = useParams();
   const currentWorkspaceId = workspaceId ? Number(workspaceId) : null;
@@ -59,7 +61,12 @@ function CampaignListPage() {
   const [error, setError] = useState(null);
   const [workspaces, setWorkspaces] = useState([]);
   const [wsDropdownOpen, setWsDropdownOpen] = useState(false);
-  const [pagination, setPagination] = useState({ pageNumber: 0, totalElements: 0, totalPages: 1, size: pageSize });
+  const [pagination, setPagination] = useState({
+    pageNumber: 0,
+    totalElements: 0,
+    totalPages: 1,
+    size: pageSize,
+  });
   const [creators, setCreators] = useState([]);
   const [actionModal, setActionModal] = useState(null);
   const [actionPendingId, setActionPendingId] = useState(null);
@@ -96,110 +103,129 @@ function CampaignListPage() {
 
   const activeWorkspaceId = workspaceFilter === 'ALL' ? undefined : Number(workspaceFilter);
 
-  const loadCreatorOptions = useCallback(async (workspaceIdValue) => {
-    try {
-      const response = await campaignApi.list(API_BASE_URL, {
-        workspaceId: workspaceIdValue || undefined,
-        page: 0,
-        size: 300,
-        sortBy: 'createdAt',
-        sortDirection: 'desc',
-      });
-      const { content } = parsePaginatedResponse(response, 0, 300);
-      const mapped = content.map(mapCampaignFromApi);
-      setCreators(extractCreatorsFromCampaigns(mapped, user));
-    } catch (err) {
-      setCreators(
-        user?.id
-          ? [{ id: String(user.id), label: user.fullName || user.email || `User #${user.id}` }]
-          : []
-      );
-    }
-  }, [user]);
+  const loadCreatorOptions = useCallback(
+    async (workspaceIdValue) => {
+      try {
+        const response = await campaignApi.list(API_BASE_URL, {
+          workspaceId: workspaceIdValue || undefined,
+          page: 0,
+          size: 300,
+          sortBy: 'createdAt',
+          sortDirection: 'desc',
+        });
+        const { content } = parsePaginatedResponse(response, 0, 300);
+        const mapped = content.map(mapCampaignFromApi);
+        setCreators(extractCreatorsFromCampaigns(mapped, user));
+      } catch (err) {
+        setCreators(
+          user?.id
+            ? [{ id: String(user.id), label: user.fullName || user.email || `User #${user.id}` }]
+            : []
+        );
+      }
+    },
+    [user]
+  );
 
   useEffect(() => {
     loadCreatorOptions(activeWorkspaceId);
   }, [activeWorkspaceId, loadCreatorOptions]);
 
-  const loadCampaigns = useCallback(async (overrides = {}) => {
-    const effectivePage = overrides.page ?? page;
-    const effectivePageSize = overrides.pageSize ?? pageSize;
-    const effectiveSearchQuery = overrides.searchQuery ?? searchQuery;
-    const effectiveStatusFilter = overrides.statusFilter ?? statusFilter;
-    const effectiveWorkspaceFilter = overrides.workspaceFilter ?? workspaceFilter;
-    const effectiveCreatorFilter = overrides.creatorFilter ?? creatorFilter;
-    const effectiveSortBy = overrides.sortBy ?? sortBy;
-    const effectiveSortDirection = overrides.sortDirection ?? sortDirection;
+  const loadCampaigns = useCallback(
+    async (overrides = {}) => {
+      const effectivePage = overrides.page ?? page;
+      const effectivePageSize = overrides.pageSize ?? pageSize;
+      const effectiveSearchQuery = overrides.searchQuery ?? searchQuery;
+      const effectiveStatusFilter = overrides.statusFilter ?? statusFilter;
+      const effectiveWorkspaceFilter = overrides.workspaceFilter ?? workspaceFilter;
+      const effectiveCreatorFilter = overrides.creatorFilter ?? creatorFilter;
+      const effectiveSortBy = overrides.sortBy ?? sortBy;
+      const effectiveSortDirection = overrides.sortDirection ?? sortDirection;
 
-    const effectiveWorkspaceId =
-      effectiveWorkspaceFilter === 'ALL' ? undefined : Number(effectiveWorkspaceFilter);
+      const effectiveWorkspaceId =
+        effectiveWorkspaceFilter === 'ALL' ? undefined : Number(effectiveWorkspaceFilter);
 
-    if (effectiveWorkspaceFilter !== 'ALL' && Number.isNaN(effectiveWorkspaceId)) return;
+      if (effectiveWorkspaceFilter !== 'ALL' && Number.isNaN(effectiveWorkspaceId)) return;
 
-    setLoading(true);
-    setError(null);
-    try {
-      const params = {
-        workspaceId: effectiveWorkspaceId || undefined,
-        search: effectiveSearchQuery || undefined,
-        status: mapStatusToApiValue(effectiveStatusFilter) || undefined,
-        createdBy:
-          effectiveCreatorFilter === 'ALL' || Number.isNaN(Number(effectiveCreatorFilter))
-            ? undefined
-            : Number(effectiveCreatorFilter),
-        sortBy: mapSortField(effectiveSortBy),
-        sortDirection: effectiveSortDirection || undefined,
-        page: effectivePage,
-        size: effectivePageSize,
-      };
-
-      const response = await campaignApi.list(API_BASE_URL, params);
-      let {
-        content: campaignsData,
-        totalElements,
-        totalPages,
-        number: responsePage,
-        size: responseSize,
-      } = parsePaginatedResponse(response, effectivePage, effectivePageSize);
-
-      if (
-        campaignsData.length === 0 &&
-        totalElements === 0 &&
-        !effectiveSearchQuery &&
-        effectiveStatusFilter === 'ALL' &&
-        effectiveCreatorFilter === 'ALL'
-      ) {
-        const fallbackResponse = await campaignApi.list(API_BASE_URL, {
+      setLoading(true);
+      setError(null);
+      try {
+        const params = {
           workspaceId: effectiveWorkspaceId || undefined,
+          search: effectiveSearchQuery || undefined,
+          status: mapStatusToApiValue(effectiveStatusFilter) || undefined,
+          createdBy:
+            effectiveCreatorFilter === 'ALL' || Number.isNaN(Number(effectiveCreatorFilter))
+              ? undefined
+              : Number(effectiveCreatorFilter),
+          sortBy: mapSortField(effectiveSortBy),
+          sortDirection: effectiveSortDirection || undefined,
           page: effectivePage,
           size: effectivePageSize,
-        });
-        const fallbackParsed = parsePaginatedResponse(fallbackResponse, effectivePage, effectivePageSize);
-        if (fallbackParsed.content.length > 0) {
-          campaignsData = fallbackParsed.content;
-          totalElements = fallbackParsed.totalElements;
-          totalPages = fallbackParsed.totalPages;
-          responsePage = fallbackParsed.number;
-          responseSize = fallbackParsed.size;
-        }
-      }
+        };
 
-      const mapped = campaignsData.map(mapCampaignFromApi);
-      setCampaigns(mapped);
-      setPagination({
-        pageNumber: responsePage,
-        totalElements,
-        totalPages: Math.max(1, totalPages),
-        size: responseSize,
-      });
-    } catch (err) {
-      setCampaigns([]);
-      setPagination({ pageNumber: 0, totalElements: 0, totalPages: 1, size: pageSize });
-      setError(err.message || 'Không thể tải chiến dịch');
-    } finally {
-      setLoading(false);
-    }
-  }, [creatorFilter, page, pageSize, searchQuery, sortBy, sortDirection, statusFilter, workspaceFilter]);
+        const response = await campaignApi.list(API_BASE_URL, params);
+        let {
+          content: campaignsData,
+          totalElements,
+          totalPages,
+          number: responsePage,
+          size: responseSize,
+        } = parsePaginatedResponse(response, effectivePage, effectivePageSize);
+
+        if (
+          campaignsData.length === 0 &&
+          totalElements === 0 &&
+          !effectiveSearchQuery &&
+          effectiveStatusFilter === 'ALL' &&
+          effectiveCreatorFilter === 'ALL'
+        ) {
+          const fallbackResponse = await campaignApi.list(API_BASE_URL, {
+            workspaceId: effectiveWorkspaceId || undefined,
+            page: effectivePage,
+            size: effectivePageSize,
+          });
+          const fallbackParsed = parsePaginatedResponse(
+            fallbackResponse,
+            effectivePage,
+            effectivePageSize
+          );
+          if (fallbackParsed.content.length > 0) {
+            campaignsData = fallbackParsed.content;
+            totalElements = fallbackParsed.totalElements;
+            totalPages = fallbackParsed.totalPages;
+            responsePage = fallbackParsed.number;
+            responseSize = fallbackParsed.size;
+          }
+        }
+
+        const mapped = campaignsData.map(mapCampaignFromApi);
+        setCampaigns(mapped);
+        setPagination({
+          pageNumber: responsePage,
+          totalElements,
+          totalPages: Math.max(1, totalPages),
+          size: responseSize,
+        });
+      } catch (err) {
+        setCampaigns([]);
+        setPagination({ pageNumber: 0, totalElements: 0, totalPages: 1, size: pageSize });
+        setError(err.message || 'Không thể tải chiến dịch');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      creatorFilter,
+      page,
+      pageSize,
+      searchQuery,
+      sortBy,
+      sortDirection,
+      statusFilter,
+      workspaceFilter,
+    ]
+  );
 
   const loadAllCampaignsForSchedule = useCallback(async () => {
     if (!currentWorkspaceId) {
@@ -294,6 +320,18 @@ function CampaignListPage() {
     [activeWorkspaceId, workspaces]
   );
 
+  // Trang planner cần một workspaceId cụ thể trong URL. Giữ đúng thứ tự fallback mà modal Knowledge
+  // Assets trước đây dùng, và thêm chặn trường hợp người dùng chưa có workspace nào.
+  const plannerWorkspaceId = activeWorkspaceId ?? currentWorkspaceId ?? workspaces[0]?.id ?? null;
+
+  const handleOpenPlanner = () => {
+    if (!plannerWorkspaceId) {
+      window.alert('Hãy chọn một workspace trước khi mở AI Workspace Planner.');
+      return;
+    }
+    navigate(`/workspaces/${plannerWorkspaceId}/planner`);
+  };
+
   const pageNumbers = useMemo(() => {
     const pages = [];
     const windowSize = 3;
@@ -361,11 +399,39 @@ function CampaignListPage() {
               </button>
             </div>
             <button type="button" className="btn-create-campaign" onClick={handleCreateCampaign}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
               Tạo chiến dịch
+            </button>
+            <button
+              type="button"
+              className="btn-create-campaign btn-secondary"
+              onClick={handleOpenPlanner}
+              title="Quản lý tài liệu nguồn và chạy AI Workspace Planner"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+              Nguồn nội dung & AI Planner
             </button>
           </div>
         </section>
@@ -385,7 +451,15 @@ function CampaignListPage() {
                     ? selectedWorkspace.name
                     : 'Chọn workspace'}
               </span>
-              <svg className={`dropdown-chevron ${wsDropdownOpen ? 'open' : ''}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                className={`dropdown-chevron ${wsDropdownOpen ? 'open' : ''}`}
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </div>
@@ -438,7 +512,15 @@ function CampaignListPage() {
         <div className="campaign-toolbar-card">
           <div className="campaign-toolbar">
             <div className="search-input-wrapper">
-              <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                className="search-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
@@ -455,7 +537,11 @@ function CampaignListPage() {
             </div>
 
             <div className="filter-group">
-              <select className="filter-select" value={workspaceFilter} onChange={(e) => setWorkspaceFilter(e.target.value)}>
+              <select
+                className="filter-select"
+                value={workspaceFilter}
+                onChange={(e) => setWorkspaceFilter(e.target.value)}
+              >
                 <option value="ALL">Tất cả workspace</option>
                 {workspaces.map((ws) => (
                   <option key={ws.id} value={String(ws.id)}>
@@ -464,7 +550,11 @@ function CampaignListPage() {
                 ))}
               </select>
 
-              <select className="filter-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <select
+                className="filter-select"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
                 <option value="ALL">Tất cả trạng thái</option>
                 <option value="ACTIVE">Đang chạy</option>
                 <option value="PAUSED">Tạm dừng</option>
@@ -487,7 +577,10 @@ function CampaignListPage() {
             </div>
           </div>
           {creators.length === 0 && (
-            <p className="campaign-filter-hint">Chưa có dữ liệu người tạo từ API. Bộ lọc sẽ cập nhật khi backend trả về trường người tạo.</p>
+            <p className="campaign-filter-hint">
+              Chưa có dữ liệu người tạo từ API. Bộ lọc sẽ cập nhật khi backend trả về trường người
+              tạo.
+            </p>
           )}
         </div>
 
@@ -528,19 +621,31 @@ function CampaignListPage() {
                         </button>
                       </th>
                       <th>
-                        <button className="campaign-sort-button" onClick={() => handleSort('title')}>
-                          Chiến dịch {sortBy === 'name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                        <button
+                          className="campaign-sort-button"
+                          onClick={() => handleSort('title')}
+                        >
+                          Chiến dịch{' '}
+                          {sortBy === 'name' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                         </button>
                       </th>
                       <th>Người tạo</th>
                       <th>
-                        <button className="campaign-sort-button" onClick={() => handleSort('createdDate')}>
-                          Ngày tạo {sortBy === 'createdAt' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                        <button
+                          className="campaign-sort-button"
+                          onClick={() => handleSort('createdDate')}
+                        >
+                          Ngày tạo{' '}
+                          {sortBy === 'createdAt' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                         </button>
                       </th>
                       <th>
-                        <button className="campaign-sort-button" onClick={() => handleSort('status')}>
-                          Trạng thái {sortBy === 'status' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
+                        <button
+                          className="campaign-sort-button"
+                          onClick={() => handleSort('status')}
+                        >
+                          Trạng thái{' '}
+                          {sortBy === 'status' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
                         </button>
                       </th>
                       <th>Thao tác</th>
@@ -553,25 +658,37 @@ function CampaignListPage() {
                         <td>
                           <div className="campaign-title-cell">
                             <div className="campaign-row-leading">
-                              <span className="campaign-row-avatar" style={{ backgroundColor: campaign.initialsBg, color: campaign.initialsColor }}>
+                              <span
+                                className="campaign-row-avatar"
+                                style={{
+                                  backgroundColor: campaign.initialsBg,
+                                  color: campaign.initialsColor,
+                                }}
+                              >
                                 {campaign.initials}
                               </span>
                               <div>
                                 <span className="campaign-title-text">{campaign.title}</span>
-                                {campaign.description ? <span className="campaign-subtext">{campaign.description}</span> : null}
+                                {campaign.description ? (
+                                  <span className="campaign-subtext">{campaign.description}</span>
+                                ) : null}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td>
                           <div className="campaign-creator-chip table">
-                            <span className="campaign-creator-avatar">{campaign.creatorInitials}</span>
+                            <span className="campaign-creator-avatar">
+                              {campaign.creatorInitials}
+                            </span>
                             <span className="campaign-creator-name">{campaign.creatorName}</span>
                           </div>
                         </td>
                         <td>{formatDate(campaign.createdAt) || campaign.dateRange}</td>
                         <td>
-                          <span className={`campaign-badge ${getStatusClassName(campaign.rawStatus)}`}>
+                          <span
+                            className={`campaign-badge ${getStatusClassName(campaign.rawStatus)}`}
+                          >
                             {mapStatusToLabel(campaign.rawStatus)}
                           </span>
                         </td>
@@ -593,16 +710,25 @@ function CampaignListPage() {
             <div className="pagination-bar standalone">
               <div className="pagination-summary">
                 Hiển thị {campaigns.length > 0 ? page * pageSize + 1 : 0} -{' '}
-                {Math.min((page + 1) * pageSize, pagination.totalElements)} / {pagination.totalElements} chiến dịch
+                {Math.min((page + 1) * pageSize, pagination.totalElements)} /{' '}
+                {pagination.totalElements} chiến dịch
               </div>
               <div className="pagination-controls">
-                <select className="page-size-select" value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>
+                <select
+                  className="page-size-select"
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                >
                   <option value={6}>6 / trang</option>
                   <option value={8}>8 / trang</option>
                   <option value={10}>10 / trang</option>
                   <option value={12}>12 / trang</option>
                 </select>
-                <button className="page-button" disabled={page === 0} onClick={() => setPage((prev) => prev - 1)}>
+                <button
+                  className="page-button"
+                  disabled={page === 0}
+                  onClick={() => setPage((prev) => prev - 1)}
+                >
                   ←
                 </button>
                 {pageNumbers.map((pageIndex) => (
@@ -614,7 +740,11 @@ function CampaignListPage() {
                     {pageIndex + 1}
                   </button>
                 ))}
-                <button className="page-button" disabled={page + 1 >= pagination.totalPages} onClick={() => setPage((prev) => prev + 1)}>
+                <button
+                  className="page-button"
+                  disabled={page + 1 >= pagination.totalPages}
+                  onClick={() => setPage((prev) => prev + 1)}
+                >
                   →
                 </button>
               </div>
@@ -629,7 +759,11 @@ function CampaignListPage() {
                 Tạo chiến dịch đầu tiên
               </button>
               {workspaceFilter !== 'ALL' && (
-                <button type="button" className="btn-secondary-ghost" onClick={() => setWorkspaceFilter('ALL')}>
+                <button
+                  type="button"
+                  className="btn-secondary-ghost"
+                  onClick={() => setWorkspaceFilter('ALL')}
+                >
                   Xem tất cả workspace
                 </button>
               )}

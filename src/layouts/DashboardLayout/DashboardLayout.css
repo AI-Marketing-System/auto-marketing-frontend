@@ -122,6 +122,31 @@
   font-weight: 600;
 }
 
+/* Link con AI Planner, chi hien cho workspace dang mo */
+.sidebar__ws-sublink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 6px 12px 6px 34px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.sidebar__ws-sublink:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.sidebar__ws-sublink--active {
+  color: #7c3aed;
+  background-color: #f5f3ff;
+  font-weight: 600;
+}
+
 .sidebar__footer {
   padding: 12px;
   border-top: 1px solid #f1f5f9;

@@ -177,6 +177,31 @@ export default function Sidebar({ variant = 'dashboard' }) {
                       <span>{ws.name}</span>
                     </NavLink>
                   </div>
+                  {/* Route planner bắt buộc có :workspaceId nên không thể làm nav item top-level.
+                      Chỉ hiện cho workspace đang mở, để sidebar không phình ra với người có nhiều
+                      workspace, nhưng vẫn để người dùng thấy tính năng khi họ đang ở trong đó. */}
+                  {location.pathname.includes(`/workspaces/${ws.id}`) && (
+                    <NavLink
+                      to={`/workspaces/${ws.id}/planner`}
+                      className={({ isActive }) =>
+                        `sidebar__ws-sublink${isActive ? ' sidebar__ws-sublink--active' : ''}`
+                      }
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                      <span>AI Planner</span>
+                    </NavLink>
+                  )}
                 </div>
               ))
             )}

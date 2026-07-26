@@ -1,0 +1,570 @@
+/*
+ * Thu vien tai lieu cua trang AI Workspace Planner.
+ *
+ * Chuyen tu campaigns/components/KnowledgeAssetsModal.css: da bo cac rule chrome cua modal
+ * (backdrop, header, close, tooltip) va doi ten sang namespace `wp-`. CSS trong CRA la global,
+ * nen cac ten chung nhu .upload-area / .action-btn / .loading-spinner / .error-message truoc day
+ * ro ri giua cac trang; prefix de trang moi khong gop them vao do.
+ */
+
+.wp-dropzone {
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 32px 20px;
+  text-align: center;
+  position: relative;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.wp-dropzone:hover {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+}
+
+.wp-dropzone.wp-dropzone--active {
+  border-color: #7c3aed;
+  background: #ede9fe;
+  transform: scale(1.01);
+}
+
+.wp-dropzone__icon {
+  color: #7c3aed;
+  margin-bottom: 12px;
+}
+
+.wp-dropzone__text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #374151;
+  margin: 0 0 4px 0;
+}
+
+.wp-dropzone__hint {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 8px 0;
+}
+
+.wp-dropzone__formats {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.wp-dropzone__input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.wp-dropzone__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 12px;
+}
+
+.wp-wpSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: wpSpin 0.8s linear infinite;
+}
+
+@keyframes wpSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wp-doc-toolbar {
+  margin: 20px 0 16px;
+}
+
+.wp-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.wp-search__icon {
+  position: absolute;
+  left: 12px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.wp-search__input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.wp-search__input:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.wp-alert--error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wp-alert--error button {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.wp-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: #6b7280;
+}
+
+.wp-doc-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.wp-doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.wp-doc-table thead {
+  background: #f9fafb;
+}
+
+.wp-doc-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.wp-doc-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #111827;
+}
+
+.wp-doc-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.wp-doc-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wp-file-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.wp-doc-name__text {
+  font-weight: 500;
+  color: #111827;
+  word-break: break-word;
+}
+
+.wp-file-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.wp-uploader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wp-uploader__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.wp-uploader__name {
+  font-size: 13px;
+  color: #374151;
+}
+
+.wp-row-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.wp-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.wp-icon-btn:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.wp-icon-btn.wp-icon-btn--view:hover {
+  color: #3b82f6;
+  background: #eff6ff;
+}
+
+.wp-icon-btn.wp-icon-btn--download:hover {
+  color: #22c55e;
+  background: #f0fdf4;
+}
+
+.wp-icon-btn.wp-icon-btn--delete:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.wp-doc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.wp-doc-empty svg {
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.wp-doc-empty p {
+  margin: 0;
+  font-size: 15px;
+  color: #6b7280;
+}
+
+.wp-doc-empty .wp-doc-empty__hint {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+/* Document Preview Modal */
+.wp-preview__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 9999;
+}
+
+.wp-preview__modal {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 95vw;
+  max-width: 1200px;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  animation: wpPreviewIn 0.2s ease-out;
+}
+
+@keyframes wpPreviewIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.wp-preview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.wp-preview__title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.wp-preview__info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.wp-preview__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wp-preview__meta {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.wp-preview__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wp-preview__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.wp-preview__btn.wp-preview__btn--primary {
+  background: #7c3aed;
+  color: #ffffff;
+}
+
+.wp-preview__btn.wp-preview__btn--primary:hover {
+  background: #6d28d9;
+}
+
+.wp-preview__btn.wp-preview__btn--secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.wp-preview__btn.wp-preview__btn--secondary:hover {
+  background: #e5e7eb;
+}
+
+.wp-preview__btn.wp-preview__btn--close {
+  background: #f3f4f6;
+  color: #6b7280;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  justify-content: center;
+}
+
+.wp-preview__btn.wp-preview__btn--close:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.wp-preview__body {
+  flex: 1;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.wp-preview__iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #ffffff;
+}
+
+.wp-preview__img-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: auto;
+}
+
+.wp-preview__img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+
+/* ---- Bo sung cho trang planner: cot chon tai lieu ---- */
+
+.wp-doc-lib__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.wp-doc-lib__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--app-text, #0f172a);
+  margin: 0;
+}
+
+.wp-doc-lib__count {
+  font-size: 13px;
+  color: var(--app-muted, #64748b);
+}
+
+.wp-doc-lib__bulk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wp-doc-lib__bulk-btn {
+  background: none;
+  border: 1px solid var(--app-border, #e2e8f0);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7c3aed;
+  cursor: pointer;
+}
+
+.wp-doc-lib__bulk-btn:hover:not(:disabled) {
+  background: rgba(124, 58, 237, 0.08);
+}
+
+.wp-doc-lib__bulk-btn:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.wp-doc-table__check-col {
+  width: 44px;
+  text-align: center;
+}
+
+.wp-doc-check {
+  width: 16px;
+  height: 16px;
+  accent-color: #7c3aed;
+  cursor: pointer;
+}
+
+.wp-doc-check:disabled {
+  cursor: not-allowed;
+}
+
+.wp-doc-table tbody tr.wp-doc-row--selected {
+  background: rgba(124, 58, 237, 0.06);
+}
+
+.wp-doc-table tbody tr.wp-doc-row--unsupported {
+  opacity: 0.55;
+}
+
+.wp-doc-row__badge-unsupported {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wp-spinner {
+    animation: none;
+  }
+  .wp-preview__modal {
+    animation: none;
+  }
+}
