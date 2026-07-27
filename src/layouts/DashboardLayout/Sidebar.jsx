@@ -64,6 +64,25 @@ const DASHBOARD_ITEMS = [
       </svg>
     ),
   },
+  {
+    to: '/invitations',
+    label: 'Lời mời',
+    icon: (
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+        <polyline points="22,6 12,13 2,6" />
+      </svg>
+    ),
+  },
 ];
 
 const ADMIN_ITEMS = [
@@ -92,37 +111,169 @@ const ADMIN_ITEMS = [
 export default function Sidebar({ variant = 'dashboard' }) {
   const items = variant === 'admin' ? ADMIN_ITEMS : DASHBOARD_ITEMS;
   const [workspaces, setWorkspaces] = useState([]);
+  const [memberWorkspaces, setMemberWorkspaces] = useState([]);
   const expandedWsRef = useRef({});
   const location = useLocation();
+
+  /**
+   * Id workspace đang mở, lấy bằng cách tách ĐÚNG một segment của URL.
+   *
+   * KHÔNG dùng `pathname.includes('/workspaces/' + ws.id)`: đó là so khớp chuỗi con, nên khi đang ở
+   * /workspaces/10/campaigns thì workspace id 1 cũng khớp (vì "/workspaces/10..." có chứa
+   * "/workspaces/1"). Hậu quả là hai card cùng sáng và hiện hai link "AI Planner".
+   */
+  const activeWorkspaceId = location.pathname.match(/\/workspaces\/([^/]+)/)?.[1] ?? null;
+  const isActiveWorkspace = (ws) => activeWorkspaceId === String(ws.id);
 
   useEffect(() => {
     if (variant === 'admin') return;
     let cancelled = false;
+
     workspaceApi
       .myWorkspaces(API_BASE_URL)
       .then((res) => {
-        console.log('Workspaces API Response:', res);
         const wsList = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
         if (!cancelled && wsList.length > 0) {
           setWorkspaces(wsList);
-
-          // Optionally auto-expand the workspace if we are currently viewing it
           const wsIdMatch = location.pathname.match(/\/workspaces\/([^/]+)/);
           if (wsIdMatch && wsIdMatch[1]) {
             expandedWsRef.current = { ...expandedWsRef.current, [wsIdMatch[1]]: true };
           }
         } else if (!cancelled) {
           setWorkspaces([]);
-          console.error('Workspaces list is empty or format unexpected:', res);
         }
       })
       .catch((err) => {
         console.error('Workspaces API Error:', err);
       });
+
+    workspaceApi
+      .memberWorkspaces(API_BASE_URL)
+      .then((res) => {
+        const wsList = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+        if (!cancelled) {
+          setMemberWorkspaces(wsList);
+        }
+      })
+      .catch((err) => {
+        console.error('Member Workspaces API Error:', err);
+      });
+
     return () => {
       cancelled = true;
     };
   }, [variant, location.pathname]);
+
+  const renderWorkspaceCard = (ws) => (
+    <NavLink
+      key={ws.id}
+      to={`/workspaces/${ws.id}/campaigns`}
+      className={({ isActive }) =>
+        `sidebar__ws-card ${isActive || isActiveWorkspace(ws) ? 'sidebar__ws-card--active' : ''}`
+      }
+      style={{ textDecoration: 'none' }}
+    >
+      <div className="sidebar__ws-avatar">
+        <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" />
+        </svg>
+      </div>
+      <div className="sidebar__ws-info">
+        <div className="sidebar__ws-name">{ws.name}</div>
+        {ws.role === 'OWNER' && <div className="sidebar__ws-role">Chủ sở hữu</div>}
+      </div>
+    </NavLink>
+  );
+
+  const renderMemberWorkspaceCard = (ws) => (
+    <NavLink
+      key={ws.id}
+      to={`/workspaces/${ws.id}/campaigns`}
+      className={({ isActive }) =>
+        `sidebar__ws-card ${isActive || isActiveWorkspace(ws) ? 'sidebar__ws-card--active' : ''}`
+      }
+      style={{ textDecoration: 'none' }}
+    >
+      <div className="sidebar__ws-avatar" style={{ backgroundColor: 'transparent' }}>
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#64748b"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      </div>
+      <div className="sidebar__ws-info">
+        <div className="sidebar__ws-name">{ws.name}</div>
+        <div
+          className="sidebar__ws-role"
+          style={{
+            flexWrap: 'nowrap',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>
+            Bởi: {ws.ownerName || 'Unknown'}
+          </span>
+          <span style={{ flexShrink: 0, fontSize: '10px' }}>•</span>
+          <span
+            style={{
+              backgroundColor: ws.role === 'ADMIN' ? '#dbeafe' : '#e2e8f0',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              fontSize: '10.5px',
+              color: ws.role === 'ADMIN' ? '#1d4ed8' : '#475569',
+              fontWeight: 600,
+              flexShrink: 0,
+            }}
+          >
+            {ws.role === 'ADMIN' ? 'Admin' : 'Member'}
+          </span>
+        </div>
+      </div>
+    </NavLink>
+  );
+
+  const renderPlannerSublink = (ws) => {
+    // Chỉ hiện cho workspace ĐANG mở, và chỉ với workspace mình sở hữu: AI Planner ở backend dùng
+    // WorkspaceAccessGuard vốn chỉ cho phép chủ workspace, nên hiện link ở mục "được mời" sẽ dẫn
+    // thẳng tới lỗi 403.
+    if (!isActiveWorkspace(ws)) return null;
+    return (
+      <NavLink
+        key={`planner-${ws.id}`}
+        to={`/workspaces/${ws.id}/planner`}
+        className={({ isActive }) =>
+          `sidebar__ws-sublink${isActive ? ' sidebar__ws-sublink--active' : ''}`
+        }
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+        <span>AI Planner</span>
+      </NavLink>
+    );
+  };
 
   return (
     <aside className="sidebar">
@@ -151,34 +302,28 @@ export default function Sidebar({ variant = 'dashboard' }) {
                 Không có dữ liệu...
               </div>
             ) : (
-              workspaces.map((ws) => (
-                <div key={ws.id} className="sidebar__ws-item">
-                  <div
-                    className={`sidebar__ws-header ${location.pathname.includes(`/workspaces/${ws.id}`) ? 'sidebar__ws-header--active' : ''}`}
-                  >
-                    <NavLink
-                      to={`/workspaces/${ws.id}/campaigns`}
-                      className={({ isActive }) =>
-                        `sidebar__ws-link${isActive ? ' sidebar__ws-link--active' : ''}`
-                      }
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                      </svg>
-                      <span>{ws.name}</span>
-                    </NavLink>
+              <div className="sidebar__ws-list">
+                {/* Card và link con của cùng một workspace phải nằm chung một khối. Trước đây dùng
+                    hai .map() tách rời nên toàn bộ card render trước rồi mới tới toàn bộ link con,
+                    khiến "AI Planner" luôn rơi xuống đáy danh sách thay vì nằm dưới workspace. */}
+                {workspaces.map((ws) => (
+                  <div key={ws.id} className="sidebar__ws-item">
+                    {renderWorkspaceCard(ws)}
+                    {renderPlannerSublink(ws)}
                   </div>
+                ))}
+              </div>
+            )}
+
+            {memberWorkspaces.length > 0 && (
+              <>
+                <div className="sidebar__section-title" style={{ marginTop: '24px' }}>
+                  DỰ ÁN ĐƯỢC MỜI (MEMBER)
                 </div>
-              ))
+                <div className="sidebar__ws-list">
+                  {memberWorkspaces.map(renderMemberWorkspaceCard)}
+                </div>
+              </>
             )}
           </div>
         )}
