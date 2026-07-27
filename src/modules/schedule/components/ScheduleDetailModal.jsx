@@ -17,13 +17,36 @@ function StatusBadge({ status }) {
   return <span className={`sdm-badge sdm-badge--${cfg.cls}`}>{cfg.label}</span>;
 }
 
-/** Icon fanpage */
-function FanpageAvatar({ name }) {
+/** Lấy 1-2 chữ cái đầu từ tên fanpage */
+function getInitials(name) {
+  if (!name) return '?';
+  return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+/** Avatar fanpage: hiển thị ảnh thật hoặc initials + Facebook badge */
+function FanpageAvatar({ name, avatarUrl }) {
   return (
-    <div className="sdm-fp-avatar">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-      </svg>
+    <div className="sdm-fp-avatar-wrap">
+      <div className="sdm-fp-avatar">
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={name}
+            className="sdm-fp-avatar__img"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <span
+          className="sdm-fp-avatar__initial"
+          style={{ display: avatarUrl ? 'none' : 'flex' }}
+        >
+          {getInitials(name)}
+        </span>
+      </div>
+      <div className="sdm-fp-avatar__badge">f</div>
     </div>
   );
 }
@@ -60,10 +83,11 @@ export default function ScheduleDetailModal({
   const [confirmCancel, setConfirmCancel] = useState(false);
 
   // US-35 – Edit state
-  const [editDate, setEditDate]       = useState('');  // YYYY-MM-DD
-  const [editTime, setEditTime]       = useState('');  // HH:mm
-  const [editMode, setEditMode]       = useState(false);
-  const [updating, setUpdating]       = useState(false);
+  const [editDate, setEditDate]           = useState('');  // YYYY-MM-DD
+  const [editTime, setEditTime]           = useState('');  // HH:mm
+  const [editMode, setEditMode]           = useState(false);
+  const [updating, setUpdating]           = useState(false);
+  const [localPublishTime, setLocalPublishTime] = useState(null); // thời gian hiển thị sau khi đã sửa
 
   /** Fetch danh sách targets khi modal mở */
   const fetchTargets = useCallback(async () => {
@@ -87,11 +111,26 @@ export default function ScheduleDetailModal({
     try {
       const list = await getWorkspaceFanpages(workspaceId);
       setAllFanpages(list);
-      if (list.length > 0) setAddFanpageId(String(list[0].fanpageId));
+      // KHÔNG set addFanpageId ở đây vì chưa có targets, sẽ sync qua useEffect bên dưới
     } catch {
       /* silent – không cần thông báo lỗi nếu fanpages fail */
     }
   }, [workspaceId]);
+
+  /**
+   * Tự động đồng bộ addFanpageId về fanpage đầu tiên CÒN CÓ THỂ THÊM
+   * (chưa có trong targets) mỗi khi targets hoặc allFanpages thay đổi.
+   * Đây là fix cho bug: addFanpageId bị set theo allFanpages[0] thay vì availableToAdd[0]
+   */
+  useEffect(() => {
+    const existingIds = new Set(targets.map((t) => String(t.fanpageId)));
+    const available = allFanpages.filter((fp) => !existingIds.has(String(fp.fanpageId)));
+    if (available.length > 0) {
+      setAddFanpageId(String(available[0].fanpageId));
+    } else {
+      setAddFanpageId('');
+    }
+  }, [targets, allFanpages]);
 
   useEffect(() => {
     if (!isOpen || !schedule) return;
@@ -99,6 +138,7 @@ export default function ScheduleDetailModal({
     setSuccessMsg('');
     setConfirmCancel(false);
     setEditMode(false);
+    setLocalPublishTime(schedule.publishTime); // reset về giá trị gốc khi mở modal
     // Initialize edit fields from current schedule publishTime
     if (schedule.publishTime) {
       const iso = schedule.publishTime;
@@ -132,6 +172,8 @@ export default function ScheduleDetailModal({
     setSuccessMsg('');
     try {
       await scheduleApi.updateSchedule(API_BASE_URL, schedule.id, { publishTime: newPublishTime });
+      // Cập nhật ngay giá trị hiển thị trong modal (không cần đóng/mở lại)
+      setLocalPublishTime(newPublishTime);
       setSuccessMsg('Đã cập nhật lịch đăng thành công!');
       setEditMode(false);
       onSuccess?.();
@@ -211,7 +253,7 @@ export default function ScheduleDetailModal({
 
   /** Map fanpageId → tên fanpage */
   const fanpageMap = {};
-  allFanpages.forEach((fp) => { fanpageMap[fp.fanpageId] = fp.fanpageName || `Fanpage #${fp.fanpageId}`; });
+  allFanpages.forEach((fp) => { fanpageMap[fp.fanpageId] = fp; }); // lưu cả object để lấy avatarUrl
 
   /** Fanpages chưa có trong targets (để dropdown thêm) */
   const existingFanpageIds = new Set(targets.map((t) => String(t.fanpageId)));
@@ -255,7 +297,7 @@ export default function ScheduleDetailModal({
               </div>
               <div className="sdm-post-info__row">
                 <span className="sdm-post-info__label">Thời gian</span>
-                <span className="sdm-post-info__value">{formatPublishTime(schedule.publishTime)}</span>
+                <span className="sdm-post-info__value">{formatPublishTime(localPublishTime || schedule.publishTime)}</span>
               </div>
               <div className="sdm-post-info__row">
                 <span className="sdm-post-info__label">Trạng thái</span>
@@ -362,23 +404,26 @@ export default function ScheduleDetailModal({
               <p className="sdm-empty">Chưa có fanpage nào được lên lịch.</p>
             ) : (
               <ul className="sdm-target-list">
-                {targets.map((target) => (
-                  <li key={target.id} className="sdm-target-item">
-                    <FanpageAvatar name={fanpageMap[target.fanpageId] || `#${target.fanpageId}`} />
-                    <div className="sdm-target-info">
-                      <span className="sdm-target-name">
-                        {fanpageMap[target.fanpageId] || `Fanpage #${target.fanpageId}`}
-                      </span>
-                      {target.errorMessage && (
-                        <span className="sdm-target-error">{target.errorMessage}</span>
-                      )}
-                      {target.retryCount > 0 && (
-                        <span className="sdm-target-retry">Thử lại: {target.retryCount} lần</span>
-                      )}
-                    </div>
-                    <StatusBadge status={target.status} />
-                  </li>
-                ))}
+                {targets.map((target) => {
+                  const fp = fanpageMap[target.fanpageId];
+                  const fpName = fp?.fanpageName || `Fanpage #${target.fanpageId}`;
+                  const fpAvatar = fp?.fanpageAvatarUrl || null;
+                  return (
+                    <li key={target.id} className="sdm-target-item">
+                      <FanpageAvatar name={fpName} avatarUrl={fpAvatar} />
+                      <div className="sdm-target-info">
+                        <span className="sdm-target-name">{fpName}</span>
+                        {target.errorMessage && (
+                          <span className="sdm-target-error">{target.errorMessage}</span>
+                        )}
+                        {target.retryCount > 0 && (
+                          <span className="sdm-target-retry">Thử lại: {target.retryCount} lần</span>
+                        )}
+                      </div>
+                      <StatusBadge status={target.status} />
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </section>
