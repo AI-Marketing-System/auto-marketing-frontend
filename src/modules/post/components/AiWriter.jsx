@@ -1,29 +1,58 @@
 import React, { useState } from 'react';
+import { postApi } from '../api/postApi';
+import { API_BASE_URL } from '../../../config/env';
 
 /**
  * AiWriter – Bảng viết nội dung bằng AI
  *
  * @param {{
  *   onInsert: (text: string) => void,
+ *   topicId?: string | number,
  * }} props
  */
 const TONES = ['Chuyên nghiệp', 'Vui tươi', 'Cảm xúc', 'Hài hước', 'Thuyết phục'];
 
-export default function AiWriter({ onInsert }) {
+export default function AiWriter({ onInsert, topicId }) {
   const [activeTab, setActiveTab]   = useState('write');   // 'write' | 'read'
   const [prompt, setPrompt]         = useState('');
   const [tone, setTone]             = useState('Vui tươi');
   const [loading, setLoading]       = useState(false);
+  const [errorMsg, setErrorMsg]     = useState(null);
   const [expanded, setExpanded]     = useState(true);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
     setLoading(true);
-    // Simulated delay – replace with real API call
-    await new Promise((r) => setTimeout(r, 1800));
-    const result = `✨ [AI - ${tone}] ${prompt.trim()} — Nội dung được tạo bởi AI với giọng văn ${tone.toLowerCase()}.`;
-    onInsert?.(result);
-    setLoading(false);
+    setErrorMsg(null);
+
+    try {
+      const payload = {
+        topicId: topicId ? Number(topicId) : 1,
+        tone: tone,
+        audience: prompt.trim(),
+        language: 'Vietnamese',
+        length: 'Medium',
+      };
+
+      const res = await postApi.generate(payload, API_BASE_URL);
+      if (res && res.success && res.data) {
+        const generatedData = res.data;
+        let generatedText = generatedData.content || '';
+
+        if (generatedData.hashtags && Array.isArray(generatedData.hashtags) && generatedData.hashtags.length > 0) {
+          generatedText += '\n\n' + generatedData.hashtags.join(' ');
+        }
+
+        onInsert?.(generatedText);
+      } else {
+        setErrorMsg(res?.message || 'Không thể tạo nội dung bằng AI.');
+      }
+    } catch (err) {
+      console.error('AI generate content error:', err);
+      setErrorMsg(err.message || 'Không thể gọi dịch vụ AI (Gemini). Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -113,6 +142,11 @@ export default function AiWriter({ onInsert }) {
                     <>✦ Tạo nội dung</>
                   )}
                 </button>
+                {errorMsg && (
+                  <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '8px', textAlign: 'center' }}>
+                    {errorMsg}
+                  </div>
+                )}
               </>
             )}
 
