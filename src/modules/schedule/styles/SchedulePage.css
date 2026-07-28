@@ -26,35 +26,6 @@
   gap: 16px;
 }
 
-.sc-workspace-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-  cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 8px;
-  transition: background 0.15s;
-}
-
-.sc-workspace-selector:hover {
-  background: #f1f5f9;
-}
-
-.sc-workspace-selector__icon {
-  font-size: 18px;
-}
-
-.sc-workspace-selector__name {
-  font-size: 14px;
-}
-
-.sc-workspace-selector svg {
-  color: #94a3b8;
-}
-
 .sc-member-avatars {
   display: flex;
   align-items: center;
@@ -511,13 +482,96 @@
   overflow: hidden;
 }
 
-.sc-post-card__platform {
+.sc-post-card__fanpages {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 10px;
+  gap: 3px;
+  margin-top: 2px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.sc-post-card__no-fanpage {
+  font-size: 9px;
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+/* Mini avatar của từng fanpage */
+.sc-fanpage-mini {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.sc-fanpage-mini__circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 1.5px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.sc-fanpage-mini__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.sc-fanpage-mini__initial {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.sc-fanpage-mini__badge {
+  position: absolute;
+  bottom: -1px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1877f2;
+  border: 1px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+}
+
+/* Hiển thị "+N" khi có nhiều hơn 3 fanpage */
+.sc-fanpage-mini__extra {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  border: 1.5px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 700;
   color: #64748b;
-  margin-top: 1px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 /* ─── Modal ─── */

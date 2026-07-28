@@ -143,4 +143,5 @@ export const campaignApi = {
 
 export const workspaceApi = {
   myWorkspaces: (baseUrl) => requestJson('/workspaces', { method: 'GET' }, baseUrl),
+  memberWorkspaces: (baseUrl) => requestJson('/workspaces/member', { method: 'GET' }, baseUrl),
 };

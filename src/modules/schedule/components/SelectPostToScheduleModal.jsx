@@ -8,6 +8,7 @@ export default function SelectPostToScheduleModal({
   isOpen,
   onClose,
   workspaceId,
+  campaignId,
   selectedDate,
   selectedHour,
   onSuccess,
@@ -32,7 +33,13 @@ export default function SelectPostToScheduleModal({
       setLoadingFanpages(true);
       setErrorMessage('');
       try {
-        const postsRes = await scheduleApi.listAvailablePosts(API_BASE_URL, workspaceId);
+        // Nếu có campaign filter thì lấy bài nháp theo campaign đó, ngược lại lấy toàn workspace
+        let postsRes;
+        if (campaignId) {
+          postsRes = await scheduleApi.listAvailablePostsByCampaign(API_BASE_URL, campaignId);
+        } else {
+          postsRes = await scheduleApi.listAvailablePosts(API_BASE_URL, workspaceId);
+        }
         const postsList = Array.isArray(postsRes) ? postsRes : postsRes?.data || [];
         setAvailablePosts(postsList);
         if (postsList.length > 0) {
@@ -52,7 +59,7 @@ export default function SelectPostToScheduleModal({
     }
 
     loadData();
-  }, [isOpen, workspaceId]);
+  }, [isOpen, workspaceId, campaignId]);
 
   // Set initial time when selectedHour changes
   useEffect(() => {
