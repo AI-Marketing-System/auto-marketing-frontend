@@ -18,7 +18,7 @@ import '../styles/CreatePost.css';
  *   onDraft: (data: object) => void,
  * }} props
  */
-export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft }) {
+export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, topicId }) {
   // ── Platform ──────────────────────────────────────────
   const [selectedPlatforms, setSelectedPlatforms] = useState(['Facebook']);
 
@@ -116,7 +116,7 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft }) 
             />
 
             {/* AI Writer */}
-            <AiWriter onInsert={handleAiInsert} />
+            <AiWriter onInsert={handleAiInsert} topicId={topicId} />
           </div>
 
           {/* Right – scheduler */}
