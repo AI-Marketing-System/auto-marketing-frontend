@@ -7,6 +7,8 @@ export const scheduleApi = {
     requestJson(`/schedules?workspaceId=${workspaceId}`, { method: 'GET' }, baseUrl),
   listAvailablePosts: (baseUrl, workspaceId) =>
     requestJson(`/posts/available?workspaceId=${workspaceId}`, { method: 'GET' }, baseUrl),
+  listAvailablePostsByCampaign: (baseUrl, campaignId) =>
+    requestJson(`/posts/available?campaignId=${campaignId}`, { method: 'GET' }, baseUrl),
   createSchedule: (baseUrl, payload) =>
     requestJson('/schedules', { method: 'POST', body: JSON.stringify(payload) }, baseUrl),
 

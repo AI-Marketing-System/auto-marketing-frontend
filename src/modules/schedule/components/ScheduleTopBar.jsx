@@ -1,34 +1,28 @@
 import React from 'react';
+import WorkspaceFanpageBar from '../../campaigns/components/WorkspaceFanpageBar';
 
 /**
  * Thanh trên cùng của trang Schedule:
- * - Workspace selector + member avatars (bên trái)
+ * - Danh sách fanpage đã kết nối với workspace (bên trái) — dùng lại WorkspaceFanpageBar
  * - Nút Quản lý, Viết bài mới, Công cụ (bên phải)
  *
  * @param {{
+ *   workspaceId: number,
  *   workspaceName: string,
  *   onNewPost: () => void,
  *   onPublish: () => void,
  * }} props
  */
-export default function ScheduleTopBar({ workspaceName = 'Client - Coffee House Brand', onNewPost, onPublish }) {
+export default function ScheduleTopBar({ workspaceId, workspaceName = 'Chọn Workspace', onNewPost, onPublish }) {
   return (
     <div className="sc-topbar">
-      {/* ── Bên trái ── */}
+      {/* ── Bên trái: Fanpage đã kết nối ── */}
       <div className="sc-topbar__left">
-        <div className="sc-workspace-selector">
-          <span className="sc-workspace-selector__icon">☕</span>
-          <span className="sc-workspace-selector__name">{workspaceName}</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </div>
-
-        <div className="sc-member-avatars">
-          <div className="sc-avatar sc-avatar--1">NK</div>
-          <div className="sc-avatar sc-avatar--2">TQ</div>
-          <button className="sc-avatar sc-avatar--add" title="Thêm thành viên">+</button>
-        </div>
+        {workspaceId ? (
+          <WorkspaceFanpageBar workspaceId={workspaceId} />
+        ) : (
+          <span style={{ fontSize: '13px', color: '#94a3b8' }}>Chọn workspace để xem fanpage</span>
+        )}
       </div>
 
       {/* ── Bên phải ── */}
@@ -66,3 +60,4 @@ export default function ScheduleTopBar({ workspaceName = 'Client - Coffee House 
     </div>
   );
 }
+
