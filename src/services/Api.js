@@ -1,4 +1,6 @@
-const DEFAULT_API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || '/api/v1').replace(/\/+$/, '');
+const DEFAULT_API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || '/api/v1'
+).replace(/\/+$/, '');
 
 const ACCESS_TOKEN_STORAGE_KEY = 'marqops.authLab.accessToken';
 const REFRESH_TOKEN_STORAGE_KEY = 'marqops.authLab.refreshToken';
@@ -7,7 +9,6 @@ function clearStoredAuthTokens() {
   if (typeof window === 'undefined') {
     return;
   }
-
   window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
   window.localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
 }
@@ -26,7 +27,8 @@ function getAuthHeaders(path, options = {}) {
   };
 
   const isPublicAuthRoute =
-    typeof path === 'string' && (path.startsWith('/auth/') || path === '/auth');
+    typeof path === 'string' &&
+    (path.startsWith('/auth/') || path === '/auth');
 
   if (!isPublicAuthRoute && typeof window !== 'undefined') {
     const accessToken = window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -34,7 +36,6 @@ function getAuthHeaders(path, options = {}) {
       headers.Authorization = `Bearer ${accessToken}`;
     }
   }
-
   return headers;
 }
 
@@ -43,22 +44,43 @@ async function readResponseBody(response) {
     return null;
   }
 
-  const contentType = response.headers.get('content-type') || '';
-
-  if (contentType.includes('application/json')) {
-    const text = await response.text();
-    return text && text.trim() ? JSON.parse(text) : null;
+  const contentType = (
+    response.headers.get('content-type') || ''
+  ).toLowerCase();
+  
+  const text = await response.text();
+  if (!text || !text.trim()) {
+    return null;
   }
 
-  const text = await response.text();
-  return text ? { message: text, raw: text, contentType } : null;
+  if (contentType.includes('application/json')) {
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      return {
+        message: text,
+        raw: text,
+        contentType,
+      };
+    }
+  }
+
+  return {
+    message: text,
+    raw: text,
+    contentType,
+  };
 }
 
-export async function requestJson(path, options = {}, baseUrl) {
+export async function requestJson(
+  path,
+  options = {},
+  baseUrl = DEFAULT_API_BASE_URL
+) {
   const response = await fetch(joinUrl(baseUrl, path), {
     cache: 'no-store',
-    headers: getAuthHeaders(path, options),
     ...options,
+    headers: getAuthHeaders(path, options),
   });
 
   const body = await readResponseBody(response);
@@ -68,18 +90,13 @@ export async function requestJson(path, options = {}, baseUrl) {
       clearStoredAuthTokens();
     }
 
-    const error = new Error(body?.message || `Request failed with status ${response.status}`);
-    error.status = response.status;
-    error.body = body;
-    throw error;
-  }
-
-  if (body && body.contentType && !body.contentType.includes('application/json')) {
     const error = new Error(
-      `Expected JSON from API nhưng nhận được ${body.contentType || 'response không rõ kiểu'}. Kiểm tra REACT_APP_API_BASE_URL.`
+      body?.message || `Request failed with status ${response.status}`
     );
+
     error.status = response.status;
     error.body = body;
+
     throw error;
   }
 
@@ -91,6 +108,41 @@ export function getApiBaseUrl() {
 }
 
 export function getAccessToken() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  return window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+}
+
+export function getRefreshToken() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  return window.localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+}
+
+export function setAccessToken(token) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  if (token) {
+    window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
+  } else {
+    window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+  }
+}
+
+export function setRefreshToken(token) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  if (token) {
+    window.localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
+  } else {
+    window.localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+  }
+}
+
+export function clearAuthTokens() {
+  clearStoredAuthTokens();
 }
