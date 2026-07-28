@@ -16,14 +16,13 @@ import {
 } from '../utils/scheduleHelpers';
 
 import { scheduleApi } from '../api/scheduleApi';
+import { getWorkspaceFanpages } from '../../campaigns/api/workspaceFanpageApi';
 import { API_BASE_URL } from '../../../config/env';
 
 /**
  * Maps the API schedules data list to the calendar posts structure
  */
-function mapSchedulesToCalendarPosts(schedules, weekDays) {
-  const platforms = ['Facebook', 'Instagram', 'TikTok'];
-  const colors = ['#7c3aed', '#10b981', '#ef4444', '#f59e0b', '#3b82f6'];
+function mapSchedulesToCalendarPosts(schedules, weekDays, fanpagesMap = {}) {
 
   return schedules.map((sch) => {
     let dateStr = sch.publishTime;
@@ -65,11 +64,16 @@ function mapSchedulesToCalendarPosts(schedules, weekDays) {
         color = '#7c3aed';
     }
 
-    // Determine platform (we default to Facebook as per current structure of fanpages)
-    let platform = 'Facebook';
-    if (sch.targets && sch.targets.length > 0) {
-      // Future mapping logic from targets...
-    }
+    // Thu thập danh sách fanpage được lên lịch và map thông tin từ fanpagesMap
+    const targetFanpages = (sch.targets || []).map((t) => {
+      const fp = fanpagesMap[t.fanpageId];
+      return {
+        fanpageId: t.fanpageId,
+        fanpageName: fp?.fanpageName || `Fanpage #${t.fanpageId}`,
+        fanpageAvatarUrl: fp?.fanpageAvatarUrl || null,
+        targetStatus: t.status,
+      };
+    });
 
     return {
       id: sch.scheduleId,
@@ -78,7 +82,7 @@ function mapSchedulesToCalendarPosts(schedules, weekDays) {
       minute,
       title: sch.postTitle || 'Bài viết không có tiêu đề',
       postContent: sch.postContent || '',
-      platform: platform,
+      targetFanpages, // danh sách fanpage được lên lịch
       color,
       image: null,
       publishTime: sch.publishTime,
@@ -96,11 +100,12 @@ function mapSchedulesToCalendarPosts(schedules, weekDays) {
  * - Truyền props xuống các component con
  */
 export default function SchedulePage({ workspaceId, workspaces = [], campaigns = [] }) {
-  // ── State tuần & dữ liệu ──
+  // ── State dữ liệu ──
   const [currentDate, setCurrentDate] = useState(new Date());
   const [weekDays, setWeekDays]       = useState([]);
   const [posts, setPosts]             = useState([]);
   const [schedules, setSchedules]     = useState([]);
+  const [fanpages, setFanpages]       = useState([]);   // fanpage của workspace hiện tại
 
   // ── State bộ lọc ──
   const [campaignFilter, setCampaignFilter] = useState('Tất cả chiến dịch');
@@ -122,6 +127,20 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
 
   const selectedWorkspace = workspaces.find((ws) => ws.id === workspaceId);
   const workspaceName = selectedWorkspace ? selectedWorkspace.name : 'Chọn Workspace';
+
+  // Build fanpagesMap {[fanpageId]: fanpage} để PostCard tra cứu thông tin avatar
+  const fanpagesMap = fanpages.reduce((acc, fp) => {
+    acc[fp.fanpageId] = fp;
+    return acc;
+  }, {});
+
+  // Fetch fanpages khi workspace thay đổi
+  useEffect(() => {
+    if (!workspaceId) return;
+    getWorkspaceFanpages(workspaceId)
+      .then((list) => setFanpages(list || []))
+      .catch(() => {});
+  }, [workspaceId]);
 
   // Tính lại weekDays mỗi khi tuần thay đổi
   useEffect(() => {
@@ -157,15 +176,15 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
   // Fetch schedules from backend when workspaceId or campaignFilter changes
   useEffect(() => {
     triggerFetchSchedules();
-  }, [workspaceId, campaignFilter]);
+  },  [workspaceId, campaignFilter]);
 
   // Map schedules to posts inside current week view
   useEffect(() => {
     if (weekDays.length > 0) {
-      const mapped = mapSchedulesToCalendarPosts(schedules, weekDays);
+      const mapped = mapSchedulesToCalendarPosts(schedules, weekDays, fanpagesMap);
       setPosts(mapped);
     }
-  }, [schedules, weekDays]);
+  }, [schedules, weekDays, fanpages]); // re-map khi fanpages được tải xong
 
   // ── Handlers điều hướng tuần ──
   const goToPrevWeek = () =>
@@ -204,6 +223,7 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
     <div className="sc-page">
       {/* 1. Thanh trên cùng */}
       <ScheduleTopBar
+        workspaceId={workspaceId}
         workspaceName={workspaceName}
         onNewPost={() => setShowNewPostModal(true)}
         onPublish={() => {}}
@@ -250,6 +270,7 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
         isOpen={showSelectPostModal}
         onClose={() => setShowSelectPostModal(false)}
         workspaceId={workspaceId}
+        campaignId={campaignFilter && campaignFilter !== 'Tất cả chiến dịch' ? Number(campaignFilter) : null}
         selectedDate={selectedCellDate}
         selectedHour={selectedCellHour}
         onSuccess={triggerFetchSchedules}
