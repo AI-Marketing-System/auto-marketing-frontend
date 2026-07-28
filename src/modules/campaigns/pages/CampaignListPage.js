@@ -25,7 +25,7 @@ import {
 } from '../utils/campaignUtils';
 import { API_BASE_URL } from '../../../config/env';
 import { useAuth } from '../../../context/AuthContext';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import SchedulePage from '../../schedule/pages/SchedulePage';
 
 const SUMMARY_ITEMS = [
@@ -705,7 +705,9 @@ function CampaignListPage() {
                                 {campaign.initials}
                               </span>
                               <div>
-                                <span className="campaign-title-text">{campaign.title}</span>
+                                <Link to={`/workspaces/${currentWorkspaceId || campaign.workspaceId}/campaigns/${campaign.id}/topics`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                  <span className="campaign-title-text" style={{ fontWeight: '600', color: '#4f46e5' }}>{campaign.title}</span>
+                                </Link>
                                 {campaign.description ? (
                                   <span className="campaign-subtext">{campaign.description}</span>
                                 ) : null}
