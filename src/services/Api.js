@@ -70,7 +70,7 @@ export async function requestJson(path, options = {}, baseUrl) {
   });
 
   const body = await readResponseBody(response);
-
+  //|| response.status === 403
   if (!response.ok) {
     if (response.status === 401) {
       clearStoredAuthTokens();
