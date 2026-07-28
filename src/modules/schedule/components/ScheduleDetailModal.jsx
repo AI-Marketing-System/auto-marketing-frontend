@@ -171,9 +171,10 @@ export default function ScheduleDetailModal({
     setError('');
     setSuccessMsg('');
     try {
-      await scheduleApi.updateSchedule(API_BASE_URL, schedule.id, { publishTime: newPublishTime });
-      // Cập nhật ngay giá trị hiển thị trong modal (không cần đóng/mở lại)
-      setLocalPublishTime(newPublishTime);
+      const res = await scheduleApi.updateSchedule(API_BASE_URL, schedule.id, { publishTime: newPublishTime });
+      // Lấy publishTime chuẩn từ response (ISO UTC) nếu có, tránh bị lệch 7h
+      const updatedTime = res?.data?.publishTime || res?.publishTime || newPublishTime;
+      setLocalPublishTime(updatedTime);
       setSuccessMsg('Đã cập nhật lịch đăng thành công!');
       setEditMode(false);
       onSuccess?.();
@@ -244,7 +245,8 @@ export default function ScheduleDetailModal({
   /** Format publishTime từ ISO → giờ ngày VN */
   function formatPublishTime(iso) {
     if (!iso) return '—';
-    const d = new Date(typeof iso === 'string' && !iso.endsWith('Z') ? iso + 'Z' : iso);
+    // Nếu iso là chuỗi local không có 'Z' hay offset (ví dụ "2026-07-29T07:00:00"), parse thẳng bằng new Date(iso) để giữ nguyên giờ địa phương
+    const d = new Date(iso);
     return d.toLocaleString('vi-VN', {
       weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
