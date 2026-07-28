@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import '../styles/CampaignListPage.css';
 import '../../../modules/social-accounts/styles/SocialAccountsPage.css';
 import CreateCampaignModal from '../components/CreateCampaignModal';
-import InviteMemberModal from '../components/InviteMemberModal';
+import InviteMemberModal from '../../workspace/components/InviteMemberModal';
 import CampaignCard from '../components/CampaignCard';
 import CampaignActions from '../components/CampaignActions';
 import WorkspaceFanpageBar from '../components/WorkspaceFanpageBar';
@@ -384,7 +384,7 @@ function CampaignListPage() {
                     ? selectedWorkspace.name
                     : 'Chọn workspace'}
               </h1>
-              {workspaceFilter !== 'ALL' && selectedWorkspace && (
+              {workspaceFilter !== 'ALL' && selectedWorkspace && selectedWorkspace.role === 'OWNER' && (
                 <button
                   type="button"
                   className="btn-invite-member"
