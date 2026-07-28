@@ -4,6 +4,7 @@ import './InviteMemberModal.css';
 
 export default function InviteMemberModal({ isOpen, onClose, workspaceId }) {
   const [email, setEmail] = useState('');
+  const [role, setRole] = useState('MEMBER');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -24,7 +25,7 @@ export default function InviteMemberModal({ isOpen, onClose, workspaceId }) {
     try {
       const response = await requestJson(`/workspaces/${workspaceId}/members/invite`, {
         method: 'POST',
-        body: JSON.stringify({ email: email.trim(), role: 'MEMBER' })
+        body: JSON.stringify({ email: email.trim(), role })
       });
       
       if (response && response.success === false) {
@@ -74,6 +75,19 @@ export default function InviteMemberModal({ isOpen, onClose, workspaceId }) {
               disabled={loading}
               autoFocus
             />
+          </div>
+          
+          <div className="invite-modal-input-group">
+            <label htmlFor="invite-role">Vai trò</label>
+            <select
+              id="invite-role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              disabled={loading}
+            >
+              <option value="MEMBER">Thành viên</option>
+              <option value="OWNER">Admin</option>
+            </select>
           </div>
           
           {error && <div className="invite-modal-error">{error}</div>}

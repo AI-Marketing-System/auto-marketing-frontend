@@ -250,16 +250,16 @@ export default function Sidebar({ variant = 'dashboard' }) {
           <span style={{ flexShrink: 0, fontSize: '10px' }}>•</span>
           <span
             style={{
-              backgroundColor: ws.role === 'ADMIN' ? '#dbeafe' : '#e2e8f0',
+              backgroundColor: ws.role === 'OWNER' ? '#dbeafe' : '#e2e8f0',
               padding: '2px 6px',
               borderRadius: '4px',
               fontSize: '10.5px',
-              color: ws.role === 'ADMIN' ? '#1d4ed8' : '#475569',
+              color: ws.role === 'OWNER' ? '#1d4ed8' : '#475569',
               fontWeight: 600,
               flexShrink: 0,
             }}
           >
-            {ws.role === 'ADMIN' ? 'Admin' : 'Member'}
+            {ws.role === 'OWNER' ? 'Admin' : 'Thành viên'}
           </span>
         </div>
       </div>
