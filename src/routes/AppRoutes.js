@@ -11,9 +11,10 @@ import SocialAccountsPage from '../modules/social-accounts/pages/SocialAccountsP
 import AnalyticsDashboard from '../modules/analytics/pages/AnalyticsDashboard';
 import CampaignListPage from '../modules/campaigns/pages/CampaignListPage';
 import WorkspacePlannerPage from '../modules/planner/pages/WorkspacePlannerPage';
-import CampaignTopicsPage from '../modules/post/pages/CampaignTopicsPage';
+import CampaignTopicsPage from '../modules/topic/pages/CampaignTopicsPage';
 import TopicPostsPage from '../modules/post/pages/TopicPostsPage';
 import PlanManagementPage from '../modules/admin/plans/pages/PlanManagementPage';
+import UserManagementPage from '../modules/admin/users/pages/UserManagementPage';
 import ErrorPage from '../public-site/pages/ErrorPage';
 import InvitationsPage from '../modules/workspace/pages/InvitationsPage';
 import DashboardLayout from '../layouts/DashboardLayout/DashboardLayout';
@@ -155,6 +156,16 @@ function AppRoutes() {
           <AdminRoute>
             <DashboardLayout variant="admin">
               <PlanManagementPage />
+            </DashboardLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <AdminRoute>
+            <DashboardLayout variant="admin">
+              <UserManagementPage />
             </DashboardLayout>
           </AdminRoute>
         }
