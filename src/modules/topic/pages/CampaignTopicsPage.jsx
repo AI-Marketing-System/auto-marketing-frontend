@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { topicApi } from '../api/postApi';
+import { topicApi } from '../api/topicApi';
 import { campaignApi, parsePaginatedResponse } from '../../campaigns/api/campaignApi';
 import { mapCampaignFromApi } from '../../campaigns/utils/campaignUtils';
 import { API_BASE_URL } from '../../../config/env';
-import '../styles/PostModule.css';
+import AiTopicGeneratorModal from '../components/AiTopicGeneratorModal';
+import '../styles/TopicModule.css';
 
 export default function CampaignTopicsPage() {
   const { workspaceId, campaignId } = useParams();
@@ -18,6 +19,7 @@ export default function CampaignTopicsPage() {
 
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [editingTopic, setEditingTopic] = useState(null);
   const [titleInput, setTitleInput] = useState('');
   const [descInput, setDescInput] = useState('');
@@ -165,6 +167,12 @@ export default function CampaignTopicsPage() {
             </p>
           </div>
           <div className="title-right">
+            <button type="button" className="btn-create-campaign btn-secondary" onClick={() => setIsAiModalOpen(true)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+              </svg>
+              AI Tạo Topic
+            </button>
             <button type="button" className="btn-create-campaign" onClick={handleOpenCreate}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <line x1="12" y1="5" x2="12" y2="19" />
@@ -291,6 +299,15 @@ export default function CampaignTopicsPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* AI Topic Generator Modal */}
+      {isAiModalOpen && campaign && (
+        <AiTopicGeneratorModal
+          campaign={campaign}
+          onClose={() => setIsAiModalOpen(false)}
+          onSaved={loadTopics}
+        />
       )}
     </div>
   );
