@@ -106,6 +106,27 @@ const ADMIN_ITEMS = [
       </svg>
     ),
   },
+  {
+    to: '/admin/users',
+    label: 'Quản lý User',
+    icon: (
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+  },
 ];
 
 export default function Sidebar({ variant = 'dashboard' }) {
@@ -229,16 +250,16 @@ export default function Sidebar({ variant = 'dashboard' }) {
           <span style={{ flexShrink: 0, fontSize: '10px' }}>•</span>
           <span
             style={{
-              backgroundColor: ws.role === 'ADMIN' ? '#dbeafe' : '#e2e8f0',
+              backgroundColor: ws.role === 'OWNER' ? '#dbeafe' : '#e2e8f0',
               padding: '2px 6px',
               borderRadius: '4px',
               fontSize: '10.5px',
-              color: ws.role === 'ADMIN' ? '#1d4ed8' : '#475569',
+              color: ws.role === 'OWNER' ? '#1d4ed8' : '#475569',
               fontWeight: 600,
               flexShrink: 0,
             }}
           >
-            {ws.role === 'ADMIN' ? 'Admin' : 'Member'}
+            {ws.role === 'OWNER' ? 'Admin' : 'Thành viên'}
           </span>
         </div>
       </div>

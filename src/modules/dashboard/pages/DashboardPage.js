@@ -229,7 +229,7 @@ function DashboardPage() {
                 </span>
               </div>
               <div className="section-meta-info">
-                <span className="owner-role-badge">Vai trò: Owner</span>
+                <span className="owner-role-badge">Vai trò: Admin</span>
                 <span className="tier-label">Business Tier</span>
                 <button
                   type="button"
