@@ -8,7 +8,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
   const [checkoutPlan, setCheckoutPlan] = useState(null);
   const [checkoutIsTrial, setCheckoutIsTrial] = useState(false);
   const [checkoutIsRenew, setCheckoutIsRenew] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('MOMO');
+  const [paymentMethod, setPaymentMethod] = useState("QR");
   const [paymentTx, setPaymentTx] = useState(null);
   const [confirming, setConfirming] = useState(false);
 
@@ -119,11 +119,15 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
         onUpgradeSuccess();
         onClose();
       } else {
-        setPaymentTx({
-          transactionId: resJson.data.id,
-          amount: checkoutPlan.price,
-          planName: checkoutPlan.name,
-        });
+        if (resJson.data && resJson.data.paymentUrl) {
+          window.location.href = resJson.data.paymentUrl;
+        } else {
+          setPaymentTx({
+            transactionId: resJson.data.id,
+            amount: checkoutPlan.price,
+            planName: checkoutPlan.name,
+          });
+        }
       }
     } catch (error) {
       alert(error.message);
@@ -297,8 +301,15 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                     <>
                       <div className="payment-options-grid">
                         <div
-                          className={`payment-opt-card ${paymentMethod === 'MOMO' ? 'selected' : ''}`}
-                          onClick={() => setPaymentMethod('MOMO')}
+                          className={`payment-opt-card ${paymentMethod === "QR" ? "selected" : ""}`}
+                          onClick={() => setPaymentMethod("QR")}
+                        >
+                          <span className="pay-opt-icon">📷</span>
+                          <span className="pay-opt-label">Mã VietQR</span>
+                        </div>
+                        <div
+                          className={`payment-opt-card ${paymentMethod === "MOMO" ? "selected" : ""}`}
+                          onClick={() => setPaymentMethod("MOMO")}
                         >
                           <span className="pay-opt-icon">📱</span>
                           <span className="pay-opt-label">Ví MoMo</span>
@@ -319,7 +330,17 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
                         </div>
                       </div>
 
-                      {paymentMethod === 'MOMO' && (
+                      {paymentMethod === "QR" && (
+                        <div className="payment-detail-card">
+                          <span className="vietqr-logo-mini">VietQR</span>
+                          <div className="momo-detail-info">
+                            <strong>Chuyển khoản nhanh qua VietQR</strong>
+                            <span>Quét mã QR từ mọi ứng dụng ngân hàng di động</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {paymentMethod === "MOMO" && (
                         <div className="payment-detail-card">
                           <span className="momo-logo-mini">MoMo</span>
                           <div className="momo-detail-info">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { postApi, topicApi } from '../api/postApi';
+import { postApi } from '../api/postApi';
+import { topicApi } from '../../topic/api/topicApi';
 import { API_BASE_URL } from '../../../config/env';
 import CreatePostModal from '../components/CreatePostModal';
 import '../styles/PostModule.css';

@@ -252,7 +252,7 @@
 
 .payment-options-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 cột cho MOMO, VNPAY, STRIPE */
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 16px;
 }
 
@@ -313,6 +313,16 @@
 
 .vnpay-logo-mini {
   background: #005baa; /* Xanh VNPAY */
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.2px;
+}
+
+.vietqr-logo-mini {
+  background: #ea580c;
   color: #ffffff;
   font-size: 11px;
   font-weight: 800;

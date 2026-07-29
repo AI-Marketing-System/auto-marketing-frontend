@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { API_BASE_URL } from '../../../config/env';
 import '../styles/DashboardPage.css';
@@ -7,6 +8,7 @@ import SharedWorkspaceCard from '../components/SharedWorkspaceCard';
 import CreateWorkspaceModal from '../components/CreateWorkspaceModal';
 
 function DashboardPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -176,8 +178,9 @@ function DashboardPage() {
   };
 
   const handleCardClick = (workspace) => {
-    console.log('Workspace clicked:', workspace.title);
-    alert(`Truy cập vào Workspace: ${workspace.title}`);
+    if (workspace && workspace.id) {
+      navigate(`/workspaces/${workspace.id}/campaigns`);
+    }
   };
 
   return (
