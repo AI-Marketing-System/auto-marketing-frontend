@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '../../../config/env';
-import '../styles/UpgradeModal.css'; // Import tu thu muc styles dung quy chuan
+import '../styles/SubscriptionModule.css';
 
 export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, currentSubscription }) {
   const [plans, setPlans] = useState([]);
