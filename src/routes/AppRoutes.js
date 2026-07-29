@@ -21,6 +21,8 @@ import DashboardLayout from '../layouts/DashboardLayout/DashboardLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { AdminRoute } from '../components/ProtectedRoute';
 import AdminHomePage from '../modules/admin/home/pages/AdminHomePage';
+import PaymentSuccessPage from '../modules/subscription/pages/PaymentSuccessPage';
+import PaymentFailedPage from '../modules/subscription/pages/PaymentFailedPage';
 function AppRoutes() {
   return (
     <Routes>
@@ -170,6 +172,8 @@ function AppRoutes() {
           </AdminRoute>
         }
       />
+      <Route path="/payment-success" element={<PaymentSuccessPage />} />
+      <Route path="/payment-failed" element={<PaymentFailedPage />} />
     </Routes>
   );
 }
