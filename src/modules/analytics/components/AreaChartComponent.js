@@ -1,124 +1,194 @@
 import React, { useState } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+import { formatChartLabel, getTimeUnitLabel } from './chartFormatters';
 import '../styles/AnalyticsDashboardV2.css';
 
-const dataViews = [
-  { date: '31/05 01/06', views: 0 },
-  { date: '03/06', views: 0 },
-  { date: '05/06', views: 0 },
-  { date: '07/06', views: 0 },
-  { date: '09/06', views: 0 },
-  { date: '11/06', views: 0 },
-  { date: '13/06', views: 0 },
-  { date: '15/06', views: 0 },
-  { date: '17/06', views: 0 },
-  { date: '19/06', views: 0 },
-  { date: '21/06', views: 0 },
-  { date: '23/06', views: 0 },
-  { date: '25/06', views: 0 },
-  { date: '26/06', views: 130 },
-  { date: '27/06', views: 5 },
-  { date: '28/06', views: 0 },
-  { date: '29/06', views: 15 },
-];
+const chartDataFallback = [];
+const chartAxisTick = { fontSize: 11, fill: 'var(--analytics-muted)' };
+const tooltipStyle = {
+  backgroundColor: 'var(--analytics-tooltip-bg)',
+  border: '1px solid var(--analytics-border)',
+  borderRadius: '10px',
+  boxShadow: 'var(--analytics-shadow-popover)',
+  color: 'var(--analytics-ink)',
+  fontFamily: 'var(--analytics-font-ui)',
+  fontSize: 13,
+};
 
-const dataReach = [
-  { date: '31/05 01/06', value: 0 },
-  { date: '03/06', value: 0 },
-  { date: '05/06', value: 0 },
-  { date: '07/06', value: 0 },
-  { date: '09/06', value: 0 },
-  { date: '11/06', value: 0 },
-  { date: '13/06', value: 0 },
-  { date: '15/06', value: 0 },
-  { date: '17/06', value: 0 },
-  { date: '19/06', value: 0 },
-  { date: '21/06', value: 0 },
-  { date: '23/06', value: 0 },
-  { date: '25/06', value: 0 },
-  { date: '26/06', value: 100 },
-  { date: '27/06', value: 2 },
-  { date: '28/06', value: 0 },
-  { date: '29/06', value: 3 },
-];
+const formatValue = (value) => Number(value || 0).toLocaleString('vi-VN');
 
-export const ViewsAreaChart = () => {
+const ChartEmptyState = () => (
+  <div className="chart-empty-state">
+    <span className="chart-empty-state__line" aria-hidden="true" />
+    <strong>Chưa có dữ liệu trong khoảng này</strong>
+    <span>Thử chọn thêm một kênh hoặc khoảng thời gian khác.</span>
+  </div>
+);
+
+export const ViewsAreaChart = ({ customData, timeGranularity = 'day' }) => {
+  const displayData = customData || chartDataFallback;
+  const timeUnitLabel = getTimeUnitLabel(timeGranularity);
+
   return (
-    <div className="chart-card">
+    <article className="chart-card chart-card--views">
       <div className="chart-header">
-        <h3 className="chart-title">Lượt xem nội dung</h3>
-        <p className="chart-subtitle">Tổng số lần nội dung của bạn xuất hiện trên màn hình.</p>
+        <div>
+          <h3 className="chart-title">Lượt xem nội dung</h3>
+        </div>
+        <p className="chart-subtitle">
+          Số lần nội dung xuất hiện trên màn hình trong kỳ đã chọn, theo {timeUnitLabel}.
+        </p>
       </div>
-      
-      <div style={{ width: '100%', height: 300 }}>
-        <ResponsiveContainer>
-          <AreaChart
-            data={dataViews}
-            margin={{ top: 5, right: 20, left: -20, bottom: 5 }}
-          >
-            <defs>
-              <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#9254de" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#9254de" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} stroke="#eee" />
-            <XAxis dataKey="date" tick={{fontSize: 10, fill: '#888'}} axisLine={false} tickLine={false} dy={10} />
-            <YAxis tick={{fontSize: 10, fill: '#888'}} axisLine={false} tickLine={false} label={{ value: 'Lượt xem nội dung', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontSize: 12, fontWeight: 600 } }} />
-            <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-            <Area type="monotone" dataKey="views" stroke="#9254de" fillOpacity={1} fill="url(#colorViews)" strokeWidth={2} />
-          </AreaChart>
-        </ResponsiveContainer>
+
+      <div className="chart-visual">
+        {displayData.length === 0 ? (
+          <ChartEmptyState />
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={displayData} margin={{ top: 12, right: 12, left: -16, bottom: 4 }}>
+              <defs>
+                <linearGradient id="analytics-views-gradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--analytics-primary)" stopOpacity={0.28} />
+                  <stop offset="100%" stopColor="var(--analytics-primary)" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="4 7" vertical={false} stroke="var(--analytics-border)" />
+              <XAxis
+                dataKey="date"
+                tick={chartAxisTick}
+                axisLine={false}
+                tickLine={false}
+                tickMargin={12}
+                interval={timeGranularity === 'hour' ? 3 : 'preserveEnd'}
+                tickFormatter={(value) => formatChartLabel(value, timeGranularity)}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={chartAxisTick}
+                axisLine={false}
+                tickLine={false}
+                width={48}
+                tickFormatter={formatValue}
+              />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                labelStyle={{ color: 'var(--analytics-muted)', marginBottom: 4 }}
+                labelFormatter={(value) => formatChartLabel(value, timeGranularity)}
+                formatter={(value) => [formatValue(value), 'Lượt xem']}
+              />
+              <Area
+                type="monotone"
+                dataKey="views"
+                stroke="var(--analytics-primary-deep)"
+                fill="url(#analytics-views-gradient)"
+                strokeWidth={2.5}
+                activeDot={{ r: 5, fill: 'var(--analytics-primary-deep)', stroke: 'var(--analytics-surface)', strokeWidth: 3 }}
+                isAnimationActive
+                animationDuration={500}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </div>
-    </div>
+    </article>
   );
 };
 
-export const ReachAreaChart = () => {
-  const [activeTab, setActiveTab] = useState('Reach');
+export const ReachAreaChart = ({ customData, timeGranularity = 'day' }) => {
+  const [activeTab, setActiveTab] = useState('reach');
+  const displayData = customData || chartDataFallback;
+  const dataKey = activeTab === 'reach' ? 'reach' : 'value';
+  const timeUnitLabel = getTimeUnitLabel(timeGranularity);
 
   return (
-    <div className="chart-card">
-      <div className="chart-tabs">
-        <div 
-          className={`chart-tab ${activeTab === 'Reach' ? 'active' : ''}`}
-          onClick={() => setActiveTab('Reach')}
-        >
-          Reach
+    <article className="chart-card chart-card--wide">
+      <div className="chart-card__topline">
+        <div>
+          <h3 className="chart-title">Lượt tiếp cận và phản ứng</h3>
         </div>
-        <div 
-          className={`chart-tab ${activeTab === 'Reaction' ? 'active' : ''}`}
-          onClick={() => setActiveTab('Reaction')}
-        >
-          Reaction
-        </div>
-      </div>
-
-      <div className="chart-header">
-        <h3 className="chart-title">Lượt tiếp cận</h3>
-        <p className="chart-subtitle">Số lượng người duy nhất đã xem nội dung của bạn.</p>
-      </div>
-      
-      <div style={{ width: '100%', height: 300 }}>
-        <ResponsiveContainer>
-          <AreaChart
-            data={dataReach}
-            margin={{ top: 5, right: 20, left: -20, bottom: 5 }}
+        <div className="chart-tabs" role="tablist" aria-label="Chỉ số tiếp cận">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'reach'}
+            className={`chart-tab${activeTab === 'reach' ? ' chart-tab--active' : ''}`}
+            onClick={() => setActiveTab('reach')}
           >
-            <defs>
-              <linearGradient id="colorReach" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#9254de" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#9254de" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} stroke="#eee" />
-            <XAxis dataKey="date" tick={{fontSize: 10, fill: '#888'}} axisLine={false} tickLine={false} dy={10} />
-            <YAxis tick={{fontSize: 10, fill: '#888'}} axisLine={false} tickLine={false} label={{ value: 'Lượt tiếp cận', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontSize: 12, fontWeight: 600 } }} />
-            <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-            <Area type="monotone" dataKey="value" stroke="#9254de" fillOpacity={1} fill="url(#colorReach)" strokeWidth={2} />
-          </AreaChart>
-        </ResponsiveContainer>
+            Tiếp cận
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'reaction'}
+            className={`chart-tab${activeTab === 'reaction' ? ' chart-tab--active' : ''}`}
+            onClick={() => setActiveTab('reaction')}
+          >
+            Phản ứng
+          </button>
+        </div>
       </div>
-    </div>
+      <p className="chart-subtitle">
+        Theo dõi quy mô khán giả và mức độ họ phản hồi với nội dung theo {timeUnitLabel}.
+      </p>
+
+      <div className="chart-visual chart-visual--wide">
+        {displayData.length === 0 ? (
+          <ChartEmptyState />
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={displayData} margin={{ top: 12, right: 12, left: -16, bottom: 4 }}>
+              <defs>
+                <linearGradient id="analytics-reach-gradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--analytics-secondary)" stopOpacity={0.26} />
+                  <stop offset="100%" stopColor="var(--analytics-secondary)" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="4 7" vertical={false} stroke="var(--analytics-border)" />
+              <XAxis
+                dataKey="date"
+                tick={chartAxisTick}
+                axisLine={false}
+                tickLine={false}
+                tickMargin={12}
+                interval={timeGranularity === 'hour' ? 3 : 'preserveEnd'}
+                tickFormatter={(value) => formatChartLabel(value, timeGranularity)}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={chartAxisTick}
+                axisLine={false}
+                tickLine={false}
+                width={48}
+                tickFormatter={formatValue}
+              />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                labelStyle={{ color: 'var(--analytics-muted)', marginBottom: 4 }}
+                labelFormatter={(value) => formatChartLabel(value, timeGranularity)}
+                formatter={(value) => [formatValue(value), activeTab === 'reach' ? 'Tiếp cận' : 'Phản ứng']}
+              />
+              <Area
+                type="monotone"
+                dataKey={dataKey}
+                stroke="var(--analytics-secondary)"
+                fill="url(#analytics-reach-gradient)"
+                strokeWidth={2.5}
+                activeDot={{ r: 5, fill: 'var(--analytics-secondary)', stroke: 'var(--analytics-surface)', strokeWidth: 3 }}
+                isAnimationActive
+                animationDuration={500}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </article>
   );
 };

@@ -48,7 +48,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
     const name = planName.toLowerCase();
     if (name === 'starter') {
       return [
-        'Tối đa 5 Workspace quản lý chiến dịch',
+'Tối đa 5 không gian làm việc quản lý chiến dịch',
         'Kết nối 3 tài khoản mạng xã hội đồng thời',
         '5,000 từ khóa AI tạo content hàng tháng',
         'Hỗ trợ qua Email trong 24h',
@@ -56,7 +56,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
     } else if (name === 'pro') {
       return [
         'Phản hồi AI thông minh hơn, nhanh hơn',
-        'Tối đa 15 Workspace làm việc nhóm',
+'Tối đa 15 không gian làm việc nhóm',
         'Kết nối 10 tài khoản mạng xã hội đa nền tảng',
         '50,000 từ khóa AI và phân tích đối thủ',
         'Thêm bộ nhớ ngữ cảnh thương hiệu nâng cao',
@@ -64,7 +64,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
     } else if (name === 'business') {
       return [
         'Tất cả tính năng cao cấp của gói Pro',
-        'Tối đa 99 Workspace cho doanh nghiệp lớn',
+'Tối đa 99 không gian làm việc cho doanh nghiệp lớn',
         'Không giới hạn tài khoản mạng xã hội',
         '500,000 từ khóa AI tạo nội dung tự động',
         'Hỗ trợ kỹ thuật 24/7 ưu tiên riêng biệt',
