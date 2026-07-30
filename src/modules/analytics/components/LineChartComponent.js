@@ -1,76 +1,94 @@
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+import { formatChartLabel, getTimeUnitLabel } from './chartFormatters';
 import '../styles/AnalyticsDashboardV2.css';
 
-const data = [
-  { date: '31/05 01/06', followers: 2.0 },
-  { date: '03/06', followers: 2.0 },
-  { date: '05/06', followers: 2.0 },
-  { date: '07/06', followers: 2.0 },
-  { date: '09/06', followers: 2.0 },
-  { date: '11/06', followers: 2.0 },
-  { date: '13/06', followers: 3.0 },
-  { date: '15/06', followers: 3.0 },
-  { date: '17/06', followers: 3.0 },
-  { date: '19/06', followers: 3.0 },
-  { date: '21/06', followers: 3.0 },
-  { date: '23/06', followers: 3.0 },
-  { date: '25/06', followers: 3.0 },
-  { date: '27/06', followers: 3.0 },
-  { date: '29/06', followers: 3.0 },
-];
+const chartDataFallback = [];
+const chartAxisTick = { fontSize: 11, fill: 'var(--analytics-muted)' };
+const tooltipStyle = {
+  backgroundColor: 'var(--analytics-tooltip-bg)',
+  border: '1px solid var(--analytics-border)',
+  borderRadius: '10px',
+  boxShadow: 'var(--analytics-shadow-popover)',
+  color: 'var(--analytics-ink)',
+  fontFamily: 'var(--analytics-font-ui)',
+  fontSize: 13,
+};
 
-const LineChartComponent = () => {
+const formatValue = (value) => Number(value || 0).toLocaleString('vi-VN');
+
+const LineChartComponent = ({ customData, timeGranularity = 'day' }) => {
+  const displayData = customData || chartDataFallback;
+  const timeUnitLabel = getTimeUnitLabel(timeGranularity);
+
   return (
-    <div className="chart-card">
+    <article className="chart-card chart-card--followers">
       <div className="chart-header">
-        <h3 className="chart-title">Lượng người theo dõi</h3>
-        <p className="chart-subtitle">Tổng số người theo dõi trang của bạn.</p>
+        <div>
+          <h3 className="chart-title">Lượng người theo dõi</h3>
+        </div>
+        <p className="chart-subtitle">
+          Tín hiệu tăng trưởng cộng dồn của các trang đang được chọn theo {timeUnitLabel}.
+        </p>
       </div>
-      
-      <div style={{ width: '100%', height: 300 }}>
-        <ResponsiveContainer>
-          <LineChart
-            data={data}
-            margin={{
-              top: 5,
-              right: 20,
-              left: -20,
-              bottom: 5,
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={true} stroke="#eee" />
-            <XAxis 
-              dataKey="date" 
-              tick={{fontSize: 10, fill: '#888'}} 
-              axisLine={false} 
-              tickLine={false} 
-              dy={10} 
-            />
-            <YAxis 
-              domain={[2.0, 3.0]} 
-              tickCount={3} 
-              tick={{fontSize: 10, fill: '#888'}} 
-              axisLine={false} 
-              tickLine={false}
-              tickFormatter={(val) => val.toFixed(1)}
-              label={{ value: 'Lượng người theo dõi', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontSize: 12, fontWeight: 600 } }}
-            />
-            <Tooltip 
-              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="followers" 
-              stroke="#9254de" 
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 6 }} 
-            />
-          </LineChart>
-        </ResponsiveContainer>
+
+      <div className="chart-visual">
+        {displayData.length === 0 ? (
+          <div className="chart-empty-state">
+            <span className="chart-empty-state__line" aria-hidden="true" />
+            <strong>Đang chờ tín hiệu tăng trưởng</strong>
+            <span>Chọn kênh để bắt đầu theo dõi người theo dõi.</span>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={displayData} margin={{ top: 12, right: 12, left: -16, bottom: 4 }}>
+              <CartesianGrid strokeDasharray="4 7" vertical={false} stroke="var(--analytics-border)" />
+              <XAxis
+                dataKey="date"
+                tick={chartAxisTick}
+                axisLine={false}
+                tickLine={false}
+                tickMargin={12}
+                interval={timeGranularity === 'hour' ? 3 : 'preserveEnd'}
+                tickFormatter={(value) => formatChartLabel(value, timeGranularity)}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={chartAxisTick}
+                axisLine={false}
+                tickLine={false}
+                width={48}
+                tickFormatter={formatValue}
+              />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                labelStyle={{ color: 'var(--analytics-muted)', marginBottom: 4 }}
+                labelFormatter={(value) => formatChartLabel(value, timeGranularity)}
+                formatter={(value) => [formatValue(value), 'Người theo dõi']}
+              />
+              <Line
+                type="monotone"
+                dataKey="followers"
+                stroke="var(--analytics-accent)"
+                strokeWidth={2.5}
+                dot={false}
+                activeDot={{ r: 5, fill: 'var(--analytics-accent)', stroke: 'var(--analytics-surface)', strokeWidth: 3 }}
+                isAnimationActive
+                animationDuration={500}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
       </div>
-    </div>
+    </article>
   );
 };
 
