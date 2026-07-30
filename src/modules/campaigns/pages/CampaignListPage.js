@@ -308,6 +308,7 @@ function CampaignListPage() {
     try {
       if (action === 'pause') await campaignApi.pause(campaign.id, API_BASE_URL);
       else if (action === 'resume') await campaignApi.resume(campaign.id, API_BASE_URL);
+      else if (action === 'delete') await campaignApi.delete(campaign.id, API_BASE_URL);
       else await campaignApi.complete(campaign.id, API_BASE_URL);
 
       setActionModal(null);
@@ -652,11 +653,7 @@ function CampaignListPage() {
                 <table className="campaign-table">
                   <thead>
                     <tr>
-                      <th>
-                        <button className="campaign-sort-button" onClick={() => handleSort('id')}>
-                          ID {sortBy === 'id' ? (sortDirection === 'asc' ? '↑' : '↓') : '↕'}
-                        </button>
-                      </th>
+
                       <th>
                         <button
                           className="campaign-sort-button"
@@ -691,7 +688,7 @@ function CampaignListPage() {
                   <tbody>
                     {campaigns.map((campaign) => (
                       <tr key={campaign.id}>
-                        <td className="campaign-id-cell">#{campaign.id}</td>
+
                         <td>
                           <div className="campaign-title-cell">
                             <div className="campaign-row-leading">
@@ -709,7 +706,7 @@ function CampaignListPage() {
                                   <span className="campaign-title-text" style={{ fontWeight: '600', color: '#4f46e5' }}>{campaign.title}</span>
                                 </Link>
                                 {campaign.description ? (
-                                  <span className="campaign-subtext">{campaign.description}</span>
+                                  <p className="campaign-desc-subtext">{campaign.description}</p>
                                 ) : null}
                               </div>
                             </div>
