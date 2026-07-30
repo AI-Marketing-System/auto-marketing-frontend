@@ -17,6 +17,16 @@ export default function CampaignTopicsPage() {
   const [campaignLoading, setCampaignLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Pagination & Sorting States
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(8);
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortDirection, setSortDirection] = useState('desc');
+  const [pagination, setPagination] = useState({
+    totalElements: 0,
+    totalPages: 0,
+  });
+
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -54,19 +64,19 @@ export default function CampaignTopicsPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await topicApi.listByCampaignId(Number(campaignId), API_BASE_URL);
-      if (response && response.success) {
-        setTopics(response.data || []);
-      } else {
-        setTopics([]);
-      }
+      const response = await topicApi.listByCampaignId(Number(campaignId), page, pageSize, sortBy, sortDirection, API_BASE_URL);
+      const parsed = parsePaginatedResponse(response, page, pageSize);
+      setTopics(parsed.content);
+      setPagination({
+        totalElements: parsed.totalElements,
+        totalPages: parsed.totalPages,
+      });
     } catch (err) {
-      setError(err.message || 'Không thể tải danh sách topic');
-      setTopics([]);
+      setError(err.message || 'Lỗi khi tải danh sách topics');
     } finally {
       setLoading(false);
     }
-  }, [campaignId]);
+  }, [campaignId, page, pageSize, sortBy, sortDirection]);
 
   useEffect(() => {
     loadCampaignDetails();
@@ -166,7 +176,23 @@ export default function CampaignTopicsPage() {
               {campaign?.description || 'Chi tiết các nhóm nội dung (Topics) của chiến dịch này.'}
             </p>
           </div>
-          <div className="title-right">
+          <div className="title-right" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <select
+              className="page-size-select"
+              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+              value={`${sortBy}-${sortDirection}`}
+              onChange={(e) => {
+                const [newSortBy, newSortDir] = e.target.value.split('-');
+                setSortBy(newSortBy);
+                setSortDirection(newSortDir);
+                setPage(0);
+              }}
+            >
+              <option value="createdAt-desc">Mới nhất</option>
+              <option value="createdAt-asc">Cũ nhất</option>
+              <option value="title-asc">Tên A-Z</option>
+              <option value="title-desc">Tên Z-A</option>
+            </select>
             <button type="button" className="btn-create-campaign btn-secondary" onClick={() => setIsAiModalOpen(true)}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
@@ -252,6 +278,46 @@ export default function CampaignTopicsPage() {
             <button type="button" className="btn-create-campaign" onClick={handleOpenCreate}>
               Tạo Topic đầu tiên
             </button>
+          </div>
+        )}
+
+        {/* Pagination Bar */}
+        {topics.length > 0 && (
+          <div className="pagination-bar standalone" style={{ marginTop: '24px' }}>
+            <div className="pagination-summary">
+              Hiển thị {page * pageSize + 1} -{' '}
+              {Math.min((page + 1) * pageSize, pagination.totalElements)} /{' '}
+              {pagination.totalElements} topics
+            </div>
+            <div className="pagination-controls">
+              <select
+                className="page-size-select"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(0);
+                }}
+              >
+                <option value={6}>6 / trang</option>
+                <option value={8}>8 / trang</option>
+                <option value={10}>10 / trang</option>
+                <option value={12}>12 / trang</option>
+              </select>
+              <button
+                className="page-button"
+                disabled={page === 0}
+                onClick={() => setPage((prev) => prev - 1)}
+              >
+                ←
+              </button>
+              <button
+                className="page-button"
+                disabled={page + 1 >= pagination.totalPages}
+                onClick={() => setPage((prev) => prev + 1)}
+              >
+                →
+              </button>
+            </div>
           </div>
         )}
       </main>
