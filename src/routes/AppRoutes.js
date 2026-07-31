@@ -11,6 +11,7 @@ import SocialAccountsPage from '../modules/social-accounts/pages/SocialAccountsP
 import AnalyticsDashboard from '../modules/analytics/pages/AnalyticsDashboard';
 import CampaignListPage from '../modules/campaigns/pages/CampaignListPage';
 import WorkspacePlannerPage from '../modules/planner/pages/WorkspacePlannerPage';
+import StagedPlannerPage from '../modules/planner/pages/StagedPlannerPage';
 import CampaignTopicsPage from '../modules/topic/pages/CampaignTopicsPage';
 import TopicPostsPage from '../modules/post/pages/TopicPostsPage';
 import PlanManagementPage from '../modules/admin/plans/pages/PlanManagementPage';
@@ -135,6 +136,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <WorkspacePlannerPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/workspaces/:workspaceId/planner/stage"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <StagedPlannerPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
