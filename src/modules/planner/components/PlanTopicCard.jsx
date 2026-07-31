@@ -29,14 +29,16 @@ function PlanTopicCard({ topic, index, campaignId, expanded, onToggleExpand, onC
         <span className="wp-topic__index">Chủ đề {index + 1}</span>
         <span className="wp-topic__name">{topic.name || <em className="wp-muted">Chưa có tên</em>}</span>
         <span className="wp-pill">{topic.posts.length} bài</span>
-        <button
-          type="button"
-          className="wp-icon-btn wp-icon-btn--delete"
-          onClick={handleRemove}
-          title="Xoá chủ đề"
-        >
-          <TrashIcon size={14} />
-        </button>
+        <div className="wp-hover-actions">
+          <button
+            type="button"
+            className="wp-icon-btn wp-icon-btn--delete"
+            onClick={handleRemove}
+            title="Xoá chủ đề"
+          >
+            <TrashIcon size={14} />
+          </button>
+        </div>
       </div>
 
       {isOpen && (
