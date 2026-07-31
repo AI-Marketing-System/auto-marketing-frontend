@@ -192,4 +192,9 @@ export const ACTION_MODAL_COPY = {
     body: 'Chiến dịch sẽ được đánh dấu hoàn thành và không thể tiếp tục chạy.',
     confirm: 'Hoàn thành',
   },
+  delete: {
+    title: 'Xóa chiến dịch?',
+    body: 'Chiến dịch cùng tất cả các topic và bài viết liên quan sẽ bị xóa. Hành động này không thể hoàn tác.',
+    confirm: 'Xóa',
+  },
 };

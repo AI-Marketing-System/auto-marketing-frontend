@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../config/env';
 import Sidebar from './Sidebar';
 import UserDropdown from './UserDropdown';
-import UpgradeModal from '../../modules/analytics/components/UpgradeModal';
+import UpgradeModal from '../../modules/subscription/components/UpgradeModal';
 import SettingsModal from '../../modules/auth/components/SettingsModal';
 import './DashboardLayout.css';
 
@@ -50,6 +50,7 @@ function CampaignTabs() {
 
 export default function DashboardLayout({ children, variant = 'dashboard' }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const isCampaignArea = location.pathname.includes('/campaigns');
   const isSocialAccounts = location.pathname === '/social-accounts';
 
@@ -98,6 +99,15 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
   useEffect(() => {
     fetchSubscription();
   }, []);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('payment_success') === 'true') {
+      setIsUpgradeModalOpen(true);
+      // Xóa query param để không bị mở lại khi F5
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location, navigate]);
 
   return (
     <div className="layout">
