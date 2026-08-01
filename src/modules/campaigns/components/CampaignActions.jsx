@@ -5,6 +5,7 @@ const ACTION_LABELS = {
   pause: { idle: 'Tạm dừng', pending: 'Đang xử lý...' },
   resume: { idle: 'Tiếp tục', pending: 'Đang xử lý...' },
   complete: { idle: 'Hoàn thành', pending: 'Đang xử lý...' },
+  delete: { idle: 'Xóa', pending: 'Đang xóa...' },
 };
 
 function CampaignActions({ campaign, pendingId, pendingAction, onAction, compact = false }) {
@@ -30,7 +31,12 @@ function CampaignActions({ campaign, pendingId, pendingAction, onAction, compact
   };
 
   if (isCompleted) {
-    return <span className="campaign-action-muted">Đã kết thúc</span>;
+    return (
+      <div className={`campaign-action-group${compact ? ' compact' : ''}`}>
+        <span className="campaign-action-muted" style={{ marginRight: '8px' }}>Đã kết thúc</span>
+        {renderButton('delete', 'delete')}
+      </div>
+    );
   }
 
   return (
@@ -38,6 +44,7 @@ function CampaignActions({ campaign, pendingId, pendingAction, onAction, compact
       {isActive ? renderButton('pause', 'pause') : null}
       {isPaused ? renderButton('resume', 'resume') : null}
       {renderButton('complete', 'complete')}
+      {renderButton('delete', 'delete')}
     </div>
   );
 }
