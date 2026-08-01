@@ -3,6 +3,7 @@ import HeatmapChart from '../components/HeatmapChart';
 import LineChartComponent from '../components/LineChartComponent';
 import MetricCard from '../components/MetricCard';
 import { ViewsAreaChart, ReachAreaChart } from '../components/AreaChartComponent';
+import TopPostsList, { normalizeTopPosts } from '../components/TopPostsList';
 import {
   workspaceApi,
   parseWorkspacesResponse,
@@ -31,8 +32,7 @@ const extractHour = (value) => {
 const normalizeHourlyLabels = (labels) => {
   if (labels.length === 0) return labels;
 
-  const lastHour = extractHour(labels[labels.length - 1]);
-  const endHour = lastHour ?? new Date().getHours();
+  const endHour = new Date().getHours();
 
   return labels.map((_, index) => {
     const hoursFromEnd = labels.length - index - 1;
@@ -50,11 +50,17 @@ const AnalyticsDashboard = () => {
   const [selectedFanpageIds, setSelectedFanpageIds] = useState([]);
   const [dashboardData, setDashboardData] = useState([]);
   const [summaryData, setSummaryData] = useState({});
+  const [followerSummaryData, setFollowerSummaryData] = useState({});
   const [heatmapData, setHeatmapData] = useState([]);
   const [publishedPostCounts, setPublishedPostCounts] = useState({});
+  const [topPosts, setTopPosts] = useState([]);
   const [loadingData, setLoadingData] = useState(false);
   const [loadingPublishedPosts, setLoadingPublishedPosts] = useState(false);
+  const [loadingTopPosts, setLoadingTopPosts] = useState(false);
   const [dateRange, setDateRange] = useState('month');
+  const [postSortBy, setPostSortBy] = useState('engagement');
+  const [postPage, setPostPage] = useState(0);
+  const [postTotalPages, setPostTotalPages] = useState(0);
 
   useEffect(() => {
     const fetchWorkspaces = async () => {
@@ -136,6 +142,38 @@ const AnalyticsDashboard = () => {
 
   useEffect(() => {
     if (!selectedWorkspaceId || selectedFanpageIds.length === 0) {
+      setTopPosts([]);
+      return;
+    }
+
+    const fetchTopPosts = async () => {
+      setLoadingTopPosts(true);
+      try {
+        const response = await DashboardService.getTopPosts({
+          workspaceId: selectedWorkspaceId,
+          fanpageIds: selectedFanpageIds,
+          campaignIds: selectedCampaignId ? [selectedCampaignId] : undefined,
+          period: dateRange,
+          limit: 5,
+          page: postPage,
+          sortBy: postSortBy,
+        });
+        setTopPosts(normalizeTopPosts(response.data || []));
+        setPostTotalPages(response.totalPages || 0);
+      } catch (err) {
+        console.error('Error fetching top posts:', err);
+        setTopPosts([]);
+        setPostTotalPages(0);
+      } finally {
+        setLoadingTopPosts(false);
+      }
+    };
+
+    fetchTopPosts();
+  }, [dateRange, selectedCampaignId, selectedFanpageIds, selectedWorkspaceId, postPage, postSortBy]);
+
+  useEffect(() => {
+    if (!selectedWorkspaceId || selectedFanpageIds.length === 0) {
       setHeatmapData([]);
       return;
     }
@@ -179,10 +217,13 @@ const AnalyticsDashboard = () => {
         const rawLabels = chartDataRaw.labels || [];
         const labels = isHourlyRange ? normalizeHourlyLabels(rawLabels) : rawLabels;
 
+        const followerSummaryRaw = response.followerSummary || {};
+        const followerChartDataRaw = followerSummaryRaw.chartData || {};
+
         setDashboardData(
           labels.map((label, index) => ({
             date: label,
-            followers: chartDataRaw.followers ? chartDataRaw.followers[index] || 0 : 0,
+            followers: followerChartDataRaw.newFollowers ? followerChartDataRaw.newFollowers[index] || 0 : 0,
             value: (chartDataRaw.shares ? chartDataRaw.shares[index] || 0 : 0) +
                    (chartDataRaw.comments ? chartDataRaw.comments[index] || 0 : 0) +
                    (chartDataRaw.likes ? chartDataRaw.likes[index] || 0 : 0),
@@ -194,10 +235,12 @@ const AnalyticsDashboard = () => {
           }))
         );
         setSummaryData(response.summary || {});
+        setFollowerSummaryData(response.followerSummary || {});
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
         setDashboardData([]);
         setSummaryData({});
+        setFollowerSummaryData({});
       } finally {
         setLoadingData(false);
       }
@@ -261,9 +304,9 @@ const AnalyticsDashboard = () => {
     },
     {
       label: 'Người theo dõi',
-      value: totals.followers,
+      value: followerSummaryData.totalNewFollowers || 0,
       helper: 'Tín hiệu tăng trưởng',
-      trend: formatGrowth(summaryData.followersGrowth),
+      trend: formatGrowth(followerSummaryData.growthRate || 0),
       tone: 'coral',
       icon: 'followers',
       sparkline: dashboardData.map((point) => point.followers),
@@ -493,6 +536,43 @@ const AnalyticsDashboard = () => {
           <ViewsAreaChart customData={dashboardData} timeGranularity={chartGranularity} />
           <LineChartComponent customData={dashboardData} timeGranularity={chartGranularity} />
           <ReachAreaChart customData={dashboardData} timeGranularity={chartGranularity} />
+        </div>
+      </section>
+
+      <section className="analytics-section analytics-top-posts" aria-labelledby="analytics-top-posts-title">
+        <div className="analytics-section-heading">
+          <div>
+            <h2 id="analytics-top-posts-title">Danh sách bài viết nổi bật</h2>
+            <p className="analytics-top-posts__description">
+              Nội dung nổi bật nhất trong khoảng thời gian và các kênh đang xem.
+            </p>
+          </div>
+          <div className="analytics-sort-container">
+            <span className="analytics-sort-label">Sắp xếp theo:</span>
+            <select
+              className="analytics-sort-select"
+              value={postSortBy}
+              onChange={(e) => {
+                setPostSortBy(e.target.value);
+                setPostPage(0);
+              }}
+            >
+              <option value="engagement">Điểm tương tác</option>
+              <option value="likes">Lượt thích cao nhất</option>
+              <option value="comments">Lượt bình luận cao nhất</option>
+              <option value="shares">Lượt chia sẻ cao nhất</option>
+            </select>
+          </div>
+        </div>
+        <div className="analytics-top-posts__card">
+          <TopPostsList 
+            posts={topPosts} 
+            loading={loadingTopPosts} 
+            page={postPage}
+            totalPages={postTotalPages}
+            onPageChange={setPostPage}
+            sortBy={postSortBy}
+          />
         </div>
       </section>
     </div>
