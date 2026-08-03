@@ -20,6 +20,8 @@ export default function AiWriter({
   brandTone,
   selectedPlatforms = [],
   hashtags = [],
+  currentContent = '',
+  onAiMediaChange,
 }) {
   const [activeTab, setActiveTab]   = useState('write');   // 'write' | 'read'
   const [prompt, setPrompt]         = useState(initialPrompt || '');
@@ -27,6 +29,31 @@ export default function AiWriter({
   const [loading, setLoading]       = useState(false);
   const [errorMsg, setErrorMsg]     = useState(null);
   const [expanded, setExpanded]     = useState(true);
+
+  // Thêm state cho chức năng tạo ảnh
+  const [imgLoading, setImgLoading] = useState(false);
+  const [imgErrorMsg, setImgErrorMsg] = useState(null);
+  const [generatedImages, setGeneratedImages] = useState([]);
+  const [imageCount, setImageCount]           = useState(1);
+  const [reloadingIndex, setReloadingIndex]   = useState(null);
+
+  const updateFilesToParent = (base64Array) => {
+    try {
+      const files = base64Array.map((base64, index) => {
+         const byteString = atob(base64);
+         const ab = new ArrayBuffer(byteString.length);
+         const ia = new Uint8Array(ab);
+         for (let i = 0; i < byteString.length; i++) {
+           ia[i] = byteString.charCodeAt(i);
+         }
+         const blob = new Blob([ab], { type: 'image/png' });
+         return new File([blob], `ai-generated-${Date.now()}-${index}.png`, { type: 'image/png' });
+      });
+      onAiMediaChange?.(files);
+    } catch (error) {
+      console.error("Lỗi khi chuyển đổi ảnh:", error);
+    }
+  };
 
   React.useEffect(() => {
     if (initialPrompt) {
@@ -71,6 +98,70 @@ export default function AiWriter({
       setErrorMsg(err.message || 'Không thể gọi dịch vụ AI (Gemini). Vui lòng thử lại.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateImage = async () => {
+    const textToGenerate = currentContent.trim() || prompt.trim();
+    if (!textToGenerate) return;
+    
+    setImgLoading(true);
+    setImgErrorMsg(null);
+
+    try {
+      const payload = {
+        prompt: textToGenerate,
+        count: imageCount
+      };
+
+      const res = await postApi.generateImage(payload, API_BASE_URL);
+      if (res && res.success && res.data && res.data.images) {
+        setGeneratedImages(res.data.images);
+        updateFilesToParent(res.data.images);
+      } else {
+        setImgErrorMsg(res?.message || 'Không thể tạo ảnh.');
+        onAiMediaChange?.([]);
+      }
+    } catch (err) {
+      console.error('AI generate image error:', err);
+      setImgErrorMsg(err.message || 'Lỗi khi gọi dịch vụ tạo ảnh.');
+      onAiMediaChange?.([]);
+    } finally {
+      setImgLoading(false);
+    }
+  };
+
+  const handleDeleteImage = (indexToRemove) => {
+    const newImages = generatedImages.filter((_, idx) => idx !== indexToRemove);
+    setGeneratedImages(newImages);
+    updateFilesToParent(newImages);
+  };
+
+  const handleReloadImage = async (indexToReload) => {
+    const textToGenerate = currentContent.trim() || prompt.trim();
+    if (!textToGenerate) return;
+
+    setReloadingIndex(indexToReload);
+    try {
+      const payload = {
+        prompt: textToGenerate,
+        count: 1 // Chỉ lấy 1 ảnh mới
+      };
+
+      const res = await postApi.generateImage(payload, API_BASE_URL);
+      if (res && res.success && res.data && res.data.images && res.data.images.length > 0) {
+        const newImages = [...generatedImages];
+        newImages[indexToReload] = res.data.images[0];
+        setGeneratedImages(newImages);
+        updateFilesToParent(newImages);
+      } else {
+        alert(res?.message || 'Không thể tạo lại ảnh.');
+      }
+    } catch (err) {
+      console.error('Reload image error:', err);
+      alert(err.message || 'Lỗi khi gọi dịch vụ tạo lại ảnh.');
+    } finally {
+      setReloadingIndex(null);
     }
   };
 
@@ -206,13 +297,107 @@ export default function AiWriter({
 
       {/* AI Image button */}
       <div style={{ padding: '8px 14px', borderTop: '1px solid #f1f5f9' }}>
-        <div className="cp-ai-image" id="cp-ai-image-btn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-          </svg>
-          Tạo ảnh cho bài viết
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <span style={{ fontSize: '13px', color: '#1e293b', fontWeight: '500' }}>Ảnh minh họa (AI)</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>Số lượng:</span>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {[1, 2, 3].map(num => (
+                <button
+                  key={num}
+                  onClick={() => setImageCount(num)}
+                  style={{
+                    padding: '2px 8px',
+                    border: `1px solid ${imageCount === num ? '#7c3aed' : '#cbd5e1'}`,
+                    backgroundColor: imageCount === num ? '#f3e8ff' : 'white',
+                    color: imageCount === num ? '#7c3aed' : '#64748b',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {num}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div 
+          className={`cp-ai-image ${imgLoading ? 'cp-ai-image--loading' : ''}`} 
+          id="cp-ai-image-btn"
+          onClick={imgLoading ? undefined : handleGenerateImage}
+          style={{ cursor: imgLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
+        >
+          {imgLoading ? (
+            <span className="cp-spinner" style={{ borderColor: '#7c3aed', borderRightColor: 'transparent', width: 14, height: 14, borderWidth: 2 }} />
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          )}
+          {imgLoading ? 'Đang tạo ảnh...' : `Tạo ${imageCount} ảnh cho bài viết`}
           <span className="cp-ai-image__badge">AI</span>
         </div>
+        
+        {imgErrorMsg && (
+          <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '8px' }}>
+            {imgErrorMsg}
+          </div>
+        )}
+
+        {generatedImages.length > 0 && (
+          <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {generatedImages.map((base64, index) => (
+              <div key={index} style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
+                <img 
+                  src={`data:image/png;base64,${base64}`} 
+                  alt={`Generated AI ${index}`} 
+                  style={{ width: '100%', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'block', opacity: reloadingIndex === index ? 0.5 : 1 }}
+                />
+                
+                {/* Lớp phủ loading khi đang reload ảnh này */}
+                {reloadingIndex === index && (
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="cp-spinner" style={{ borderColor: '#7c3aed', borderRightColor: 'transparent', width: 24, height: 24, borderWidth: 3 }} />
+                  </div>
+                )}
+
+                {/* Các nút thao tác */}
+                {reloadingIndex !== index && (
+                  <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
+                    <button
+                      onClick={() => handleReloadImage(index)}
+                      title="Tạo lại ảnh này"
+                      style={{
+                        width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)', 
+                        border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteImage(index)}
+                      title="Xóa ảnh này"
+                      style={{
+                        width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.9)', 
+                        border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -19,33 +19,13 @@ export const postApi = {
     requestJson(`/posts/topic/${topicId}`, { method: 'GET' }, baseUrl),
 
   create: (payload, mediaFiles, baseUrl) => {
-    if (mediaFiles && mediaFiles.length > 0) {
-      const formData = buildFormData(payload, mediaFiles);
-      return requestJson('/posts', { method: 'POST', body: formData }, baseUrl);
-    }
-    return requestJson(
-      '/posts',
-      {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      },
-      baseUrl
-    );
+    const formData = buildFormData(payload, mediaFiles);
+    return requestJson('/posts', { method: 'POST', body: formData }, baseUrl);
   },
 
   update: (id, payload, mediaFiles, baseUrl) => {
-    if (mediaFiles && mediaFiles.length > 0) {
-      const formData = buildFormData(payload, mediaFiles);
-      return requestJson(`/posts/${id}`, { method: 'PUT', body: formData }, baseUrl);
-    }
-    return requestJson(
-      `/posts/${id}`,
-      {
-        method: 'PUT',
-        body: JSON.stringify(payload),
-      },
-      baseUrl
-    );
+    const formData = buildFormData(payload, mediaFiles);
+    return requestJson(`/posts/${id}`, { method: 'PUT', body: formData }, baseUrl);
   },
 
   delete: (id, baseUrl) =>
@@ -54,6 +34,16 @@ export const postApi = {
   generate: (payload, baseUrl) =>
     requestJson(
       '/posts/generate',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+      baseUrl
+    ),
+
+  generateImage: (payload, baseUrl) =>
+    requestJson(
+      '/posts/generate-image',
       {
         method: 'POST',
         body: JSON.stringify(payload),
