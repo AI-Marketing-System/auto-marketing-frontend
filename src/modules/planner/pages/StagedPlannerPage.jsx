@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import StageProgress from '../components/StageProgress';
 import EntitySourceBadge from '../components/EntitySourceBadge';
 import FieldRow from '../components/FieldRow';
@@ -27,7 +27,7 @@ import {
   regeneratePosts,
   confirmStage,
   updateDraftStructure,
-  finalizePlan,
+  finalizeAndMaterializePlan,
 } from '../api/stagedPlannerApi';
 import { planDraftApi, parsePlanDraftResponse } from '../api/plannerApi';
 import { API_BASE_URL } from '../../../config/env';
@@ -38,6 +38,7 @@ import '../styles/StagedPlannerPage.css';
 // ─────────────────────────────────────────────────────────────────────────
 function StagedPlannerPage() {
   const { workspaceId } = useParams();
+  const navigate = useNavigate();
 
   const [stage, setStage] = useState(PLAN_STAGES.INIT);
   const [error, setError] = useState(null);
@@ -293,14 +294,15 @@ function StagedPlannerPage() {
     }, 'Đang chuyển sang màn hình Review tổng thể...');
   }, [workspaceId, campaigns, overview, syncStructureToBackend, callApi]);
 
-  // ─── Finalize Plan ──────────────────────────────────────────────────────
+  // ─── Finalize & Materialize Plan ─────────────────────────────────────────
   const handleFinalize = useCallback(async () => {
     if (!workspaceId) return;
     await syncStructureToBackend(campaigns, overview);
     await callApi(async () => {
-      await finalizePlan(workspaceId);
-    }, 'Đang hoàn tất và chốt kế hoạch...');
-  }, [workspaceId, campaigns, overview, syncStructureToBackend, callApi]);
+      await finalizeAndMaterializePlan(workspaceId);
+      navigate(`/workspaces/${workspaceId}/campaigns`);
+    }, 'Đang khởi tạo các Chiến dịch, Chủ đề & Bài viết vào Cơ sở dữ liệu...');
+  }, [workspaceId, campaigns, overview, syncStructureToBackend, callApi, navigate]);
 
   // ─── Manual Handlers (Add / Edit / Delete) ─────────────────────────────
   const setSource = (obj) => ({ ...obj, source: obj.source || 'USER_EDITED' });
@@ -1419,7 +1421,7 @@ function ConfirmedStep({
           disabled={loading}
           style={{ padding: '12px 32px' }}
         >
-          Chốt & Lưu Kế Hoạch Đã Tạo
+          🚀 Khởi Tạo Kế Hoạch Workspace
         </button>
       </div>
     </section>

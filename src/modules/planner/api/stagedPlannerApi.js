@@ -44,7 +44,7 @@ export const generateCampaigns = async (workspaceId) => {
 };
 
 /** Regenerate campaigns với chỉ dẫn bổ sung */
-export const regenerateCampaigns = async (workspaceId, body) => {
+export const regenerateCampaigns = async (workspaceId, body = {}) => {
   const response = await requestJson(
     `/workspaces/${workspaceId}/planner/stage/campaigns/regenerate`,
     { method: 'POST', body: JSON.stringify(body) },
@@ -53,8 +53,8 @@ export const regenerateCampaigns = async (workspaceId, body) => {
   return assertApiSuccess(response);
 };
 
-/** Bước 2: Sinh topics cho 1 campaign */
-export const generateTopics = async (workspaceId, body) => {
+/** Bước 2: Sinh topics cho các campaign */
+export const generateTopics = async (workspaceId, body = {}) => {
   const response = await requestJson(
     `/workspaces/${workspaceId}/planner/stage/topics`,
     { method: 'POST', body: JSON.stringify(body) },
@@ -63,8 +63,8 @@ export const generateTopics = async (workspaceId, body) => {
   return assertApiSuccess(response);
 };
 
-/** Regenerate topics cho 1 campaign */
-export const regenerateTopics = async (workspaceId, body) => {
+/** Regenerate topics cho các campaign */
+export const regenerateTopics = async (workspaceId, body = {}) => {
   const response = await requestJson(
     `/workspaces/${workspaceId}/planner/stage/topics/regenerate`,
     { method: 'POST', body: JSON.stringify(body) },
@@ -73,8 +73,8 @@ export const regenerateTopics = async (workspaceId, body) => {
   return assertApiSuccess(response);
 };
 
-/** Bước 3: Sinh posts cho 1 topic */
-export const generatePosts = async (workspaceId, body) => {
+/** Bước 3: Sinh posts cho các topic */
+export const generatePosts = async (workspaceId, body = {}) => {
   const response = await requestJson(
     `/workspaces/${workspaceId}/planner/stage/posts`,
     { method: 'POST', body: JSON.stringify(body) },
@@ -83,8 +83,8 @@ export const generatePosts = async (workspaceId, body) => {
   return assertApiSuccess(response);
 };
 
-/** Regenerate posts cho 1 topic */
-export const regeneratePosts = async (workspaceId, body) => {
+/** Regenerate posts cho các topic */
+export const regeneratePosts = async (workspaceId, body = {}) => {
   const response = await requestJson(
     `/workspaces/${workspaceId}/planner/stage/posts/regenerate`,
     { method: 'POST', body: JSON.stringify(body) },
@@ -108,6 +108,26 @@ export const finalizePlan = async (workspaceId) => {
   const response = await requestJson(
     `/workspaces/${workspaceId}/planner/stage/finalize`,
     { method: 'POST' },
+    baseUrl()
+  );
+  return assertApiSuccess(response);
+};
+
+/** Chốt kế hoạch và khởi tạo thực thể thật vào DB MySQL (campaigns, topics, posts) */
+export const finalizeAndMaterializePlan = async (workspaceId) => {
+  const response = await requestJson(
+    `/workspaces/${workspaceId}/planner/stage/finalize-materialize`,
+    { method: 'POST' },
+    baseUrl()
+  );
+  return assertApiSuccess(response);
+};
+
+/** AI sinh caption bài viết Social Media hoàn chỉnh từ Content Brief & Brand Tone */
+export const generateFullPostContent = async (workspaceId, body) => {
+  const response = await requestJson(
+    `/workspaces/${workspaceId}/planner/generate-post-content`,
+    { method: 'POST', body: JSON.stringify(body) },
     baseUrl()
   );
   return assertApiSuccess(response);
