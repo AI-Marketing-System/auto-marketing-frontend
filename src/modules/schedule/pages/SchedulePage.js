@@ -60,6 +60,9 @@ function mapSchedulesToCalendarPosts(schedules, weekDays, fanpagesMap = {}) {
       case 'CANCELLED':
         color = '#94a3b8'; // Xám (Gray) - Hủy
         break;
+      case 'DELETED':
+        color = '#64748b'; // Xám đậm (Slate Gray) - Đã xóa
+        break;
       default:
         color = '#7c3aed';
     }
