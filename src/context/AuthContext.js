@@ -62,6 +62,8 @@ export function AuthProvider({ children }) {
 
   const isAuthenticated = !!accessToken;
 
+  const [isSessionExpired, setIsSessionExpired] = useState(false);
+
   const setTokens = useCallback((newAccessToken, newRefreshToken) => {
     setAccessToken(newAccessToken);
     setRefreshToken(newRefreshToken);
@@ -92,6 +94,13 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
+  const handleSessionExpired = useCallback(() => {
+    setTokens(null, null);
+    setUser(null);
+    setIsSessionExpired(true);
+    navigate('/login', { replace: true, state: { sessionExpired: true } });
+  }, [setTokens, navigate]);
+
   const logout = useCallback(
     async (apiBaseUrl) => {
       try {
@@ -104,6 +113,7 @@ export function AuthProvider({ children }) {
         setTokens(null, null);
         setUser(null);
         setError(null);
+        setIsSessionExpired(false);
         navigate('/login', { replace: true });
       }
     },
@@ -114,6 +124,7 @@ export function AuthProvider({ children }) {
     async (credentials, apiBaseUrl) => {
       setIsLoading(true);
       setError(null);
+      setIsSessionExpired(false);
       try {
         const res = await fetch(`${apiBaseUrl}/auth/login`, {
           method: 'POST',
@@ -181,10 +192,49 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = getStoredTokens().accessToken;
     if (token) {
+      const payload = decodeTokenPayload(token);
+      if (payload && payload.exp && payload.exp * 1000 <= Date.now()) {
+        handleSessionExpired();
+        return;
+      }
       setAccessToken(token);
       updateUserFromToken(token);
     }
-  }, [updateUserFromToken]);
+  }, [updateUserFromToken, handleSessionExpired]);
+
+  // Listen for 401 unauthorized custom event from API calls
+  useEffect(() => {
+    const onAuthExpired = () => {
+      handleSessionExpired();
+    };
+
+    window.addEventListener('auth:expired', onAuthExpired);
+    return () => {
+      window.removeEventListener('auth:expired', onAuthExpired);
+    };
+  }, [handleSessionExpired]);
+
+  // Expiration timer check for active session
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const payload = decodeTokenPayload(accessToken);
+    if (!payload || !payload.exp) return;
+
+    const expiresAt = payload.exp * 1000;
+    const timeoutMs = expiresAt - Date.now();
+
+    if (timeoutMs <= 0) {
+      handleSessionExpired();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      handleSessionExpired();
+    }, timeoutMs);
+
+    return () => clearTimeout(timer);
+  }, [accessToken, handleSessionExpired]);
 
   const value = {
     accessToken,
@@ -193,6 +243,8 @@ export function AuthProvider({ children }) {
     isAuthenticated,
     isLoading,
     error,
+    isSessionExpired,
+    setIsSessionExpired,
     login,
     logout,
     refreshAccessToken,
