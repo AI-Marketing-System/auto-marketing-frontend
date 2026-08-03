@@ -18,7 +18,7 @@ import '../styles/CreatePost.css';
  *   onDraft: (data: object) => void,
  * }} props
  */
-export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, topicId }) {
+export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, topicId, initialData, brandTone }) {
   // ── Platform ──────────────────────────────────────────
   const [selectedPlatforms, setSelectedPlatforms] = useState(['Facebook']);
 
@@ -27,13 +27,29 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
       prev.includes(name) ? prev.filter((p) => p !== name) : [...prev, name]
     );
 
-  // ── Content ───────────────────────────────────────────
+  // ── Content & Hashtags ───────────────────────────────
   const [content, setContent]       = useState('');
+  const [hashtags, setHashtags]     = useState([]);
   const [mediaFiles, setMediaFiles] = useState([]);
 
   const handleMediaAdd    = (files) => setMediaFiles((p) => [...p, ...files]);
   const handleMediaRemove = (idx)   => setMediaFiles((p) => p.filter((_, i) => i !== idx));
-  const handleAiInsert    = (text)  => setContent((c) => (c ? c + '\n\n' + text : text));
+
+  const handleAiInsert = (generatedText, aiHashtags) => {
+    setContent(generatedText);
+    if (aiHashtags && Array.isArray(aiHashtags) && aiHashtags.length > 0) {
+      setHashtags((prev) => {
+        const combined = [...prev];
+        aiHashtags.forEach((tag) => {
+          const cleanTag = tag.replace(/^#+/, '');
+          if (cleanTag && !combined.includes(cleanTag)) {
+            combined.push(cleanTag);
+          }
+        });
+        return combined;
+      });
+    }
+  };
 
   // ── Scheduler ─────────────────────────────────────────
   const [topic, setTopic]               = useState('');
@@ -41,6 +57,29 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
   const [scheduleMode, setScheduleMode] = useState('now');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [time, setTime]                 = useState('09:00');
+
+  const [submitting, setSubmitting] = useState(false);
+
+  // Sync initialData when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setContent(initialData.content || initialData.contentBrief || '');
+        let initTags = [];
+        if (initialData.hashtags && Array.isArray(initialData.hashtags)) {
+          initTags = initialData.hashtags.map((t) => t.replace(/^#+/, ''));
+        } else if (typeof initialData.hashtags === 'string' && initialData.hashtags.trim()) {
+          initTags = initialData.hashtags.split(',').map((t) => t.trim().replace(/^#+/, ''));
+        }
+        setHashtags(initTags);
+      } else {
+        setContent('');
+        setHashtags([]);
+      }
+      setMediaFiles([]);
+      setSubmitting(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -52,9 +91,11 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
     const dateStr = `${year}-${month}-${day}`;
 
     return {
+      id: initialData?.id,
       platforms: selectedPlatforms,
       content,
-      media: mediaFiles.map((f) => f.name),
+      hashtags,
+      mediaFiles,
       topic,
       evergreen,
       scheduleMode,
@@ -64,14 +105,30 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
     };
   };
 
-  const handleSubmit = () => {
-    onSubmit?.(buildPayload());
-    onClose?.();
+  const handleSubmit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await onSubmit?.(buildPayload());
+      onClose?.();
+    } catch (err) {
+      console.error('Failed to submit post:', err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDraft = () => {
-    onDraft?.(buildPayload());
-    onClose?.();
+  const handleDraft = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await onDraft?.(buildPayload());
+      onClose?.();
+    } catch (err) {
+      console.error('Failed to draft post:', err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -81,11 +138,11 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Tạo bài viết"
+        aria-label={initialData ? "Chỉnh sửa bài viết" : "Tạo bài viết"}
       >
         {/* ── Header ── */}
         <div className="cp-modal__header">
-          <h2 className="cp-modal__title">Tạo bài viết</h2>
+          <h2 className="cp-modal__title">{initialData ? "Chỉnh sửa & Hoàn thiện bài viết" : "Tạo bài viết"}</h2>
           <button
             className="cp-modal__close"
             onClick={onClose}
@@ -110,13 +167,23 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
             <PostEditor
               content={content}
               onContentChange={setContent}
+              hashtags={hashtags}
+              onHashtagsChange={setHashtags}
               mediaFiles={mediaFiles}
               onMediaAdd={handleMediaAdd}
               onMediaRemove={handleMediaRemove}
             />
 
-            {/* AI Writer */}
-            <AiWriter onInsert={handleAiInsert} topicId={topicId} />
+            {/* AI Writer prefilled with brief, tone & brand tone */}
+            <AiWriter
+              onInsert={handleAiInsert}
+              topicId={topicId}
+              initialPrompt={initialData?.content || ''}
+              initialTone={initialData?.tone}
+              brandTone={brandTone || initialData?.brandTone}
+              selectedPlatforms={selectedPlatforms}
+              hashtags={hashtags}
+            />
           </div>
 
           {/* Right – scheduler */}
@@ -140,16 +207,26 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
           <button
             className="cp-btn cp-btn--ghost"
             onClick={handleDraft}
+            disabled={submitting}
             id="cp-modal-draft"
           >
-            Lưu nháp
+            {submitting ? 'Đang xử lý...' : 'Lưu nháp'}
           </button>
           <button
             className="cp-btn cp-btn--primary"
             onClick={handleSubmit}
+            disabled={submitting}
             id="cp-modal-submit"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            Hoàn tất
+            {submitting ? (
+              <>
+                <span className="cp-spinner" />
+                Đang lưu & upload media...
+              </>
+            ) : (
+              'Hoàn tất'
+            )}
           </button>
         </div>
       </div>
