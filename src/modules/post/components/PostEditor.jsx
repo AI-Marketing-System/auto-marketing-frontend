@@ -14,11 +14,29 @@ import React, { useRef } from 'react';
 export default function PostEditor({
   content = '',
   onContentChange,
+  hashtags = [],
+  onHashtagsChange,
   mediaFiles = [],
   onMediaAdd,
   onMediaRemove,
 }) {
   const fileInputRef = useRef(null);
+  const [tagInput, setTagInput] = React.useState('');
+
+  const handleAddHashtag = (e) => {
+    if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
+      e.preventDefault();
+      let raw = tagInput.trim().replace(/^#+/, '');
+      if (raw && !hashtags.includes(raw)) {
+        onHashtagsChange?.([...hashtags, raw]);
+      }
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveHashtag = (index) => {
+    onHashtagsChange?.(hashtags.filter((_, i) => i !== index));
+  };
 
   // ── Format helpers ──────────────────────────────────────
   const wrapSelection = (before, after = before) => {
@@ -100,6 +118,46 @@ export default function PostEditor({
         </div>
       </div>
 
+      {/* Hashtag Manager */}
+      <div className="cp-hashtags-container">
+        <div className="cp-hashtags-header">
+          <span>🏷️ Hashtags bài viết</span>
+          <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+            (Nhấn Enter hoặc gõ phẩy để thêm)
+          </span>
+        </div>
+        <div className="cp-hashtags-list">
+          {hashtags.map((tag, idx) => (
+            <span key={idx} className="cp-hashtag-pill">
+              #{tag.replace(/^#+/, '')}
+              <button
+                type="button"
+                className="cp-hashtag-remove"
+                onClick={() => handleRemoveHashtag(idx)}
+                title="Xoá hashtag"
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+          <input
+            type="text"
+            className="cp-hashtag-input"
+            placeholder="+ Thêm hashtag"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={handleAddHashtag}
+            onBlur={() => {
+              let raw = tagInput.trim().replace(/^#+/, '');
+              if (raw && !hashtags.includes(raw)) {
+                onHashtagsChange?.([...hashtags, raw]);
+                setTagInput('');
+              }
+            }}
+          />
+        </div>
+      </div>
+
       {/* Media / link buttons */}
       <div className="cp-media-bar">
         <button
@@ -167,19 +225,38 @@ export default function PostEditor({
       {/* Preview thumbnails */}
       {mediaFiles.length > 0 && (
         <div className="cp-media-preview">
-          {mediaFiles.map((file, idx) => (
-            <div key={idx} className="cp-media-thumb">
-              <img src={URL.createObjectURL(file)} alt={file.name} />
-              <button
-                className="cp-media-thumb__remove"
-                onClick={() => onMediaRemove?.(idx)}
-                title="Xoá"
-                id={`cp-remove-media-${idx}`}
-              >
-                ✕
-              </button>
-            </div>
-          ))}
+          {mediaFiles.map((file, idx) => {
+            const isVideo = file.type && file.type.startsWith('video/');
+            return (
+              <div key={idx} className="cp-media-thumb">
+                {isVideo ? (
+                  <video src={URL.createObjectURL(file)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                ) : (
+                  <img src={URL.createObjectURL(file)} alt={file.name} />
+                )}
+                {isVideo && (
+                  <span style={{
+                    position: 'absolute',
+                    bottom: '2px',
+                    left: '2px',
+                    background: 'rgba(0,0,0,0.6)',
+                    color: '#fff',
+                    fontSize: '9px',
+                    padding: '1px 4px',
+                    borderRadius: '3px'
+                  }}>🎥 Video</span>
+                )}
+                <button
+                  className="cp-media-thumb__remove"
+                  onClick={() => onMediaRemove?.(idx)}
+                  title="Xoá"
+                  id={`cp-remove-media-${idx}`}
+                >
+                  ✕
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

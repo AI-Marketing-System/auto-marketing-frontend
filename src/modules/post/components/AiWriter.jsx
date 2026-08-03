@@ -12,13 +12,32 @@ import { API_BASE_URL } from '../../../config/env';
  */
 const TONES = ['Chuyên nghiệp', 'Vui tươi', 'Cảm xúc', 'Hài hước', 'Thuyết phục'];
 
-export default function AiWriter({ onInsert, topicId }) {
+export default function AiWriter({
+  onInsert,
+  topicId,
+  initialPrompt,
+  initialTone,
+  brandTone,
+  selectedPlatforms = [],
+  hashtags = [],
+}) {
   const [activeTab, setActiveTab]   = useState('write');   // 'write' | 'read'
-  const [prompt, setPrompt]         = useState('');
-  const [tone, setTone]             = useState('Vui tươi');
+  const [prompt, setPrompt]         = useState(initialPrompt || '');
+  const [tone, setTone]             = useState(initialTone || brandTone || 'Chuyên nghiệp');
   const [loading, setLoading]       = useState(false);
   const [errorMsg, setErrorMsg]     = useState(null);
   const [expanded, setExpanded]     = useState(true);
+
+  React.useEffect(() => {
+    if (initialPrompt) {
+      setPrompt(initialPrompt);
+    }
+    if (initialTone) {
+      setTone(initialTone);
+    } else if (brandTone) {
+      setTone(brandTone);
+    }
+  }, [initialPrompt, initialTone, brandTone]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -29,7 +48,10 @@ export default function AiWriter({ onInsert, topicId }) {
       const payload = {
         topicId: topicId ? Number(topicId) : 1,
         tone: tone,
+        contentBrief: prompt.trim(),
         audience: prompt.trim(),
+        platforms: selectedPlatforms,
+        hashtags: hashtags,
         language: 'Vietnamese',
         length: 'Medium',
       };
@@ -38,12 +60,9 @@ export default function AiWriter({ onInsert, topicId }) {
       if (res && res.success && res.data) {
         const generatedData = res.data;
         let generatedText = generatedData.content || '';
+        const generatedHashtags = generatedData.hashtags || [];
 
-        if (generatedData.hashtags && Array.isArray(generatedData.hashtags) && generatedData.hashtags.length > 0) {
-          generatedText += '\n\n' + generatedData.hashtags.join(' ');
-        }
-
-        onInsert?.(generatedText);
+        onInsert?.(generatedText, generatedHashtags);
       } else {
         setErrorMsg(res?.message || 'Không thể tạo nội dung bằng AI.');
       }
@@ -69,10 +88,18 @@ export default function AiWriter({ onInsert, topicId }) {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
-          AI viết nội dung
+          AI viết nội dung & Gợi ý giọng văn
           <span className="cp-ai__badge">AI</span>
+          {!expanded && (
+            <span style={{ fontSize: '11px', color: '#6d28d9', fontWeight: 500, marginLeft: '8px', opacity: 0.85 }}>
+              • Giọng văn: {tone?.length > 25 ? tone.substring(0, 25) + '...' : tone}
+            </span>
+          )}
         </div>
-        <span className={`cp-ai__toggle${expanded ? ' cp-ai__toggle--open' : ''}`}>▾</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {!expanded && <span style={{ fontSize: '11.5px', color: '#7c3aed', fontWeight: 600 }}>✦ Mở rộng</span>}
+          <span className={`cp-ai__toggle${expanded ? ' cp-ai__toggle--open' : ''}`}>▾</span>
+        </div>
       </div>
 
       {expanded && (
@@ -114,8 +141,22 @@ export default function AiWriter({ onInsert, topicId }) {
                 <div>
                   <div className="cp-ai__label">Giọng văn</div>
                   <div className="cp-tone-row">
+                    {brandTone && (
+                      <button
+                        type="button"
+                        key="brand-tone"
+                        id="cp-tone-brand"
+                        className={`cp-tone-chip cp-tone-chip--brand${tone === brandTone ? ' cp-tone-chip--active' : ''}`}
+                        onClick={() => setTone(brandTone)}
+                        title={brandTone}
+                      >
+                        🏢 Giọng Thương hiệu
+                        <span className="cp-tone-badge">Brand</span>
+                      </button>
+                    )}
                     {TONES.map((t) => (
                       <button
+                        type="button"
                         key={t}
                         id={`cp-tone-${t}`}
                         className={`cp-tone-chip${tone === t ? ' cp-tone-chip--active' : ''}`}
