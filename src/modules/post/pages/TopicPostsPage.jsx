@@ -76,6 +76,7 @@ export default function TopicPostsPage() {
         hashtagsList.push(match[1]);
       }
 
+      const isAiGenerated = modalData.content.includes('✨') || modalData.content.includes('[AI');
       const payload = {
         workspaceId: Number(workspaceId),
         campaignId: topicDetails ? Number(topicDetails.campaignId) : null,
@@ -83,8 +84,8 @@ export default function TopicPostsPage() {
         title: modalData.content.slice(0, 50).trim() || 'Bài đăng mới',
         content: modalData.content,
         hashtags: hashtagsList,
-        generatedByAi: modalData.content.includes('✨') || modalData.content.includes('[AI'),
-        aiModel: 'gemini-3.5-flash',
+        generatedByAi: isAiGenerated,
+        aiModel: isAiGenerated ? 'gemini' : null,
       };
 
       const res = await postApi.create(payload, API_BASE_URL);
