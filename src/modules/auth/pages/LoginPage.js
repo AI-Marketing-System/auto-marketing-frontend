@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import '../styles/LoginPage.css';
 import '../styles/auth-feedback.css';
 import Brand from '../../../public-site/components/Brand';
@@ -10,6 +10,7 @@ import { useAuth } from '../../../context/AuthContext';
 
 function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const auth = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +25,16 @@ function LoginPage() {
 
   const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState(null);
+  const [feedback, setFeedback] = useState(() => {
+    if (location.state?.sessionExpired || auth.isSessionExpired) {
+      return {
+        kind: 'error',
+        title: 'Phiên đăng nhập đã hết hạn',
+        message: 'Phiên làm việc của bạn đã hết hạn. Vui lòng đăng nhập lại.',
+      };
+    }
+    return null;
+  });
   const [responseBody, setResponseBody] = useState(null);
 
   const handleSubmit = async (e) => {

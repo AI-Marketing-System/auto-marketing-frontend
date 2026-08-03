@@ -12,6 +12,7 @@ function StatusBadge({ status }) {
     SUCCESS:   { label: 'Thành công', cls: 'success' },
     FAILED:    { label: 'Thất bại',   cls: 'failed' },
     CANCELLED: { label: 'Đã hủy',    cls: 'cancelled' },
+    DELETED:   { label: 'Đã xóa',     cls: 'failed' },
   };
   const cfg = map[status] || { label: status, cls: 'unknown' };
   return <span className={`sdm-badge sdm-badge--${cfg.cls}`}>{cfg.label}</span>;
@@ -232,9 +233,30 @@ export default function ScheduleDetailModal({
     } catch (err) {
       const msg = err?.message || 'Không thể hủy lịch. Vui lòng thử lại.';
       setError(msg);
-      setConfirmCancel(false);
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const [deletingTargetId, setDeletingTargetId] = useState(null);
+
+  const handleDeleteFbPost = async (targetId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa bài viết này khỏi Fanpage Facebook? Action này không thể hoàn tác.')) {
+      return;
+    }
+    setDeletingTargetId(targetId);
+    setError('');
+    setSuccessMsg('');
+    try {
+      await scheduleApi.deletePublishedFbPost(API_BASE_URL, targetId);
+      setSuccessMsg('Đã xóa bài viết trên Facebook thành công!');
+      await fetchTargets();
+      onSuccess?.();
+    } catch (err) {
+      const msg = err?.message || 'Không thể xóa bài viết trên Facebook.';
+      setError(msg);
+    } finally {
+      setDeletingTargetId(null);
     }
   };
 
@@ -410,6 +432,9 @@ export default function ScheduleDetailModal({
                   const fp = fanpageMap[target.fanpageId];
                   const fpName = fp?.fanpageName || `Fanpage #${target.fanpageId}`;
                   const fpAvatar = fp?.fanpageAvatarUrl || null;
+                  const isSuccess = target.status === 'SUCCESS';
+                  const isDeletingThis = deletingTargetId === target.id;
+
                   return (
                     <li key={target.id} className="sdm-target-item">
                       <FanpageAvatar name={fpName} avatarUrl={fpAvatar} />
@@ -422,7 +447,25 @@ export default function ScheduleDetailModal({
                           <span className="sdm-target-retry">Thử lại: {target.retryCount} lần</span>
                         )}
                       </div>
-                      <StatusBadge status={target.status} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <StatusBadge status={target.status} />
+                        {isSuccess && (
+                          <button
+                            type="button"
+                            className="sdm-btn sdm-btn--cancel"
+                            style={{ padding: '4px 8px', fontSize: '12px' }}
+                            onClick={() => handleDeleteFbPost(target.id)}
+                            disabled={deletingTargetId !== null}
+                            title="Xóa bài viết này khỏi Facebook Fanpage"
+                          >
+                            {isDeletingThis ? (
+                              <span className="sdm-spinner" />
+                            ) : (
+                              'Xóa trên FB'
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </li>
                   );
                 })}
