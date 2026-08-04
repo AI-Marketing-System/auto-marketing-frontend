@@ -31,9 +31,11 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
   const [content, setContent]       = useState('');
   const [hashtags, setHashtags]     = useState([]);
   const [mediaFiles, setMediaFiles] = useState([]);
+  const [aiMediaFiles, setAiMediaFiles] = useState([]);
 
   const handleMediaAdd    = (files) => setMediaFiles((p) => [...p, ...files]);
   const handleMediaRemove = (idx)   => setMediaFiles((p) => p.filter((_, i) => i !== idx));
+  const handleAiMediaChange = (files) => setAiMediaFiles(files);
 
   const handleAiInsert = (generatedText, aiHashtags) => {
     setContent(generatedText);
@@ -58,7 +60,7 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [time, setTime]                 = useState('09:00');
 
-  const [submitting, setSubmitting] = useState(false);
+  const [submitType, setSubmitType] = useState(null); // 'draft' | 'submit' | null
 
   // Sync initialData when modal opens
   React.useEffect(() => {
@@ -77,7 +79,8 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
         setHashtags([]);
       }
       setMediaFiles([]);
-      setSubmitting(false);
+      setAiMediaFiles([]);
+      setSubmitType(null);
     }
   }, [isOpen]);
 
@@ -95,7 +98,7 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
       platforms: selectedPlatforms,
       content,
       hashtags,
-      mediaFiles,
+      mediaFiles: [...mediaFiles, ...aiMediaFiles],
       topic,
       evergreen,
       scheduleMode,
@@ -106,28 +109,28 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
   };
 
   const handleSubmit = async () => {
-    if (submitting) return;
-    setSubmitting(true);
+    if (submitType) return;
+    setSubmitType('submit');
     try {
       await onSubmit?.(buildPayload());
       onClose?.();
     } catch (err) {
       console.error('Failed to submit post:', err);
     } finally {
-      setSubmitting(false);
+      setSubmitType(null);
     }
   };
 
   const handleDraft = async () => {
-    if (submitting) return;
-    setSubmitting(true);
+    if (submitType) return;
+    setSubmitType('draft');
     try {
       await onDraft?.(buildPayload());
       onClose?.();
     } catch (err) {
       console.error('Failed to draft post:', err);
     } finally {
-      setSubmitting(false);
+      setSubmitType(null);
     }
   };
 
@@ -183,6 +186,8 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
               brandTone={brandTone || initialData?.brandTone}
               selectedPlatforms={selectedPlatforms}
               hashtags={hashtags}
+              currentContent={content}
+              onAiMediaChange={handleAiMediaChange}
             />
           </div>
 
@@ -207,19 +212,27 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, onDraft, to
           <button
             className="cp-btn cp-btn--ghost"
             onClick={handleDraft}
-            disabled={submitting}
+            disabled={submitType !== null}
             id="cp-modal-draft"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            {submitting ? 'Đang xử lý...' : 'Lưu nháp'}
+            {submitType === 'draft' ? (
+              <>
+                <span className="cp-spinner" style={{ borderColor: '#64748b', borderRightColor: 'transparent' }} />
+                Đang xử lý...
+              </>
+            ) : (
+              'Lưu nháp'
+            )}
           </button>
           <button
             className="cp-btn cp-btn--primary"
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitType !== null}
             id="cp-modal-submit"
             style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            {submitting ? (
+            {submitType === 'submit' ? (
               <>
                 <span className="cp-spinner" />
                 Đang lưu & upload media...
