@@ -187,8 +187,7 @@ export default function TopicPostsPage() {
     setIsModalOpen(true);
   };
 
-  // Submit from CreatePostModal (Hoàn tất & Lên lịch)
-  const handleSubmitPost = async (modalData) => {
+    const handleSubmitPost = async (modalData) => {
     if (!modalData.content.trim()) return;
 
     try {
@@ -204,6 +203,7 @@ export default function TopicPostsPage() {
 
       const isAiGenerated = modalData.content.includes('✨') || modalData.content.includes('[AI');
       const isScheduled = modalData.scheduleMode === 'schedule' && modalData.scheduledAt;
+      const isPublishNow = modalData.scheduleMode === 'now';
 
       const currentEditPost = editingPost;
       if (currentEditPost) {
@@ -234,6 +234,18 @@ export default function TopicPostsPage() {
             console.warn('Schedule create:', e);
           }
           setActiveTab('scheduled');
+        } else if (isPublishNow) {
+          try {
+            await scheduleApi.publishImmediately(API_BASE_URL, {
+              postId: currentEditPost.id,
+              fanpageIds: modalData.fanpageIds || [],
+            });
+            window.alert('Bài viết đang được đăng ngay lên các Fanpage đã chọn!');
+          } catch (e) {
+            console.error('Publish immediately fail:', e);
+            window.alert('Đăng bài thất bại: ' + (e.message || 'Lỗi hệ thống'));
+          }
+          setActiveTab('scheduled');
         }
       } else {
         // Create new post
@@ -250,28 +262,45 @@ export default function TopicPostsPage() {
         };
 
         const res = await postApi.create(payload, modalData.mediaFiles, API_BASE_URL);
-        if (res.success && isScheduled && res.data?.id) {
-          try {
-            await scheduleApi.createSchedule(API_BASE_URL, {
-              postId: res.data.id,
-              workspaceId: Number(workspaceId),
-              publishTime: modalData.scheduledAt,
-              fanpageIds: modalData.fanpageIds || [],
-            });
-          } catch (e) {
-            console.warn('Schedule create:', e);
+        if (res.success && res.data?.id) {
+          const newPostId = res.data.id;
+          if (isScheduled) {
+            try {
+              await scheduleApi.createSchedule(API_BASE_URL, {
+                postId: newPostId,
+                workspaceId: Number(workspaceId),
+                publishTime: modalData.scheduledAt,
+                fanpageIds: modalData.fanpageIds || [],
+              });
+            } catch (e) {
+              console.warn('Schedule create:', e);
+            }
+            setActiveTab('scheduled');
+          } else if (isPublishNow) {
+            try {
+              await scheduleApi.publishImmediately(API_BASE_URL, {
+                postId: newPostId,
+                fanpageIds: modalData.fanpageIds || [],
+              });
+              window.alert('Bài viết đang được đăng ngay lên các Fanpage đã chọn!');
+            } catch (e) {
+              console.error('Publish immediately fail:', e);
+              window.alert('Đăng bài thất bại: ' + (e.message || 'Lỗi hệ thống'));
+            }
+            setActiveTab('scheduled');
           }
-          setActiveTab('scheduled');
         }
       }
 
       await loadPosts();
+      if (topicDetails?.campaignId) {
+        loadSchedules(topicDetails.campaignId);
+      }
     } catch (err) {
       window.alert(err.message || 'Không thể lưu bài viết. Vui lòng thử lại.');
       throw err;
     }
   };
-
   // Draft save from CreatePostModal (Lưu nháp)
   const handleDraftPost = async (modalData) => {
     if (!modalData.content.trim()) return;
