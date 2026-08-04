@@ -1,92 +1,148 @@
 import React from 'react';
 
 /**
- * PlatformSelector – Chọn nền tảng mạng xã hội để đăng bài
+ * PlatformSelector – Thanh chọn Fanpage để đăng bài
+ * Hiển thị dạng avatar tròn có badge "f" + nút "+" thêm
  *
- * @param {{
- *   platforms: string[],
- *   selected: string[],
- *   onToggle: (name: string) => void,
- * }} props
+ * Props:
+ *   fanpages: Array<{fanpageId, fanpageName, fanpageAvatarUrl}>
+ *   selectedFanpageIds: number[]
+ *   onToggle: (fanpageId: number) => void
+ *   fanpagesLoading: boolean
  */
-const PLATFORM_COLORS = {
-  Facebook:  '#1877f2',
-  Instagram: '#e1306c',
-  TikTok:    '#010101',
-  Twitter:   '#1da1f2',
-  LinkedIn:  '#0077b5',
-};
 
-const PLATFORM_ICONS = {
-  Facebook: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="#1877f2">
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-    </svg>
-  ),
-  Instagram: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="url(#ps-ig-grad)">
-      <defs>
-        <linearGradient id="ps-ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor="#f09433" />
-          <stop offset="50%"  stopColor="#dc2743" />
-          <stop offset="100%" stopColor="#bc1888" />
-        </linearGradient>
-      </defs>
-      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-    </svg>
-  ),
-  TikTok: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="#010101">
-      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.83a8.17 8.17 0 004.78 1.52V6.89a4.85 4.85 0 01-1.01-.2z" />
-    </svg>
-  ),
-  Twitter: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="#1da1f2">
-      <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z" />
-    </svg>
-  ),
-  LinkedIn: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="#0077b5">
-      <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" />
-      <circle cx="4" cy="4" r="2" />
-    </svg>
-  ),
-};
-
-const DEFAULT_PLATFORMS = ['Facebook', 'Instagram', 'TikTok', 'Twitter', 'LinkedIn'];
+function getInitials(name) {
+  if (!name) return '?';
+  return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+}
 
 export default function PlatformSelector({
-  platforms = DEFAULT_PLATFORMS,
-  selected = ['Facebook'],
+  fanpages = [],
+  selectedFanpageIds = [],
   onToggle,
+  fanpagesLoading = false,
 }) {
+  if (fanpagesLoading) {
+    return (
+      <div className="cp-platform-bar">
+        {[1, 2].map((i) => (
+          <div key={i} style={{
+            width: 44, height: 44, borderRadius: '50%',
+            background: '#f1f5f9', animation: 'cp-pulse 1.4s ease infinite',
+          }} />
+        ))}
+      </div>
+    );
+  }
+
+  if (fanpages.length === 0) {
+    return (
+      <div className="cp-platform-bar">
+        <span style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}>
+          Chưa có fanpage nào — liên kết trong Tài khoản xã hội
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="cp-platform-bar">
-      {platforms.map((name) => {
-        const isActive = selected.includes(name);
+    <div className="cp-platform-bar" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+      {fanpages.map((fp) => {
+        const isSelected = selectedFanpageIds.includes(fp.fanpageId);
+        const name = fp.fanpageName || `Fanpage #${fp.fanpageId}`;
+
         return (
           <button
-            key={name}
-            id={`cp-platform-${name.toLowerCase()}`}
-            className={`cp-platform-chip${isActive ? ' cp-platform-chip--active' : ''}`}
-            onClick={() => onToggle?.(name)}
-            title={name}
+            key={fp.fanpageId}
+            type="button"
+            title={`${name}${isSelected ? ' (đã chọn)' : ' (nhấp để chọn)'}`}
+            onClick={() => onToggle?.(fp.fanpageId)}
+            style={{
+              position: 'relative',
+              width: 44, height: 44,
+              borderRadius: '50%',
+              border: `2.5px solid ${isSelected ? '#4f46e5' : '#e2e8f0'}`,
+              padding: 0, cursor: 'pointer',
+              background: '#e2e8f0',
+              overflow: 'visible',
+              transition: 'border-color 0.18s, box-shadow 0.18s',
+              boxShadow: isSelected ? '0 0 0 3px rgba(79,70,229,0.18)' : 'none',
+              flexShrink: 0,
+            }}
           >
-            {PLATFORM_ICONS[name] && (
-              <span className="cp-platform-chip__icon">{PLATFORM_ICONS[name]}</span>
+            {/* Avatar */}
+            <div style={{
+              width: '100%', height: '100%',
+              borderRadius: '50%', overflow: 'hidden',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: '#c7d2fe', fontSize: 13, fontWeight: 700, color: '#3730a3',
+            }}>
+              {fp.fanpageAvatarUrl ? (
+                <img
+                  src={fp.fanpageAvatarUrl}
+                  alt={name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              ) : getInitials(name)}
+            </div>
+
+            {/* Badge Facebook */}
+            <span style={{
+              position: 'absolute', bottom: -2, right: -2,
+              width: 16, height: 16,
+              background: '#1877f2', borderRadius: '50%',
+              border: '2px solid #fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 9, fontWeight: 900, color: '#fff', lineHeight: 1,
+              pointerEvents: 'none',
+            }}>
+              f
+            </span>
+
+            {/* Dấu tick khi chọn */}
+            {isSelected && (
+              <span style={{
+                position: 'absolute', top: -4, right: -4,
+                width: 16, height: 16,
+                background: '#4f46e5', borderRadius: '50%',
+                border: '2px solid #fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                pointerEvents: 'none',
+              }}>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </span>
             )}
-            {!PLATFORM_ICONS[name] && (
-              <span
-                className="cp-platform-chip__dot"
-                style={{ background: PLATFORM_COLORS[name] || '#7c3aed' }}
-              />
-            )}
-            {name}
           </button>
         );
       })}
-      <button className="cp-platform-chip cp-platform-chip--add" title="Thêm nền tảng">
-        + Thêm
+
+      {/* Nút "+" thêm fanpage */}
+      <button
+        type="button"
+        title="Quản lý fanpage trong mục Tài khoản xã hội"
+        style={{
+          width: 40, height: 40, borderRadius: '50%',
+          border: '2px dashed #cbd5e1',
+          background: '#f8fafc', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#94a3b8', fontSize: 20, fontWeight: 300,
+          transition: 'all 0.15s', flexShrink: 0,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = '#7c3aed';
+          e.currentTarget.style.color = '#7c3aed';
+          e.currentTarget.style.background = '#f5f3ff';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = '#cbd5e1';
+          e.currentTarget.style.color = '#94a3b8';
+          e.currentTarget.style.background = '#f8fafc';
+        }}
+      >
+        +
       </button>
     </div>
   );

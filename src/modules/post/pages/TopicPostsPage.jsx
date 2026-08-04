@@ -228,7 +228,7 @@ export default function TopicPostsPage() {
               postId: currentEditPost.id,
               workspaceId: Number(workspaceId),
               publishTime: modalData.scheduledAt,
-              fanpageIds: [],
+              fanpageIds: modalData.fanpageIds || [],
             });
           } catch (e) {
             console.warn('Schedule create:', e);
@@ -256,7 +256,7 @@ export default function TopicPostsPage() {
               postId: res.data.id,
               workspaceId: Number(workspaceId),
               publishTime: modalData.scheduledAt,
-              fanpageIds: [],
+              fanpageIds: modalData.fanpageIds || [],
             });
           } catch (e) {
             console.warn('Schedule create:', e);
@@ -502,7 +502,7 @@ export default function TopicPostsPage() {
                       <div className="post-item-hashtags">
                         {post.hashtags.map((tag, idx) => (
                           <span key={idx} className="hashtag-pill">
-                            #{tag}
+                            #{tag.replace(/^#+/, '')}
                           </span>
                         ))}
                       </div>
@@ -674,6 +674,7 @@ export default function TopicPostsPage() {
         }}
         onSubmit={handleSubmitPost}
         onDraft={handleDraftPost}
+        workspaceId={workspaceId}
         topicId={topicId}
         initialData={editingPost}
         brandTone={topicDetails?.brandTone || topicDetails?.workspaceBrandTone}

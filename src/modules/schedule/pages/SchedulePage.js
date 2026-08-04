@@ -87,7 +87,7 @@ function mapSchedulesToCalendarPosts(schedules, weekDays, fanpagesMap = {}) {
       postContent: sch.postContent || '',
       targetFanpages, // danh sách fanpage được lên lịch
       color,
-      image: null,
+      image: sch.postImageUrl || null,
       publishTime: sch.publishTime,
       status: sch.status,
     };
