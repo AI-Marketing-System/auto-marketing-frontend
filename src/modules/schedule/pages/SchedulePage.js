@@ -8,6 +8,8 @@ import CalendarGrid     from '../components/CalendarGrid';
 import CreatePostModal  from '../../post/components/CreatePostModal';
 import SelectPostToScheduleModal from '../components/SelectPostToScheduleModal';
 import ScheduleDetailModal from '../components/ScheduleDetailModal';
+import { postApi } from '../../post/api/postApi';
+import { topicApi } from '../../topic/api/topicApi';
 
 import {
   getWeekDays,
@@ -145,6 +147,46 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
       .catch(() => {});
   }, [workspaceId]);
 
+  // State topics của cả workspace
+  const [topics, setTopics] = useState([]);
+
+  // Load tất cả topics từ các campaigns của workspace hiện tại
+  useEffect(() => {
+    if (!campaigns || campaigns.length === 0) {
+      setTopics([]);
+      return;
+    }
+    const loadAllTopics = async () => {
+      try {
+        const promises = campaigns.map(c =>
+          topicApi.listByCampaignId(c.id, 0, 100, 'createdAt', 'desc', API_BASE_URL)
+            .then(res => {
+              if (res?.success) {
+                return res.data?.content || res.data || [];
+              }
+              return [];
+            })
+            .catch(() => [])
+        );
+        const results = await Promise.all(promises);
+        const flatTopics = results.flat();
+        // Lọc trùng theo id
+        const uniqueTopics = [];
+        const seen = new Set();
+        flatTopics.forEach(t => {
+          if (t && t.id && !seen.has(t.id)) {
+            seen.add(t.id);
+            uniqueTopics.push(t);
+          }
+        });
+        setTopics(uniqueTopics);
+      } catch (err) {
+        console.error('Failed to load workspace topics:', err);
+      }
+    };
+    loadAllTopics();
+  }, [campaigns]);
+
   // Tính lại weekDays mỗi khi tuần thay đổi
   useEffect(() => {
     const days = getWeekDays(currentDate);
@@ -217,9 +259,107 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
     setShowDetailModal(true);
   };
 
-  // ── Handler tạo bài mới ──
-  const handleNewPostSubmit = (data) => {
-    console.log('Bài viết mới:', data);
+  // ── Handler tạo bài mới (Hoàn tất & Lên lịch/Đăng ngay) ──
+  const handleNewPostSubmit = async (modalData) => {
+    if (!modalData.content.trim()) return;
+
+    try {
+      const extractedTags = [];
+      const hashtagRegex = /#(\w+)/g;
+      let match;
+      while ((match = hashtagRegex.exec(modalData.content)) !== null) {
+        extractedTags.push(match[1]);
+      }
+      const modalTags = (modalData.hashtags || []).map((t) => t.replace(/^#+/, ''));
+      const hashtagsList = Array.from(new Set([...modalTags, ...extractedTags])).filter(Boolean);
+
+      const isAiGenerated = modalData.content.includes('✨') || modalData.content.includes('[AI');
+      const isScheduled = modalData.scheduleMode === 'schedule' && modalData.scheduledAt;
+      const isPublishNow = modalData.scheduleMode === 'now';
+
+      const chosenTopicId = modalData.topicId ? Number(modalData.topicId) : (topicFilter && topicFilter !== 'Tất cả chủ đề' ? Number(topicFilter) : null);
+      const foundTopic = topics.find(t => t.id === chosenTopicId);
+      const chosenCampaignId = foundTopic ? foundTopic.campaignId : (campaignFilter && campaignFilter !== 'Tất cả chiến dịch' ? Number(campaignFilter) : null);
+
+      const payload = {
+        workspaceId: Number(workspaceId),
+        campaignId: chosenCampaignId,
+        topicId: chosenTopicId,
+        title: modalData.content.slice(0, 50).trim() || 'Bài đăng mới',
+        content: modalData.content,
+        hashtags: hashtagsList,
+        status: isScheduled ? 'SCHEDULED' : 'DRAFT',
+        generatedByAi: isAiGenerated,
+        aiModel: isAiGenerated ? 'gemini-3.5-flash' : null,
+      };
+
+      const res = await postApi.create(payload, modalData.mediaFiles, API_BASE_URL);
+      if (res.success && res.data?.id) {
+        const newPostId = res.data.id;
+        if (isScheduled) {
+          try {
+            await scheduleApi.createSchedule(API_BASE_URL, {
+              postId: newPostId,
+              workspaceId: Number(workspaceId),
+              publishTime: modalData.scheduledAt,
+              fanpageIds: modalData.fanpageIds || [],
+            });
+          } catch (e) {
+            console.warn('Schedule create error:', e);
+          }
+        } else if (isPublishNow) {
+          try {
+            await scheduleApi.publishImmediately(API_BASE_URL, {
+              postId: newPostId,
+              fanpageIds: modalData.fanpageIds || [],
+            });
+            window.alert('Bài viết đang được đăng ngay lên các Fanpage đã chọn!');
+          } catch (e) {
+            console.error('Publish immediately fail:', e);
+            window.alert('Đăng bài thất bại: ' + (e.message || 'Lỗi hệ thống'));
+          }
+        }
+        await triggerFetchSchedules();
+      }
+    } catch (err) {
+      window.alert(err.message || 'Không thể tạo bài viết. Vui lòng thử lại.');
+    }
+  };
+
+  // ── Handler lưu nháp bài viết mới ──
+  const handleDraftPost = async (modalData) => {
+    if (!modalData.content.trim()) return;
+
+    try {
+      const extractedTags = [];
+      const hashtagRegex = /#(\w+)/g;
+      let match;
+      while ((match = hashtagRegex.exec(modalData.content)) !== null) {
+        extractedTags.push(match[1]);
+      }
+      const modalTags = (modalData.hashtags || []).map((t) => t.replace(/^#+/, ''));
+      const hashtagsList = Array.from(new Set([...modalTags, ...extractedTags])).filter(Boolean);
+
+      const chosenTopicId = modalData.topicId ? Number(modalData.topicId) : (topicFilter && topicFilter !== 'Tất cả chủ đề' ? Number(topicFilter) : null);
+      const foundTopic = topics.find(t => t.id === chosenTopicId);
+      const chosenCampaignId = foundTopic ? foundTopic.campaignId : (campaignFilter && campaignFilter !== 'Tất cả chiến dịch' ? Number(campaignFilter) : null);
+
+      const payload = {
+        workspaceId: Number(workspaceId),
+        campaignId: chosenCampaignId,
+        topicId: chosenTopicId,
+        title: modalData.content.slice(0, 50).trim() || 'Bài đăng mới',
+        content: modalData.content,
+        hashtags: hashtagsList,
+        status: 'DRAFT',
+        generatedByAi: false,
+      };
+
+      await postApi.create(payload, modalData.mediaFiles, API_BASE_URL);
+      window.alert('Lưu nháp bài viết thành công!');
+    } catch (err) {
+      window.alert(err.message || 'Không thể lưu nháp bài viết.');
+    }
   };
 
   return (
@@ -260,12 +400,13 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
         onCardClick={handleCardClick}
       />
 
-      {/* 5. Modal tạo bài mới */}
       <CreatePostModal
         isOpen={showNewPostModal}
         onClose={() => setShowNewPostModal(false)}
         onSubmit={handleNewPostSubmit}
-        onDraft={(data) => console.log('Lưu nháp:', data)}
+        onDraft={handleDraftPost}
+        workspaceId={workspaceId}
+        topics={topics}
       />
 
       {/* 6. Modal lên lịch bài viết có sẵn khi click vào ô lịch */}
@@ -279,7 +420,7 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
         onSuccess={triggerFetchSchedules}
       />
 
-      {/* 7. Modal chi tiết lịch đăng (US-36/37/38) */}
+      {/* 7. Modal chi tiết lịch đăng */}
       <ScheduleDetailModal
         isOpen={showDetailModal}
         onClose={() => { setShowDetailModal(false); setSelectedSchedule(null); }}

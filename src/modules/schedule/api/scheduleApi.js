@@ -31,5 +31,9 @@ export const scheduleApi = {
   /** Xóa bài viết đã đăng trên Facebook */
   deletePublishedFbPost: (baseUrl, targetId) =>
     requestJson(`/publish/target/${targetId}`, { method: 'DELETE' }, baseUrl),
+
+  /** Đăng ngay lập tức */
+  publishImmediately: (baseUrl, payload) =>
+    requestJson('/publish', { method: 'POST', body: JSON.stringify(payload) }, baseUrl),
 };
 
