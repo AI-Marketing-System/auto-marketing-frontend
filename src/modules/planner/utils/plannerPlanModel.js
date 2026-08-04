@@ -197,8 +197,9 @@ export const countPlan = (plan) => {
 export const parseHashtags = (value) =>
   str(value)
     .split(/[\s,]+/)
-    .map((token) => token.trim())
-    .filter((token) => token.length > 1 && token.startsWith('#'));
+    .map((token) => token.trim().replace(/^#+/, ''))
+    .filter((token) => token.length > 0)
+    .map((token) => `#${token}`);
 
 /** Mở sẵn campaign đầu tiên và topic đầu của nó, để người dùng thấy ngay có nội dung gì. */
 export const defaultExpanded = (plan) => {

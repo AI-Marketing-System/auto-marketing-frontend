@@ -3,9 +3,69 @@ import { useParams, Link } from 'react-router-dom';
 import { postApi } from '../api/postApi';
 import { topicApi } from '../../topic/api/topicApi';
 import { scheduleApi } from '../../schedule/api/scheduleApi';
+import { getWorkspaceFanpages } from '../../campaigns/api/workspaceFanpageApi';
 import { API_BASE_URL } from '../../../config/env';
 import CreatePostModal from '../components/CreatePostModal';
+import ScheduleDetailModal from '../../schedule/components/ScheduleDetailModal';
 import '../styles/PostModule.css';
+
+// ── Hằng số màu sắc theo trạng thái lịch ──
+const STATUS_CONFIG = {
+  WAITING:   { label: 'Đang chờ',   color: '#3b82f6', bg: '#dbeafe', dot: '#3b82f6' },
+  RUNNING:   { label: 'Đang đăng',  color: '#d97706', bg: '#fef3c7', dot: '#f59e0b' },
+  SUCCESS:   { label: 'Thành công', color: '#15803d', bg: '#dcfce7', dot: '#10b981' },
+  FAILED:    { label: 'Thất bại',   color: '#b91c1c', bg: '#fee2e2', dot: '#ef4444' },
+  CANCELLED: { label: 'Đã hủy',    color: '#475569', bg: '#f1f5f9', dot: '#94a3b8' },
+  DELETED:   { label: 'Đã xóa',    color: '#475569', bg: '#f1f5f9', dot: '#94a3b8' },
+};
+
+function ScheduleStatusBadge({ status }) {
+  const cfg = STATUS_CONFIG[status] || { label: status, color: '#475569', bg: '#f1f5f9', dot: '#94a3b8' };
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '5px',
+      padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
+      color: cfg.color, background: cfg.bg,
+    }}>
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
+      {cfg.label}
+    </span>
+  );
+}
+
+function FanpageAvatarList({ targets, fanpagesMap }) {
+  if (!targets || targets.length === 0) {
+    return <span style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}>Chưa có fanpage</span>;
+  }
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+      {targets.map((t) => {
+        const fp = fanpagesMap[t.fanpageId];
+        const name = fp?.fanpageName || `Fanpage #${t.fanpageId}`;
+        const avatar = fp?.fanpageAvatarUrl;
+        const tCfg = STATUS_CONFIG[t.status] || STATUS_CONFIG.WAITING;
+        return (
+          <div key={t.fanpageId || t.id} title={`${name} • ${tCfg.label}`}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px',
+              background: '#f8fafc', border: `1px solid ${tCfg.bg}`,
+              borderRadius: '20px', padding: '2px 8px 2px 4px', fontSize: 12 }}>
+            <div style={{
+              width: 20, height: 20, borderRadius: '50%', overflow: 'hidden',
+              background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 9, fontWeight: 700, color: '#475569', flexShrink: 0,
+            }}>
+              {avatar
+                ? <img src={avatar} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : name.slice(0, 2).toUpperCase()}
+            </div>
+            <span style={{ color: '#334155', fontWeight: 500, maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: tCfg.dot, flexShrink: 0 }} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function TopicPostsPage() {
   const { workspaceId, topicId } = useParams();
@@ -22,6 +82,21 @@ export default function TopicPostsPage() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
+
+  // Schedule List State (Tab Lịch đăng)
+  const [schedules, setSchedules] = useState([]);
+  const [schedulesLoading, setSchedulesLoading] = useState(false);
+  const [fanpages, setFanpages] = useState([]);
+
+  // Schedule Detail Modal State
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
+
+  // Map fanpageId → fanpage object
+  const fanpagesMap = fanpages.reduce((acc, fp) => {
+    acc[fp.fanpageId] = fp;
+    return acc;
+  }, {});
 
   // Load Topic Details
   const loadTopicDetails = useCallback(async () => {
@@ -59,10 +134,42 @@ export default function TopicPostsPage() {
     }
   }, [topicId]);
 
+  // Load Schedules by campaignId (khi topicDetails đã có campaignId)
+  const loadSchedules = useCallback(async (campaignId) => {
+    if (!campaignId) return;
+    setSchedulesLoading(true);
+    try {
+      const res = await scheduleApi.listByCampaign(API_BASE_URL, Number(campaignId));
+      const data = Array.isArray(res) ? res : res?.data || [];
+      // Lọc chỉ schedule thuộc topic hiện tại
+      const filtered = data.filter((sch) => String(sch.topicId) === String(topicId));
+      setSchedules(filtered);
+    } catch (err) {
+      console.error('Failed to load schedules:', err);
+    } finally {
+      setSchedulesLoading(false);
+    }
+  }, [topicId]);
+
+  // Load fanpages of workspace
+  useEffect(() => {
+    if (!workspaceId) return;
+    getWorkspaceFanpages(workspaceId)
+      .then((list) => setFanpages(list || []))
+      .catch(() => {});
+  }, [workspaceId]);
+
   useEffect(() => {
     loadTopicDetails();
     loadPosts();
   }, [loadTopicDetails, loadPosts]);
+
+  // Khi topicDetails load xong, tải schedules theo campaignId
+  useEffect(() => {
+    if (topicDetails?.campaignId) {
+      loadSchedules(topicDetails.campaignId);
+    }
+  }, [topicDetails?.campaignId, loadSchedules]);
 
   // Filter posts by status
   const draftPosts = posts.filter((p) => p.status !== 'SCHEDULED' && p.status !== 'PUBLISHED');
@@ -121,7 +228,7 @@ export default function TopicPostsPage() {
               postId: currentEditPost.id,
               workspaceId: Number(workspaceId),
               publishTime: modalData.scheduledAt,
-              fanpageIds: [],
+              fanpageIds: modalData.fanpageIds || [],
             });
           } catch (e) {
             console.warn('Schedule create:', e);
@@ -149,7 +256,7 @@ export default function TopicPostsPage() {
               postId: res.data.id,
               workspaceId: Number(workspaceId),
               publishTime: modalData.scheduledAt,
-              fanpageIds: [],
+              fanpageIds: modalData.fanpageIds || [],
             });
           } catch (e) {
             console.warn('Schedule create:', e);
@@ -297,7 +404,7 @@ export default function TopicPostsPage() {
             onClick={() => setActiveTab('scheduled')}
             style={{ padding: '8px 24px' }}
           >
-            Lịch đăng & Bài viết đã đăng ({scheduledPosts.length})
+            Lịch đăng & Bài viết đã đăng ({schedules.length})
           </button>
         </div>
 
@@ -395,7 +502,7 @@ export default function TopicPostsPage() {
                       <div className="post-item-hashtags">
                         {post.hashtags.map((tag, idx) => (
                           <span key={idx} className="hashtag-pill">
-                            #{tag}
+                            #{tag.replace(/^#+/, '')}
                           </span>
                         ))}
                       </div>
@@ -419,60 +526,136 @@ export default function TopicPostsPage() {
           </div>
         )}
 
-        {/* TAB 2: Scheduled & Published Posts */}
+        {/* TAB 2: Schedule List (gọi API schedules thực sự) */}
         {activeTab === 'scheduled' && (
           <div>
-            <h3 className="post-section-title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-              DANH SÁCH BÀI VIẾT ĐÃ ĐẶT LỊCH
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h3 className="post-section-title" style={{ marginBottom: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                DANH SÁCH LỊCH ĐĂNG BÀI
+              </h3>
+              <button
+                type="button"
+                onClick={() => topicDetails?.campaignId && loadSchedules(topicDetails.campaignId)}
+                style={{
+                  background: 'none', border: '1px solid #e2e8f0', borderRadius: 8,
+                  padding: '6px 12px', fontSize: 12, color: '#64748b', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                </svg>
+                Làm mới
+              </button>
+            </div>
 
-            {scheduledPosts.length > 0 ? (
-              <div className="posts-container-grid">
-                {scheduledPosts.map((post) => (
-                  <div key={post.id} className="post-item-card" style={{ borderColor: '#818cf8', background: '#f8fafc' }}>
-                    <div className="post-item-header">
-                      <div className="post-item-meta">
-                        <span className="post-badge" style={{ background: '#dcfce7', color: '#15803d' }}>
-                          🟢 Đã lên lịch đăng
-                        </span>
-                        <span className="post-item-date">
-                          Lịch hẹn: {new Date(post.updatedAt || Date.now()).toLocaleString('vi-VN')}
-                        </span>
+            {schedulesLoading ? (
+              <div className="empty-campaigns-state loading-state">
+                <div className="loading-spinner" />
+                <p className="empty-text">Đang tải danh sách lịch đăng...</p>
+              </div>
+            ) : schedules.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+                {schedules.map((sch) => {
+                  const statusCfg = STATUS_CONFIG[sch.status] || STATUS_CONFIG.WAITING;
+                  let publishDate = sch.publishTime;
+                  if (typeof publishDate === 'string' && !publishDate.endsWith('Z') && !publishDate.includes('+')) {
+                    publishDate += 'Z';
+                  }
+                  const dateObj = publishDate ? new Date(publishDate) : null;
+                  const dateFormatted = dateObj
+                    ? dateObj.toLocaleString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : '—';
+                  return (
+                    <div
+                      key={sch.scheduleId}
+                      onClick={() => {
+                        setSelectedSchedule({
+                          id: sch.scheduleId,
+                          postTitle: sch.postTitle,
+                          postContent: sch.postContent,
+                          publishTime: sch.publishTime,
+                          status: sch.status,
+                        });
+                        setShowDetailModal(true);
+                      }}
+                      style={{
+                        background: '#fff',
+                        border: `1.5px solid ${sch.status === 'WAITING' ? '#bfdbfe' : sch.status === 'SUCCESS' ? '#bbf7d0' : sch.status === 'FAILED' ? '#fecaca' : '#e2e8f0'}`,
+                        borderLeft: `4px solid ${statusCfg.dot}`,
+                        borderRadius: 12,
+                        padding: '16px 20px',
+                        cursor: 'pointer',
+                        transition: 'all 0.18s ease',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'none'; }}
+                    >
+                      {/* Row 1: Tiêu đề + Badge trạng thái */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {sch.postTitle || '(Không có tiêu đề)'}
+                          </p>
+                        </div>
+                        <ScheduleStatusBadge status={sch.status} />
+                      </div>
+
+                      {/* Row 2: Nội dung bài viết (preview ngắn) */}
+                      {sch.postContent && (
+                        <p style={{ margin: '0 0 10px 0', fontSize: 13, color: '#475569', lineHeight: 1.5,
+                          overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                          {sch.postContent}
+                        </p>
+                      )}
+
+                      {/* Row 3: Thời gian + Fanpage */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748b' }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                          </svg>
+                          <span style={{ fontWeight: 500, color: '#334155' }}>{dateFormatted}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#94a3b8', flexShrink: 0 }}>
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                          </svg>
+                          <FanpageAvatarList targets={sch.targets || []} fanpagesMap={fanpagesMap} />
+                        </div>
+                      </div>
+
+                      {/* Row 4: Click hint */}
+                      <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, fontSize: 11, color: '#94a3b8' }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="8" x2="12" y2="16" />
+                          <line x1="8" y1="12" x2="16" y2="12" />
+                        </svg>
+                        Nhấp để xem chi tiết & quản lý
                       </div>
                     </div>
-                    <div className="post-item-body" style={{ fontWeight: 600, color: '#1e293b' }}>
-                      {post.title}
-                    </div>
-                    <div className="post-item-body" style={{ whiteSpace: 'pre-line', fontSize: 13 }}>
-                      {post.content}
-                    </div>
-
-                    {post.medias && post.medias.length > 0 && (
-                      <div className="post-media-grid" style={{ marginTop: '10px' }}>
-                        {post.medias.map((m) => (
-                          <div key={m.id || m.url} className="post-media-item">
-                            {m.type === 'VIDEO' ? (
-                              <video src={m.url} controls className="post-media-video" />
-                            ) : (
-                              <img src={m.url} alt="Post media" className="post-media-img" />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="empty-campaigns-state">
                 <div className="empty-state-icon">📅</div>
-                <p className="empty-text">Chưa có bài viết nào được lên lịch cho chủ đề này.</p>
+                <p className="empty-text">Chưa có lịch đăng bài nào cho chủ đề này.</p>
                 <p style={{ fontSize: 13, color: '#64748b' }}>
                   Nhấp vào bài viết nháp ở Tab <strong>Bài viết nháp</strong> để mở popup chỉnh sửa, hoàn thiện và đặt lịch hẹn!
                 </p>
@@ -491,9 +674,19 @@ export default function TopicPostsPage() {
         }}
         onSubmit={handleSubmitPost}
         onDraft={handleDraftPost}
+        workspaceId={workspaceId}
         topicId={topicId}
         initialData={editingPost}
         brandTone={topicDetails?.brandTone || topicDetails?.workspaceBrandTone}
+      />
+
+      {/* Schedule Detail Modal (tái sử dụng từ workspace schedule view) */}
+      <ScheduleDetailModal
+        isOpen={showDetailModal}
+        onClose={() => { setShowDetailModal(false); setSelectedSchedule(null); }}
+        schedule={selectedSchedule}
+        workspaceId={workspaceId}
+        onSuccess={() => topicDetails?.campaignId && loadSchedules(topicDetails.campaignId)}
       />
     </div>
   );

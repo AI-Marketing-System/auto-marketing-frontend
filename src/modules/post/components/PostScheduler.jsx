@@ -1,15 +1,13 @@
 import React from 'react';
 
 /**
- * PostScheduler – Phần phải của modal: Chủ đề, Evergreen, cách đăng, lịch & giờ
+ * PostScheduler – Phần phải của modal: Chủ đề, Evergreen, ngày & giờ đăng
  *
  * @param {{
  *   topic: string,
  *   onTopicChange: (v: string) => void,
  *   evergreen: boolean,
  *   onEvergreenChange: (v: boolean) => void,
- *   scheduleMode: 'now' | 'schedule',
- *   onScheduleModeChange: (v: string) => void,
  *   selectedDate: Date | null,
  *   onDateChange: (d: Date) => void,
  *   time: string,
@@ -22,8 +20,6 @@ export default function PostScheduler({
   onTopicChange,
   evergreen = false,
   onEvergreenChange,
-  scheduleMode = 'now',
-  onScheduleModeChange,
   selectedDate,
   onDateChange,
   time = '09:00',
@@ -89,8 +85,7 @@ export default function PostScheduler({
         </div>
 
         <div
-          className={`cp-method-option${scheduleMode === 'now' ? ' cp-method-option--active' : ''}`}
-          onClick={() => onScheduleModeChange?.('now')}
+          className="cp-method-option cp-method-option--active"
           id="cp-method-now"
         >
           <div className="cp-method-radio" />
@@ -133,6 +128,29 @@ export default function PostScheduler({
           <div className="cp-time-hint">(GMT+07:00) Hanoi</div>
         </div>
       </div>
+
+      {/* ── Preview lịch đăng ── */}
+      {selectedDate && time && (
+        <div style={{
+          padding: '10px 12px',
+          background: 'linear-gradient(135deg, #eef2ff, #f5f3ff)',
+          borderRadius: 8, border: '1px solid #c7d2fe',
+          fontSize: 12, color: '#4338ca', fontWeight: 500,
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          {(() => {
+            try {
+              const [h, m] = time.split(':').map(Number);
+              const dt = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), h, m);
+              return `Sẽ đăng lúc: ${dt.toLocaleString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+            } catch { return `Sẽ đăng lúc: ${time}`; }
+          })()}
+        </div>
+      )}
     </div>
   );
 }

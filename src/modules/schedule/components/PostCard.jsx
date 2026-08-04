@@ -67,15 +67,31 @@ export default function PostCard({ post, onCardClick }) {
 
       {/* Ảnh thumbnail + tiêu đề */}
       <div className="sc-post-card__body">
-        <div className="sc-post-card__img-placeholder">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <polyline points="21 15 16 10 5 21" />
-          </svg>
-        </div>
+        {post.image ? (
+          <img
+            src={post.image}
+            alt="thumbnail"
+            className="sc-post-card__img"
+            style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '4px',
+              objectFit: 'cover',
+              flexShrink: 0
+            }}
+          />
+        ) : (
+          <div className="sc-post-card__img-placeholder">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+          </div>
+        )}
         <span className="sc-post-card__title">{post.title}</span>
       </div>
+
 
       {/* Fanpage avatars */}
       <div className="sc-post-card__fanpages">
