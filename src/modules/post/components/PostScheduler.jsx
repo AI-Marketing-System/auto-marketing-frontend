@@ -22,6 +22,7 @@ export default function PostScheduler({
   topic = '',
   onTopicChange,
   topics = [],
+  topicName = '',
   evergreen = false,
   onEvergreenChange,
   scheduleMode = 'schedule',
@@ -70,7 +71,8 @@ export default function PostScheduler({
             id="cp-topic-input"
             className="cp-topic-input"
             placeholder="+ Thêm chủ đề"
-            value={topic}
+            value={topicName || topic}
+            disabled={!!topicName}
             onChange={(e) => onTopicChange?.(e.target.value)}
           />
         )}

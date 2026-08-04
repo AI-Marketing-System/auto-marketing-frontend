@@ -34,6 +34,7 @@ export default function CreatePostModal({
   onDraft,
   workspaceId,
   topicId,
+  topicName,
   initialData,
   brandTone,
   topics = [],
@@ -270,6 +271,7 @@ export default function CreatePostModal({
             topic={topic}
             onTopicChange={setTopic}
             topics={topics}
+            topicName={topicName}
             evergreen={evergreen}
             onEvergreenChange={setEvergreen}
             scheduleMode={scheduleMode}
@@ -283,7 +285,7 @@ export default function CreatePostModal({
         </div>
 
         {/* ── Footer ── */}
-        <div className="cp-modal__footer">
+        <div className="cp-modal__footer" style={{ justifyContent: 'space-between' }}>
           {/* Lưu nháp – không lên lịch */}
           <button
             className="cp-btn cp-btn--ghost"

@@ -705,6 +705,7 @@ export default function TopicPostsPage() {
         onDraft={handleDraftPost}
         workspaceId={workspaceId}
         topicId={topicId}
+        topicName={topicDetails?.title}
         initialData={editingPost}
         brandTone={topicDetails?.brandTone || topicDetails?.workspaceBrandTone}
       />
