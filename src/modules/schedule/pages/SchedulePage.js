@@ -10,6 +10,8 @@ import SelectPostToScheduleModal from '../components/SelectPostToScheduleModal';
 import ScheduleDetailModal from '../components/ScheduleDetailModal';
 import { postApi } from '../../post/api/postApi';
 import { topicApi } from '../../topic/api/topicApi';
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
 
 import {
   getWeekDays,
@@ -202,7 +204,7 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
   }, []);
 
   // Fetch function reused across schedule listings and creation successes
-  const triggerFetchSchedules = async () => {
+  const triggerFetchSchedules = React.useCallback(async () => {
     if (!workspaceId) return;
     try {
       let res;
@@ -216,12 +218,49 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
     } catch (err) {
       console.error('Error fetching schedules:', err);
     }
-  };
+  }, [workspaceId, campaignFilter]);
 
   // Fetch schedules from backend when workspaceId or campaignFilter changes
   useEffect(() => {
     triggerFetchSchedules();
   },  [workspaceId, campaignFilter]);
+
+  // Establish WebSocket connection to listen for schedule status updates
+  useEffect(() => {
+    if (!workspaceId) return;
+
+    // Remove /api/v1 from API_BASE_URL to get the root URL for websocket
+    const wsUrl = API_BASE_URL.replace('/api/v1', '') + '/ws-marketing';
+
+    const client = new Client({
+      webSocketFactory: () => new SockJS(wsUrl),
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+    });
+
+    client.onConnect = () => {
+      console.log('Connected to WebSocket');
+      client.subscribe(`/topic/workspace/${workspaceId}/schedules`, (message) => {
+        if (message.body) {
+          console.log('Received schedule update:', message.body);
+          // Trigger a refresh of schedules
+          triggerFetchSchedules();
+        }
+      });
+    };
+
+    client.onStompError = (frame) => {
+      console.error('Broker reported error: ' + frame.headers['message']);
+      console.error('Additional details: ' + frame.body);
+    };
+
+    client.activate();
+
+    return () => {
+      client.deactivate();
+    };
+  }, [workspaceId, triggerFetchSchedules]);
 
   // Map schedules to posts inside current week view
   useEffect(() => {
