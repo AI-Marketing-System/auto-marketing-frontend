@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { generateFullPostContent } from '../api/stagedPlannerApi';
 import { SparkleIcon } from './PlannerIcons';
+import { showTokenToast } from '../../subscription/components/TokenToast';
+import UpgradeModal from '../../subscription/components/UpgradeModal';
 
 /**
  * SmartPostCreatorModal - Modal soạn bài viết thông minh từ Skeleton
@@ -19,6 +21,7 @@ export default function SmartPostCreatorModal({ workspaceId, postSkeleton, onClo
   );
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   if (!postSkeleton) return null;
 
@@ -27,18 +30,41 @@ export default function SmartPostCreatorModal({ workspaceId, postSkeleton, onClo
     setGenerating(true);
     setError(null);
     try {
-      const generatedText = await generateFullPostContent(workspaceId, {
+      const res = await generateFullPostContent(workspaceId, {
         title,
         contentBrief,
         brandTone,
         platform,
         freeTextInstructions: [],
       });
+
+      // API trả về { data: TokenAwareResponse<String> } qua axios
+      // stagedPlannerApi trả về response.data (ApiResponse wrapper)
+      // → dữ liệu thực sự nằm ở res.data = { payload, tokensUsed, remainingToken }
+      const d = res?.data ?? res;
+      let generatedText = null;
+
+      if (d && typeof d === 'object' && 'payload' in d && 'tokensUsed' in d) {
+        // TokenAwareResponse: lấy payload và hiển thị toast
+        generatedText = d.payload;
+        window.dispatchEvent(new CustomEvent('quota:changed'));
+        showTokenToast(d.tokensUsed, d.remainingToken);
+      } else if (typeof d === 'string') {
+        generatedText = d;
+      } else {
+        generatedText = d;
+      }
+
       if (generatedText) {
         setContent(generatedText);
       }
     } catch (err) {
-      setError(err.message || 'Lỗi khi gọi AI sinh nội dung bài viết');
+      const status = err?.response?.status || err?.status;
+      if (status === 402) {
+        setShowUpgrade(true);
+      } else {
+        setError(err.message || 'Lỗi khi gọi AI sinh nội dung bài viết');
+      }
     } finally {
       setGenerating(false);
     }
@@ -60,22 +86,24 @@ export default function SmartPostCreatorModal({ workspaceId, postSkeleton, onClo
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20,
-      }}
-    >
+    <>
+      <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} />
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 20,
+        }}
+      >
       <div
         style={{
           background: '#ffffff',
@@ -250,6 +278,6 @@ export default function SmartPostCreatorModal({ workspaceId, postSkeleton, onClo
           </button>
         </div>
       </div>
-    </div>
+    </>
   );
 }
