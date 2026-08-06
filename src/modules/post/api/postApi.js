@@ -2,15 +2,24 @@ import { requestJson } from '../../../services/Api';
 
 const buildFormData = (payload, mediaFiles) => {
   const formData = new FormData();
-  const jsonBlob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-  formData.append('request', jsonBlob);
+
   if (mediaFiles && mediaFiles.length > 0) {
+    const mediaUrls = [];
     mediaFiles.forEach((file) => {
       if (file instanceof File) {
         formData.append('mediaFiles', file);
+      } else if (file.url) {
+        mediaUrls.push(file.url);
       }
     });
+    if (mediaUrls.length > 0) {
+      payload.mediaUrls = mediaUrls;
+    }
   }
+
+  const jsonBlob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  formData.append('request', jsonBlob);
+
   return formData;
 };
 
