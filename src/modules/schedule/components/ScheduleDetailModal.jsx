@@ -316,10 +316,6 @@ export default function ScheduleDetailModal({
             <h3 className="sdm-section__title">Bài viết</h3>
             <div className="sdm-post-info">
               <div className="sdm-post-info__row">
-                <span className="sdm-post-info__label">Tiêu đề</span>
-                <span className="sdm-post-info__value">{schedule.postTitle || '(Không có tiêu đề)'}</span>
-              </div>
-              <div className="sdm-post-info__row">
                 <span className="sdm-post-info__label">Thời gian</span>
                 <span className="sdm-post-info__value">{formatPublishTime(localPublishTime || schedule.publishTime)}</span>
               </div>
@@ -327,12 +323,33 @@ export default function ScheduleDetailModal({
                 <span className="sdm-post-info__label">Trạng thái</span>
                 <StatusBadge status={schedule.status} />
               </div>
+              {schedule.campaignName && (
+                <div className="sdm-post-info__row">
+                  <span className="sdm-post-info__label">Chiến dịch</span>
+                  <span className="sdm-post-info__value">{schedule.campaignName}</span>
+                </div>
+              )}
+              {schedule.topicName && (
+                <div className="sdm-post-info__row">
+                  <span className="sdm-post-info__label">Chủ đề</span>
+                  <span className="sdm-post-info__value">{schedule.topicName}</span>
+                </div>
+              )}
               {schedule.postContent && (
                 <div className="sdm-post-content">
                   <p>{schedule.postContent.length > 200
                     ? schedule.postContent.substring(0, 200) + '…'
                     : schedule.postContent}
                   </p>
+                </div>
+              )}
+              {schedule.image && (
+                <div className="sdm-post-media" style={{ marginTop: '12px', textAlign: 'center' }}>
+                  {schedule.image.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) ? (
+                    <video src={schedule.image} controls style={{ maxWidth: '100%', borderRadius: '8px', maxHeight: '300px' }} />
+                  ) : (
+                    <img src={schedule.image} alt="Media" style={{ maxWidth: '100%', borderRadius: '8px', maxHeight: '300px', objectFit: 'cover' }} />
+                  )}
                 </div>
               )}
             </div>
