@@ -206,12 +206,18 @@ export default function Sidebar({ variant = 'dashboard' }) {
       }
       style={{ textDecoration: 'none' }}
     >
-      <div className="sidebar__ws-avatar">
-        <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="8" r="4" />
-          <path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" />
-        </svg>
-      </div>
+      {ws.avatarUrl ? (
+        <div className="sidebar__ws-avatar" style={{ padding: 0 }}>
+          <img src={ws.avatarUrl} alt={ws.name} style={{ width: '100%', height: '100%', borderRadius: '4px', objectFit: 'cover' }} />
+        </div>
+      ) : (
+        <div className="sidebar__ws-avatar">
+          <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z" />
+          </svg>
+        </div>
+      )}
       <div className="sidebar__ws-info">
         <div className="sidebar__ws-name">{ws.name}</div>
         {ws.role === 'OWNER' && <div className="sidebar__ws-role">Chủ sở hữu</div>}
@@ -228,23 +234,29 @@ export default function Sidebar({ variant = 'dashboard' }) {
       }
       style={{ textDecoration: 'none' }}
     >
-      <div className="sidebar__ws-avatar" style={{ backgroundColor: 'transparent' }}>
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#64748b"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-          <circle cx="9" cy="7" r="4"></circle>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-        </svg>
-      </div>
+      {ws.avatarUrl ? (
+        <div className="sidebar__ws-avatar" style={{ padding: 0 }}>
+          <img src={ws.avatarUrl} alt={ws.name} style={{ width: '100%', height: '100%', borderRadius: '4px', objectFit: 'cover' }} />
+        </div>
+      ) : (
+        <div className="sidebar__ws-avatar" style={{ backgroundColor: 'transparent' }}>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#64748b"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+      )}
       <div className="sidebar__ws-info">
         <div className="sidebar__ws-name">{ws.name}</div>
         <div

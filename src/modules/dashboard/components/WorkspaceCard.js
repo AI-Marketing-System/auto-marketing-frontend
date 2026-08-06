@@ -4,6 +4,7 @@ function WorkspaceCard({
   isCreator = false,
   title,
   accountsCount,
+  avatarUrl,
   onEditClick,
   onDeleteClick,
   onCardClick,
@@ -53,7 +54,11 @@ function WorkspaceCard({
   return (
     <div className="workspace-card" onClick={onCardClick}>
       <div className="workspace-card-header">
-        <span className="workspace-tag">WORKSPACE</span>
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={title} className="workspace-avatar" style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }} />
+        ) : (
+          <span className="workspace-tag">WORKSPACE</span>
+        )}
         <div
           ref={dropdownRef}
           className="settings-btn"
