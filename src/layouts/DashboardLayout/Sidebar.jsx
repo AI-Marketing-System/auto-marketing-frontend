@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { workspaceApi } from '../../modules/campaigns/api/campaignApi';
+import { requestJson } from '../../services/Api';
 import { API_BASE_URL } from '../../config/env';
 import './DashboardLayout.css';
 
@@ -133,6 +134,7 @@ export default function Sidebar({ variant = 'dashboard' }) {
   const items = variant === 'admin' ? ADMIN_ITEMS : DASHBOARD_ITEMS;
   const [workspaces, setWorkspaces] = useState([]);
   const [memberWorkspaces, setMemberWorkspaces] = useState([]);
+  const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
   const expandedWsRef = useRef({});
   const location = useLocation();
 
@@ -178,6 +180,16 @@ export default function Sidebar({ variant = 'dashboard' }) {
       })
       .catch((err) => {
         console.error('Member Workspaces API Error:', err);
+      });
+
+    requestJson('/workspaces/invitations', {}, API_BASE_URL)
+      .then((res) => {
+        if (!cancelled && res && res.data) {
+          setPendingInvitationsCount(res.data.length);
+        }
+      })
+      .catch((err) => {
+        console.error('Invitations API Error:', err);
       });
 
     return () => {
@@ -309,7 +321,21 @@ export default function Sidebar({ variant = 'dashboard' }) {
             to={item.to}
             className={({ isActive }) => `sidebar__link${isActive ? ' sidebar__link--active' : ''}`}
           >
-            {item.icon}
+            <div style={{ position: 'relative', display: 'flex' }}>
+              {item.icon}
+              {item.label === 'Lời mời' && pendingInvitationsCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-2px',
+                  right: '-2px',
+                  width: '8px',
+                  height: '8px',
+                  backgroundColor: '#ef4444',
+                  borderRadius: '50%',
+                  display: 'inline-block'
+                }} />
+              )}
+            </div>
             <span>{item.label}</span>
           </NavLink>
         ))}

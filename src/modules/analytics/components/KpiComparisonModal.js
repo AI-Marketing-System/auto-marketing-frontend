@@ -39,6 +39,19 @@ const KpiComparisonModal = ({ isOpen, onClose, postTargetId, postInfo }) => {
       const kpiData = res?.data || res;
 
       if (kpiData) {
+        if (kpiData.chartData) {
+          const nameMap = {
+            'Likes': 'Lượt thích',
+            'Comments': 'Bình luận',
+            'Shares': 'Chia sẻ',
+            'Reach': 'Tiếp cận',
+            'Impressions': 'Lượt xem'
+          };
+          kpiData.chartData = kpiData.chartData.map(item => ({
+            ...item,
+            metricName: nameMap[item.metricName] || item.metricName
+          }));
+        }
         setData(kpiData);
         if (kpiData.hasTarget) {
           setFormData({
@@ -263,14 +276,14 @@ const KpiComparisonModal = ({ isOpen, onClose, postTargetId, postInfo }) => {
                     />
                     <Bar
                       dataKey="target"
-                      name="Mục tiêu (Target)"
+                      name="Mục tiêu"
                       fill="#8b5cf6"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={48}
                     />
                     <Bar
                       dataKey="actual"
-                      name="Thực tế (Actual)"
+                      name="Thực tế"
                       fill="#34d399"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={48}
