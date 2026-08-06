@@ -12,15 +12,8 @@ function DashboardPage() {
   const { user } = useAuth();
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [sharedWorkspaces] = useState([
-    {
-      id: 3,
-      title: 'FitLife Nutrition',
-      role: 'MEMBER',
-      campaigns: ['FitLife Fanpage', 'Summer Campaign 2026'],
-    },
-    { id: 4, title: 'TechVista Solutions', role: 'ADMIN', campaigns: ['TechVista Marketing'] },
-  ]);
+  const [sharedWorkspaces, setSharedWorkspaces] = useState([]);
+  const [loadingShared, setLoadingShared] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState(null);
   const [pendingDeletes, setPendingDeletes] = useState({});
@@ -53,8 +46,37 @@ function DashboardPage() {
       .finally(() => setLoading(false));
   };
 
+  const fetchSharedWorkspaces = () => {
+    setLoadingShared(true);
+    const token = localStorage.getItem('marqops.authLab.accessToken');
+    fetch(`${API_BASE_URL}/workspaces/member`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Không thể tải danh sách workspace được chia sẻ');
+        return res.json();
+      })
+      .then((resJson) => {
+        if (resJson && resJson.success && resJson.data) {
+          const mapped = resJson.data.map((ws) => ({
+            id: ws.id,
+            title: ws.name,
+            role: ws.role === 'OWNER' ? 'ADMIN' : (ws.role || 'MEMBER'),
+            campaigns: ws.campaigns ? ws.campaigns.map(c => c.name) : [],
+            avatarUrl: ws.avatarUrl,
+          }));
+          setSharedWorkspaces(mapped);
+        }
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoadingShared(false));
+  };
+
   useEffect(() => {
     fetchWorkspaces();
+    fetchSharedWorkspaces();
   }, []);
 
   const handleCreateWorkspace = () => {
@@ -435,19 +457,50 @@ function DashboardPage() {
               </div>
             </div>
 
-            {/* Flex / Grid of Shared Workspaces */}
-            <div className="shared-workspaces-flex">
-              {sharedWorkspaces.map((ws) => (
-                <SharedWorkspaceCard
-                  key={ws.id}
-                  role={ws.role}
-                  title={ws.title}
-                  campaigns={ws.campaigns}
-                  avatarUrl={ws.avatarUrl}
-                  onSettingsClick={() => handleSettingsClick(ws)}
-                  onCardClick={() => handleCardClick(ws)}
-                />
-              ))}
+            <div className="shared-workspaces-flex" style={sharedWorkspaces.length === 0 ? { display: 'flex', width: '100%' } : {}}>
+              {loadingShared ? (
+                <div style={{ color: '#64748b', fontSize: '14px', textAlign: 'center', width: '100%', padding: '20px' }}>
+                  Đang tải danh sách...
+                </div>
+              ) : sharedWorkspaces.length > 0 ? (
+                sharedWorkspaces.map((ws) => (
+                  <SharedWorkspaceCard
+                    key={ws.id}
+                    role={ws.role}
+                    title={ws.title}
+                    campaigns={ws.campaigns}
+                    avatarUrl={ws.avatarUrl}
+                    onSettingsClick={() => handleSettingsClick(ws)}
+                    onCardClick={() => handleCardClick(ws)}
+                  />
+                ))
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '40px 20px',
+                  width: '100%',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '12px',
+                  border: '1px dashed #cbd5e1',
+                  margin: '0 auto'
+                }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '16px' }}>
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                  <p style={{ color: '#334155', fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
+                    Chưa có Workspace được chia sẻ
+                  </p>
+                  <p style={{ color: '#64748b', fontSize: '14px', textAlign: 'center', maxWidth: '450px', lineHeight: '1.5' }}>
+                    Bạn hiện chưa tham gia vào bất kỳ Workspace nào với tư cách thành viên. Hãy yêu cầu quản trị viên thêm bạn vào Workspace của họ nhé!
+                  </p>
+                </div>
+              )}
             </div>
           </section>
         </div>

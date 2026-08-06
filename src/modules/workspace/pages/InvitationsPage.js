@@ -9,6 +9,16 @@ const InvitationsPage = () => {
 
   useEffect(() => {
     fetchInvitations();
+
+    const handleInvitationsUpdated = () => {
+      fetchInvitations();
+    };
+
+    window.addEventListener('invitations:updated', handleInvitationsUpdated);
+    
+    return () => {
+      window.removeEventListener('invitations:updated', handleInvitationsUpdated);
+    };
   }, []);
 
   const fetchInvitations = async () => {
@@ -77,13 +87,17 @@ const InvitationsPage = () => {
             <div key={inv.workspaceId} className="invitation-card">
               <div className="invitation-info">
                 <div className="invitation-avatar">
-                  {inv.workspaceName ? inv.workspaceName.charAt(0).toUpperCase() : 'W'}
+                  {inv.avatarUrl ? (
+                    <img src={inv.avatarUrl} alt={inv.workspaceName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                  ) : (
+                    inv.workspaceName ? inv.workspaceName.charAt(0).toUpperCase() : 'W'
+                  )}
                 </div>
                 <div className="invitation-details">
                   <h3 className="invitation-ws-name">{inv.workspaceName}</h3>
                   <div className="invitation-meta">
                     <span className="invitation-role-badge">
-                      Vai trò: {inv.role}
+                      Vai trò: {inv.role === 'OWNER' ? 'ADMIN' : inv.role}
                     </span>
                     <span>•</span>
                     <span>Đã mời vào: {new Date(inv.invitedAt).toLocaleDateString('vi-VN')}</span>
