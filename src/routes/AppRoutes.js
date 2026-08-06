@@ -16,12 +16,14 @@ import CampaignTopicsPage from '../modules/topic/pages/CampaignTopicsPage';
 import TopicPostsPage from '../modules/post/pages/TopicPostsPage';
 import PlanManagementPage from '../modules/admin/plans/pages/PlanManagementPage';
 import UserManagementPage from '../modules/admin/users/pages/UserManagementPage';
+import AdminDashboardPage from '../modules/admin/dashboard/pages/AdminDashboardPage';
+import AdminTransactionsPage from '../modules/admin/transactions/pages/AdminTransactionsPage';
 import ErrorPage from '../public-site/pages/ErrorPage';
 import InvitationsPage from '../modules/workspace/pages/InvitationsPage';
 import DashboardLayout from '../layouts/DashboardLayout/DashboardLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { AdminRoute } from '../components/ProtectedRoute';
-import AdminHomePage from '../modules/admin/home/pages/AdminHomePage';
+
 import PaymentSuccessPage from '../modules/subscription/pages/PaymentSuccessPage';
 import PaymentFailedPage from '../modules/subscription/pages/PaymentFailedPage';
 function AppRoutes() {
@@ -152,7 +154,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/admin" element={<AdminHomePage />} />
+
+
       <Route
         path="/invitations"
         element={
@@ -179,6 +182,26 @@ function AppRoutes() {
           <AdminRoute>
             <DashboardLayout variant="admin">
               <UserManagementPage />
+            </DashboardLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/dashboard"
+        element={
+          <AdminRoute>
+            <DashboardLayout variant="admin">
+              <AdminDashboardPage />
+            </DashboardLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/transactions"
+        element={
+          <AdminRoute>
+            <DashboardLayout variant="admin">
+              <AdminTransactionsPage />
             </DashboardLayout>
           </AdminRoute>
         }

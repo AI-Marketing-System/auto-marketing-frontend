@@ -22,6 +22,18 @@ export default function PostEditor({
 }) {
   const fileInputRef = useRef(null);
   const [tagInput, setTagInput] = React.useState('');
+  const [showLinkInput, setShowLinkInput] = React.useState(false);
+  const [linkInput, setLinkInput] = React.useState('');
+
+  const handleAddLink = () => {
+    if (linkInput.trim()) {
+      // Xác định type là VIDEO nếu đuôi mp4, webm... còn lại mặc định IMAGE
+      const isVideo = linkInput.trim().match(/\.(mp4|webm|ogg|mov)$/i);
+      onMediaAdd?.([{ url: linkInput.trim(), type: isVideo ? 'VIDEO' : 'IMAGE' }]);
+      setLinkInput('');
+      setShowLinkInput(false);
+    }
+  };
 
   const handleAddHashtag = (e) => {
     if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
@@ -182,10 +194,7 @@ export default function PostEditor({
         <button
           className="cp-media-btn"
           id="cp-media-link-btn"
-          onClick={() => {
-            const url = prompt('Nhập URL liên kết:');
-            if (url) onContentChange?.((content || '') + ` [link](${url})`);
-          }}
+          onClick={() => setShowLinkInput(!showLinkInput)}
         >
           <svg
             width="14"
@@ -198,7 +207,7 @@ export default function PostEditor({
             <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
             <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
           </svg>
-          Liên kết
+          Liên kết ảnh/video
         </button>
         <input
           ref={fileInputRef}
@@ -209,6 +218,27 @@ export default function PostEditor({
           onChange={handleFileChange}
         />
       </div>
+
+      {showLinkInput && (
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          <input
+            type="text"
+            value={linkInput}
+            onChange={(e) => setLinkInput(e.target.value)}
+            placeholder="Nhập URL hình ảnh hoặc video..."
+            style={{ flex: 1, padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '14px', outline: 'none' }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleAddLink();
+            }}
+          />
+          <button
+            onClick={handleAddLink}
+            style={{ padding: '8px 16px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
+          >
+            Thêm URL
+          </button>
+        </div>
+      )}
 
       {/* Drop zone */}
       <div
