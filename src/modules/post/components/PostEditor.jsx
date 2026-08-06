@@ -226,13 +226,19 @@ export default function PostEditor({
       {mediaFiles.length > 0 && (
         <div className="cp-media-preview">
           {mediaFiles.map((file, idx) => {
-            const isVideo = file.type && file.type.startsWith('video/');
+            const isFileObj = file instanceof File;
+            const isVideo = isFileObj
+              ? (file.type && file.type.startsWith('video/'))
+              : (file.type === 'VIDEO' || (file.url && file.url.match(/\.(mp4|webm|ogg|mov)$/i)));
+            const src = isFileObj ? URL.createObjectURL(file) : file.url;
+            const name = isFileObj ? file.name : 'media';
+
             return (
               <div key={idx} className="cp-media-thumb">
                 {isVideo ? (
-                  <video src={URL.createObjectURL(file)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                  <video src={src} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
                 ) : (
-                  <img src={URL.createObjectURL(file)} alt={file.name} />
+                  <img src={src} alt={name} />
                 )}
                 {isVideo && (
                   <span style={{
