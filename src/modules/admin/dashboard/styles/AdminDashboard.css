@@ -1,0 +1,285 @@
+.admin-dash {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #1e293b;
+}
+
+/* Header */
+.admin-dash__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.admin-dash__header-title h1 {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+}
+
+.admin-dash__header-title p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* KPI grid */
+.admin-dash__kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.kpi-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+
+.kpi-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.kpi-card__icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kpi-icon--blue   { background: #eff6ff; color: #2563eb; }
+.kpi-icon--green  { background: #f0fdf4; color: #16a34a; }
+.kpi-icon--violet { background: #f5f3ff; color: #7c3aed; }
+.kpi-icon--amber  { background: #fffbeb; color: #d97706; }
+.kpi-icon--red    { background: #fef2f2; color: #dc2626; }
+.kpi-icon--teal   { background: #f0fdfa; color: #0d9488; }
+
+.kpi-card__label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.kpi-card__value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.kpi-card__sub {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.kpi-sub-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.kpi-sub-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 2-column widgets */
+.admin-dash__widgets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .admin-dash__widgets { grid-template-columns: 1fr; }
+}
+
+.widget-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  overflow: hidden;
+}
+
+.widget-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.widget-card__header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.widget-card__header a {
+  font-size: 13px;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.widget-card__header a:hover { text-decoration: underline; }
+
+/* User list widget */
+.widget-user-list { list-style: none; margin: 0; padding: 0; }
+
+.widget-user-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background .15s;
+}
+
+.widget-user-item:last-child { border-bottom: none; }
+.widget-user-item:hover { background: #f8fafc; }
+
+.widget-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #e0e7ff;
+  color: #4338ca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.widget-user-info { flex: 1; min-width: 0; }
+.widget-user-name  { font-weight: 600; font-size: 14px; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.widget-user-email { font-size: 12px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.badge-status-sm {
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.badge-status-sm--active { background: #dcfce7; color: #15803d; }
+.badge-status-sm--locked { background: #fee2e2; color: #b91c1c; }
+
+/* Transaction list widget */
+.widget-txn-list { list-style: none; margin: 0; padding: 0; }
+
+.widget-txn-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background .15s;
+}
+
+.widget-txn-item:last-child { border-bottom: none; }
+.widget-txn-item:hover { background: #f8fafc; }
+
+.widget-txn-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #f0fdf4;
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.widget-txn-info { flex: 1; min-width: 0; }
+.widget-txn-user   { font-weight: 600; font-size: 14px; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.widget-txn-method { font-size: 12px; color: #64748b; }
+
+.widget-txn-right { text-align: right; flex-shrink: 0; }
+.widget-txn-amount { font-weight: 700; font-size: 14px; color: #0f172a; }
+.widget-txn-date   { font-size: 11px; color: #94a3b8; }
+
+/* Status badges for txn */
+.txn-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.txn-badge--paid     { background: #dcfce7; color: #15803d; }
+.txn-badge--pending  { background: #fefce8; color: #854d0e; }
+.txn-badge--failed   { background: #fee2e2; color: #b91c1c; }
+.txn-badge--refunded { background: #ede9fe; color: #6d28d9; }
+
+/* Buttons */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-secondary:hover { background: #f8fafc; }
+
+/* Skeleton loader */
+.admin-dash__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: #94a3b8;
+  gap: 14px;
+  font-size: 16px;
+}
+
+.admin-dash__error {
+  margin: 40px auto;
+  max-width: 500px;
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+}
