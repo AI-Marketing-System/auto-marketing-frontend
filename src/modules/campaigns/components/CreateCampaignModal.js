@@ -30,11 +30,24 @@ function CreateCampaignModal({ isOpen, onClose, onSubmit, defaultWorkspaceId = n
 
     let cancelled = false;
     setLoadingWorkspaces(true);
-    workspaceApi
-      .myWorkspaces(API_BASE_URL)
-      .then((res) => {
+
+    Promise.all([
+      workspaceApi.myWorkspaces(API_BASE_URL).catch(() => []),
+      workspaceApi.memberWorkspaces(API_BASE_URL).catch(() => [])
+    ])
+      .then(([myRes, memberRes]) => {
         if (cancelled) return;
-        const wsList = parseWorkspacesResponse(res);
+        const myWsList = parseWorkspacesResponse(myRes);
+        const memberWsList = parseWorkspacesResponse(memberRes);
+        
+        const wsMap = new Map();
+        [...myWsList, ...memberWsList].forEach(ws => {
+          if (!wsMap.has(ws.id)) {
+            wsMap.set(ws.id, ws);
+          }
+        });
+        const wsList = Array.from(wsMap.values());
+        
         setWorkspaces(wsList);
 
         if (wsList.length === 0) {
@@ -45,12 +58,6 @@ function CreateCampaignModal({ isOpen, onClose, onSubmit, defaultWorkspaceId = n
         const preferredId = defaultWorkspaceId != null ? String(defaultWorkspaceId) : '';
         const hasPreferred = preferredId && wsList.some((ws) => String(ws.id) === preferredId);
         setWorkspaceId(hasPreferred ? preferredId : String(wsList[0].id));
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setWorkspaces([]);
-          setWorkspaceId('');
-        }
       })
       .finally(() => {
         if (!cancelled) setLoadingWorkspaces(false);
