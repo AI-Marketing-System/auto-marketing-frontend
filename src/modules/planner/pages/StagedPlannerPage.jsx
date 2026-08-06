@@ -31,6 +31,8 @@ import {
 } from '../api/stagedPlannerApi';
 import { planDraftApi, parsePlanDraftResponse } from '../api/plannerApi';
 import { API_BASE_URL } from '../../../config/env';
+import { showTokenToast } from '../../subscription/components/TokenToast';
+import UpgradeModal from '../../subscription/components/UpgradeModal';
 import '../styles/StagedPlannerPage.css';
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -43,6 +45,7 @@ function StagedPlannerPage() {
   const [stage, setStage] = useState(PLAN_STAGES.INIT);
   const [error, setError] = useState(null);
   const [draftLoading, setDraftLoading] = useState(true);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   // 7 core business input fields
   const [seedInput, setSeedInput] = useState({
@@ -106,6 +109,20 @@ function StagedPlannerPage() {
     };
   }, [workspaceId]);
 
+  // Helper bóc tách TokenAwareResponse: phát tín hiệu quota:changed và hiển thị Toast token
+  const processTokenAwareResponse = useCallback((raw) => {
+    let d = raw?.data ?? raw;
+    if (typeof d === 'string') {
+      try { d = JSON.parse(d); } catch (e) {}
+    }
+    if (d && typeof d === 'object' && 'tokensUsed' in d) {
+      window.dispatchEvent(new CustomEvent('quota:changed'));
+      showTokenToast(d.tokensUsed, d.remainingToken);
+      return d.payload ?? d;
+    }
+    return d;
+  }, []);
+
   // ─── Generic safe API caller wrapper ────────────────────────────────────
   const callApi = useCallback(async (fn, msg) => {
     setLoading(true);
@@ -115,13 +132,23 @@ function StagedPlannerPage() {
       const res = await fn();
       let d = res?.data ?? res;
       if (typeof d === 'string') {
-        try {
-          d = JSON.parse(d);
-        } catch (e) {}
+        try { d = JSON.parse(d); } catch (e) {}
       }
+
+      if (d && typeof d === 'object' && 'payload' in d && 'tokensUsed' in d) {
+        window.dispatchEvent(new CustomEvent('quota:changed'));
+        showTokenToast(d.tokensUsed, d.remainingToken);
+        return d.payload;
+      }
+
       return d;
     } catch (err) {
-      setError(err.message || 'Có lỗi xảy ra trong quá trình xử lý');
+      const status = err?.response?.status || err?.status;
+      if (status === 402) {
+        setShowUpgrade(true);
+      } else {
+        setError(err.message || 'Có lỗi xảy ra trong quá trình xử lý');
+      }
       throw err;
     } finally {
       setLoading(false);
@@ -162,12 +189,7 @@ function StagedPlannerPage() {
       });
 
       const raw = await generateCampaigns(workspaceId);
-      let data = raw?.data ?? raw;
-      if (typeof data === 'string') {
-        try {
-          data = JSON.parse(data);
-        } catch (e) {}
-      }
+      const data = processTokenAwareResponse(raw);
       if (data) {
         setOverview({
           workspaceName: data.workspaceName,
@@ -180,19 +202,21 @@ function StagedPlannerPage() {
         setStage(PLAN_STAGES.CAMPAIGNS_GENERATED);
       }
     }, 'AI đang phân tích thông tin và khởi tạo danh sách chiến dịch...');
-  }, [workspaceId, seedInput, pendingFiles, selectedDocIds, callApi]);
+  }, [workspaceId, seedInput, pendingFiles, selectedDocIds, callApi, processTokenAwareResponse]);
 
   // ─── Regenerate Campaigns ───────────────────────────────────────────────
   const handleRegenCampaigns = useCallback(async () => {
     if (!workspaceId) return;
     await syncStructureToBackend(campaigns, overview);
     const data = await callApi(
-      () =>
-        regenerateCampaigns(workspaceId, {
+      async () => {
+        const raw = await regenerateCampaigns(workspaceId, {
           freeTextInstructions: freeText.trim() ? [freeText] : [],
           campaignIndex: -1,
           topicIndex: -1,
-        }),
+        });
+        return processTokenAwareResponse(raw);
+      },
       'AI đang sinh lại danh sách chiến dịch...'
     );
     if (data) {
@@ -206,7 +230,7 @@ function StagedPlannerPage() {
       setCampaigns(Array.isArray(data.campaigns) ? data.campaigns : []);
     }
     setFreeText('');
-  }, [workspaceId, freeText, campaigns, overview, syncStructureToBackend, callApi]);
+  }, [workspaceId, freeText, campaigns, overview, syncStructureToBackend, callApi, processTokenAwareResponse]);
 
   // ─── Step 1 -> Step 2: Confirm Campaigns & Generate Batch Topics ────────
   const handleProceedToTopics = useCallback(async () => {
@@ -214,9 +238,11 @@ function StagedPlannerPage() {
     await syncStructureToBackend(campaigns, overview);
     await callApi(async () => {
       // Gọi generateTopics TRƯỚC khi stage còn CAMPAIGNS_GENERATED (backend assertStage yêu cầu vậy)
-      await generateTopics(workspaceId, {
+      const raw = await generateTopics(workspaceId, {
         freeTextInstructions: freeText.trim() ? [freeText] : [],
       });
+      processTokenAwareResponse(raw);
+
       // Sau đó mới confirm chuyển stage
       await confirmStage(workspaceId, PLAN_STAGES.TOPICS_GENERATED);
 
@@ -228,16 +254,18 @@ function StagedPlannerPage() {
       setStage(PLAN_STAGES.TOPICS_GENERATED);
     }, 'AI đang tạo danh sách chủ đề cho toàn bộ các chiến dịch...');
     setFreeText('');
-  }, [workspaceId, campaigns, overview, freeText, syncStructureToBackend, callApi]);
+  }, [workspaceId, campaigns, overview, freeText, syncStructureToBackend, callApi, processTokenAwareResponse]);
 
   // ─── Regenerate Topics ──────────────────────────────────────────────────
   const handleRegenBatchTopics = useCallback(async () => {
     if (!workspaceId) return;
     await syncStructureToBackend(campaigns, overview);
     await callApi(async () => {
-      await regenerateTopics(workspaceId, {
+      const raw = await regenerateTopics(workspaceId, {
         freeTextInstructions: freeText.trim() ? [freeText] : [],
       });
+      processTokenAwareResponse(raw);
+
       const draftRes = await planDraftApi.get(API_BASE_URL, workspaceId);
       const updated = parsePlanDraftResponse(draftRes);
       if (updated?.plan?.campaigns) {
@@ -245,7 +273,7 @@ function StagedPlannerPage() {
       }
     }, 'AI đang sinh lại danh sách chủ đề...');
     setFreeText('');
-  }, [workspaceId, campaigns, overview, freeText, syncStructureToBackend, callApi]);
+  }, [workspaceId, campaigns, overview, freeText, syncStructureToBackend, callApi, processTokenAwareResponse]);
 
   // ─── Step 2 -> Step 3: Confirm Topics & Generate Batch Posts ───────────
   const handleProceedToPosts = useCallback(async () => {
@@ -253,7 +281,9 @@ function StagedPlannerPage() {
     await syncStructureToBackend(campaigns, overview);
     await callApi(async () => {
       // Gọi generatePosts TRƯỚC khi stage còn TOPICS_GENERATED (backend assertStage yêu cầu vậy)
-      await generatePosts(workspaceId, { freeTextInstructions: freeText.trim() ? [freeText] : [] });
+      const raw = await generatePosts(workspaceId, { freeTextInstructions: freeText.trim() ? [freeText] : [] });
+      processTokenAwareResponse(raw);
+
       // Sau đó mới confirm chuyển stage
       await confirmStage(workspaceId, PLAN_STAGES.POSTS_GENERATED);
 
@@ -265,7 +295,7 @@ function StagedPlannerPage() {
       setStage(PLAN_STAGES.POSTS_GENERATED);
     }, 'AI đang tạo danh sách bài viết skeleton cho toàn bộ các chủ đề...');
     setFreeText('');
-  }, [workspaceId, campaigns, overview, freeText, syncStructureToBackend, callApi]);
+  }, [workspaceId, campaigns, overview, freeText, syncStructureToBackend, callApi, processTokenAwareResponse]);
 
   // ─── Regenerate Posts ───────────────────────────────────────────────────
   const handleRegenBatchPosts = useCallback(async () => {
@@ -452,6 +482,9 @@ function StagedPlannerPage() {
 
   return (
     <div className="sp-page">
+      {/* UpgradeModal — hiển thị khi hết AI token (HTTP 402) */}
+      <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} />
+
       {/* Global Anti-Spam Loading Overlay */}
       <PlannerLoadingOverlay isLoading={loading} message={loadMsg} />
 

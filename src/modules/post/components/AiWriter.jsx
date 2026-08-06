@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { postApi } from '../api/postApi';
 import { API_BASE_URL } from '../../../config/env';
+import { useQuota } from '../../subscription/hooks/useQuota';
+import { showTokenToast } from '../../subscription/components/TokenToast';
+import UpgradeModal from '../../subscription/components/UpgradeModal';
 
 /**
  * AiWriter – Bảng viết nội dung bằng AI
@@ -23,12 +26,14 @@ export default function AiWriter({
   currentContent = '',
   onAiMediaChange,
 }) {
+  const { quota } = useQuota();
   const [activeTab, setActiveTab]   = useState('write');   // 'write' | 'read'
   const [prompt, setPrompt]         = useState(initialPrompt || '');
   const [tone, setTone]             = useState(initialTone || brandTone || 'Chuyên nghiệp');
   const [loading, setLoading]       = useState(false);
   const [errorMsg, setErrorMsg]     = useState(null);
   const [expanded, setExpanded]     = useState(true);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   // Thêm state cho chức năng tạo ảnh
   const [imgLoading, setImgLoading] = useState(false);
@@ -90,12 +95,22 @@ export default function AiWriter({
         const generatedHashtags = generatedData.hashtags || [];
 
         onInsert?.(generatedText, generatedHashtags);
+        window.dispatchEvent(new CustomEvent('quota:changed'));
+        // Hiển thị toast token nếu backend trả về thông tin
+        if (generatedData.tokensUsed !== undefined) {
+          showTokenToast(generatedData.tokensUsed, generatedData.remainingToken);
+        }
       } else {
         setErrorMsg(res?.message || 'Không thể tạo nội dung bằng AI.');
       }
     } catch (err) {
       console.error('AI generate content error:', err);
-      setErrorMsg(err.message || 'Không thể gọi dịch vụ AI (Gemini). Vui lòng thử lại.');
+      const status = err?.response?.status || err?.status;
+      if (status === 402) {
+        setShowUpgrade(true);
+      } else {
+        setErrorMsg(err.message || 'Không thể gọi dịch vụ AI (Gemini). Vui lòng thử lại.');
+      }
     } finally {
       setLoading(false);
     }
@@ -118,14 +133,24 @@ export default function AiWriter({
       if (res && res.success && res.data && res.data.images) {
         setGeneratedImages(res.data.images);
         updateFilesToParent(res.data.images);
+        window.dispatchEvent(new CustomEvent('quota:changed'));
+        // Hiển thị toast token
+        if (res.data.tokensUsed !== undefined) {
+          showTokenToast(res.data.tokensUsed, res.data.remainingToken);
+        }
       } else {
         setImgErrorMsg(res?.message || 'Không thể tạo ảnh.');
         onAiMediaChange?.([]);
       }
     } catch (err) {
       console.error('AI generate image error:', err);
-      setImgErrorMsg(err.message || 'Lỗi khi gọi dịch vụ tạo ảnh.');
-      onAiMediaChange?.([]);
+      const status = err?.response?.status || err?.status;
+      if (status === 402) {
+        setShowUpgrade(true);
+      } else {
+        setImgErrorMsg(err.message || 'Lỗi khi gọi dịch vụ tạo ảnh.');
+        onAiMediaChange?.([]);
+      }
     } finally {
       setImgLoading(false);
     }
@@ -154,20 +179,38 @@ export default function AiWriter({
         newImages[indexToReload] = res.data.images[0];
         setGeneratedImages(newImages);
         updateFilesToParent(newImages);
+        // Bổ sung: dispatch quota:changed và hiện toast sau reload ảnh
+        window.dispatchEvent(new CustomEvent('quota:changed'));
+        if (res.data.tokensUsed !== undefined) {
+          showTokenToast(res.data.tokensUsed, res.data.remainingToken);
+        }
       } else {
-        alert(res?.message || 'Không thể tạo lại ảnh.');
+        const status = res?.status;
+        if (status === 402) {
+          setShowUpgrade(true);
+        } else {
+          alert(res?.message || 'Không thể tạo lại ảnh.');
+        }
       }
     } catch (err) {
       console.error('Reload image error:', err);
-      alert(err.message || 'Lỗi khi gọi dịch vụ tạo lại ảnh.');
+      const status = err?.response?.status || err?.status;
+      if (status === 402) {
+        setShowUpgrade(true);
+      } else {
+        alert(err.message || 'Lỗi khi gọi dịch vụ tạo lại ảnh.');
+      }
     } finally {
       setReloadingIndex(null);
     }
   };
 
   return (
-    <div className="cp-ai">
-      {/* Header / Toggle */}
+    <>
+      <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} />
+      <div className="cp-ai">
+        {/* Header / Toggle */}
+
       <div
         className="cp-ai__header"
         onClick={() => setExpanded((v) => !v)}
@@ -181,6 +224,11 @@ export default function AiWriter({
           </svg>
           AI viết nội dung & Gợi ý giọng văn
           <span className="cp-ai__badge">AI</span>
+          {quota?.remainingTokens !== undefined && (
+            <span style={{ fontSize: '11px', color: '#059669', backgroundColor: '#ecfdf5', padding: '2px 8px', borderRadius: '12px', fontWeight: 600, marginLeft: '6px' }}>
+              ⚡ {quota.remainingTokens.toLocaleString('vi-VN')} token
+            </span>
+          )}
           {!expanded && (
             <span style={{ fontSize: '11px', color: '#6d28d9', fontWeight: 500, marginLeft: '8px', opacity: 0.85 }}>
               • Giọng văn: {tone?.length > 25 ? tone.substring(0, 25) + '...' : tone}
@@ -400,5 +448,6 @@ export default function AiWriter({
         )}
       </div>
     </div>
-  );
+  </>
+);
 }

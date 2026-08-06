@@ -79,6 +79,12 @@ export async function requestJson(path, options = {}, baseUrl) {
       }
     }
 
+    if (response.status === 402) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('subscription:payment_required', { detail: body }));
+      }
+    }
+
     const error = new Error(body?.message || `Request failed with status ${response.status}`);
     error.status = response.status;
     error.body = body;
