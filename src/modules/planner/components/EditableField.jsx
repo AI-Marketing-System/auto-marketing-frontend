@@ -37,8 +37,20 @@ function EditableField({
         const end = controlRef.current.value.length;
         controlRef.current.setSelectionRange(end, end);
       }
+      if (as === 'textarea') {
+        controlRef.current.style.height = 'auto';
+        controlRef.current.style.height = controlRef.current.scrollHeight + 'px';
+      }
     }
   }, [editing, as]);
+
+  const handleInput = (event) => {
+    setDraft(event.target.value);
+    if (as === 'textarea' && controlRef.current) {
+      controlRef.current.style.height = 'auto';
+      controlRef.current.style.height = controlRef.current.scrollHeight + 'px';
+    }
+  };
 
   const commit = () => {
     setEditing(false);
@@ -102,7 +114,7 @@ function EditableField({
           rows={rows}
           maxLength={maxLength}
           placeholder={placeholder}
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={handleInput}
           onBlur={commit}
           onKeyDown={handleKeyDown}
         />
@@ -115,7 +127,7 @@ function EditableField({
           value={draft}
           maxLength={maxLength}
           placeholder={placeholder}
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={handleInput}
           onBlur={commit}
           onKeyDown={handleKeyDown}
         />

@@ -1,8 +1,10 @@
 import { requestJson } from '../../../services/Api';
 
 export const topicApi = {
-  listByCampaignId: (campaignId, baseUrl) =>
-    requestJson(`/topics/campaign/${campaignId}`, { method: 'GET' }, baseUrl),
+  listByCampaignId: (campaignId, page = 0, size = 10, sortBy = 'createdAt', sortDir = 'desc', baseUrl) => {
+    const searchParams = new URLSearchParams({ page, size, sortBy, sortDir });
+    return requestJson(`/topics/campaign/${campaignId}?${searchParams.toString()}`, { method: 'GET' }, baseUrl);
+  },
   getById: (id, baseUrl) =>
     requestJson(`/topics/${id}`, { method: 'GET' }, baseUrl),
   create: (payload, baseUrl) =>

@@ -4,6 +4,8 @@ import { API_BASE_URL } from '../../config/env';
 import Sidebar from './Sidebar';
 import UserDropdown from './UserDropdown';
 import UpgradeModal from '../../modules/subscription/components/UpgradeModal';
+import QuotaModal from '../../modules/subscription/components/QuotaModal';
+import { QuotaProvider } from '../../modules/subscription/context/QuotaContext';
 import SettingsModal from '../../modules/auth/components/SettingsModal';
 import './DashboardLayout.css';
 
@@ -61,6 +63,7 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
     isTrial: false,
   });
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsActiveTab, setSettingsActiveTab] = useState('account');
 
@@ -109,72 +112,91 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
     }
   }, [location, navigate]);
 
+  useEffect(() => {
+    const handlePaymentRequired = () => {
+      setIsUpgradeModalOpen(true);
+    };
+    window.addEventListener('subscription:payment_required', handlePaymentRequired);
+    return () => {
+      window.removeEventListener('subscription:payment_required', handlePaymentRequired);
+    };
+  }, []);
+
   return (
-    <div className="layout">
-      <Sidebar variant={variant} />
-      <div className="main">
-        <header className="topbar">
-          <div className="topbar__left">
-            <span className="topbar__title">
-              {isSocialAccounts
-                ? 'Tài khoản mạng xã hội'
-                : variant === 'admin'
-                  ? 'Admin'
-                  : 'Dashboard'}
-            </span>
-          </div>
+    <QuotaProvider>
+      <div className="layout">
+        <Sidebar variant={variant} />
+        <div className="main">
+          <header className="topbar">
+            <div className="topbar__left">
+              <span className="topbar__title">
+                {isSocialAccounts
+                  ? 'Tài khoản mạng xã hội'
+                  : variant === 'admin'
+                    ? 'Admin'
+                    : 'Dashboard'}
+              </span>
+            </div>
 
-          {/* Tabs Chiến dịch / Lịch đăng — chỉ hiển thị trong khu vực campaigns */}
-          {isCampaignArea && <CampaignTabs />}
+            {/* Tabs Chiến dịch / Lịch đăng — chỉ hiển thị trong khu vực campaigns */}
+            {isCampaignArea && <CampaignTabs />}
 
-          <div className="topbar__right">
-            {/* <button type="button" className="topbar__help">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" />
-              </svg>
-              <span>Trợ giúp</span>
-            </button> */}
-            <UserDropdown
-              subscription={subscription}
-              onUpgradeClick={() => setIsUpgradeModalOpen(true)}
-              onProfileClick={() => {
-                setSettingsActiveTab('account');
-                setIsSettingsOpen(true);
-              }}
-              onSettingsClick={() => {
-                setSettingsActiveTab('billing');
-                setIsSettingsOpen(true);
-              }}
-            />
-          </div>
-        </header>
-        <main className="content">{children}</main>
+            <div className="topbar__right">
+              {/* <button type="button" className="topbar__help">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" />
+                </svg>
+                <span>Trợ giúp</span>
+              </button> */}
+              <UserDropdown
+                subscription={subscription}
+                onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+                onQuotaClick={() => setIsQuotaModalOpen(true)}
+                onProfileClick={() => {
+                  setSettingsActiveTab('account');
+                  setIsSettingsOpen(true);
+                }}
+                onSettingsClick={() => {
+                  setSettingsActiveTab('billing');
+                  setIsSettingsOpen(true);
+                }}
+              />
+            </div>
+          </header>
+          <main className="content">{children}</main>
+        </div>
+
+        <UpgradeModal
+          isOpen={isUpgradeModalOpen}
+          onClose={() => setIsUpgradeModalOpen(false)}
+          onUpgradeSuccess={fetchSubscription}
+          currentSubscription={subscription}
+        />
+
+        <QuotaModal
+          isOpen={isQuotaModalOpen}
+          onClose={() => setIsQuotaModalOpen(false)}
+          onOpenUpgrade={() => setIsUpgradeModalOpen(true)}
+        />
+
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          initialTab={settingsActiveTab}
+          subscription={subscription}
+          onCancelSuccess={fetchSubscription}
+        />
       </div>
-
-      <UpgradeModal
-        isOpen={isUpgradeModalOpen}
-        onClose={() => setIsUpgradeModalOpen(false)}
-        onUpgradeSuccess={fetchSubscription}
-        currentSubscription={subscription}
-      />
-
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        initialTab={settingsActiveTab}
-        subscription={subscription}
-        onCancelSuccess={fetchSubscription}
-      />
-    </div>
+    </QuotaProvider>
   );
 }

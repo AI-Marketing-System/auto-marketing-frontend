@@ -45,14 +45,16 @@ function PlanPostCard({ post, index, campaignId, topicId, expanded, onToggleExpa
             {post.scheduleSuggestion}
           </span>
         )}
-        <button
-          type="button"
-          className="wp-icon-btn wp-icon-btn--delete"
-          onClick={handleRemove}
-          title="Xoá bài viết"
-        >
-          <TrashIcon size={14} />
-        </button>
+        <div className="wp-hover-actions">
+          <button
+            type="button"
+            className="wp-icon-btn wp-icon-btn--delete"
+            onClick={handleRemove}
+            title="Xoá bài viết"
+          >
+            <TrashIcon size={14} />
+          </button>
+        </div>
       </div>
 
       {expanded && (

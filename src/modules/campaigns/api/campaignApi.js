@@ -115,7 +115,7 @@ export const buildCreateCampaignPayload = ({
   endDate,
 }) => ({
   workspaceId,
-  name: (name || title || '').trim(),
+  title: (title || name || '').trim(),
   description: description || '',
   status,
   startDate,
@@ -139,6 +139,8 @@ export const campaignApi = {
     requestJson(`/campaigns/${campaignId}/resume`, { method: 'PUT' }, baseUrl),
   complete: (campaignId, baseUrl) =>
     requestJson(`/campaigns/${campaignId}/complete`, { method: 'PUT' }, baseUrl),
+  delete: (campaignId, baseUrl) =>
+    requestJson(`/campaigns/${campaignId}`, { method: 'DELETE' }, baseUrl),
 };
 
 export const workspaceApi = {

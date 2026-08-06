@@ -23,6 +23,7 @@ function DashboardPage() {
   ]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState(null);
+  const [pendingDeletes, setPendingDeletes] = useState({});
 
   const fetchWorkspaces = () => {
     setLoading(true);
@@ -74,11 +75,15 @@ function DashboardPage() {
         body: JSON.stringify({
           name: data.title,
           description: data.description || '',
+          avatar: data.avatar || null,
         }),
       })
-        .then((res) => {
-          if (!res.ok) throw new Error('Không thể cập nhật thông tin workspace');
-          return res.json();
+        .then(async (res) => {
+          const resJson = await res.json().catch(() => null);
+          if (!res.ok) {
+            throw new Error(resJson?.message || 'Không thể cập nhật thông tin workspace');
+          }
+          return resJson;
         })
         .then((resJson) => {
           if (resJson && resJson.success && resJson.data) {
@@ -91,14 +96,16 @@ function DashboardPage() {
                       title: updated.name,
                       description: updated.description,
                       slug: updated.slug,
+                      avatarUrl: updated.avatarUrl,
                     }
                   : ws
               )
             );
             setEditingWorkspace(null);
             setIsModalOpen(false);
+            window.dispatchEvent(new CustomEvent('quota:changed'));
           } else {
-            alert(resJson.message || 'Cập nhật workspace thất bại');
+            alert(resJson?.message || 'Cập nhật workspace thất bại');
           }
         })
         .catch((err) => {
@@ -115,11 +122,15 @@ function DashboardPage() {
         body: JSON.stringify({
           name: data.title,
           description: data.description || '',
+          avatar: data.avatar || null,
         }),
       })
-        .then((res) => {
-          if (!res.ok) throw new Error('Không thể tạo workspace mới');
-          return res.json();
+        .then(async (res) => {
+          const resJson = await res.json().catch(() => null);
+          if (!res.ok) {
+            throw new Error(resJson?.message || 'Không thể tạo workspace mới');
+          }
+          return resJson;
         })
         .then((resJson) => {
           if (resJson && resJson.success && resJson.data) {
@@ -131,12 +142,14 @@ function DashboardPage() {
                 title: newWs.name,
                 description: newWs.description,
                 slug: newWs.slug,
+                avatarUrl: newWs.avatarUrl,
                 accountsCount: 0,
               },
             ]);
             setIsModalOpen(false);
+            window.dispatchEvent(new CustomEvent('quota:changed'));
           } else {
-            alert(resJson.message || 'Tạo workspace thất bại');
+            alert(resJson?.message || 'Tạo workspace thất bại');
           }
         })
         .catch((err) => {
@@ -152,29 +165,84 @@ function DashboardPage() {
   };
 
   const handleDeleteWorkspace = (workspaceId) => {
-    const token = localStorage.getItem('marqops.authLab.accessToken');
-    fetch(`${API_BASE_URL}/workspaces/${workspaceId}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Không thể xóa workspace này');
-        return res.json();
+    const workspaceToDelete = workspaces.find((ws) => ws.id === workspaceId);
+    if (!workspaceToDelete) return;
+
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa Workspace "${workspaceToDelete.title}" không? Mọi dữ liệu bên trong sẽ bị xóa vĩnh viễn.`)) {
+      return;
+    }
+
+    // 1. Lạc quan (Optimistic update): Xóa khỏi giao diện ngay lập tức
+    setWorkspaces((prev) => prev.filter((ws) => ws.id !== workspaceId));
+    setEditingWorkspace(null);
+    setIsModalOpen(false);
+
+    // 2. Set timeout 5s để xóa thật
+    const timeoutId = setTimeout(() => {
+      const token = localStorage.getItem('marqops.authLab.accessToken');
+      fetch(`${API_BASE_URL}/workspaces/${workspaceId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
-      .then((resJson) => {
-        if (resJson && resJson.success) {
-          setWorkspaces((prev) => prev.filter((ws) => ws.id !== workspaceId));
-          setEditingWorkspace(null);
-          setIsModalOpen(false);
-        } else {
-          alert(resJson.message || 'Xóa workspace thất bại');
-        }
-      })
-      .catch((err) => {
-        alert(err.message || 'Đã xảy ra lỗi khi xóa workspace');
-      });
+        .then((res) => {
+          if (!res.ok) throw new Error('Không thể xóa workspace này');
+          return res.json();
+        })
+        .then((resJson) => {
+          if (resJson && resJson.success) {
+            // Xóa thành công, dọn dẹp state pending
+            setPendingDeletes((prev) => {
+              const newPending = { ...prev };
+              delete newPending[workspaceId];
+              return newPending;
+            });
+          } else {
+            // Thất bại: khôi phục lại UI và báo lỗi
+            alert(resJson.message || 'Xóa workspace thất bại');
+            setWorkspaces((prev) => [...prev, workspaceToDelete]);
+            setPendingDeletes((prev) => {
+              const newPending = { ...prev };
+              delete newPending[workspaceId];
+              return newPending;
+            });
+          }
+        })
+        .catch((err) => {
+          alert(err.message || 'Đã xảy ra lỗi khi xóa workspace');
+          setWorkspaces((prev) => [...prev, workspaceToDelete]);
+          setPendingDeletes((prev) => {
+            const newPending = { ...prev };
+            delete newPending[workspaceId];
+            return newPending;
+          });
+        });
+    }, 5000);
+
+    // 3. Lưu thông tin vào state để có thể Hoàn tác
+    setPendingDeletes((prev) => ({
+      ...prev,
+      [workspaceId]: { workspace: workspaceToDelete, timeoutId },
+    }));
+  };
+
+  const handleUndoDelete = (workspaceId) => {
+    setPendingDeletes((prev) => {
+      const pendingDelete = prev[workspaceId];
+      if (pendingDelete) {
+        // Hủy timeout
+        clearTimeout(pendingDelete.timeoutId);
+        
+        // Khôi phục UI
+        setWorkspaces((currentWorkspaces) => [...currentWorkspaces, pendingDelete.workspace]);
+        
+        const newPending = { ...prev };
+        delete newPending[workspaceId];
+        return newPending;
+      }
+      return prev;
+    });
   };
 
   const handleCardClick = (workspace) => {
@@ -185,6 +253,58 @@ function DashboardPage() {
 
   return (
     <div className="dashboard-container">
+      {/* Undo Toast Container */}
+      <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {Object.keys(pendingDeletes).map((wsId) => {
+          const ws = pendingDeletes[wsId].workspace;
+          return (
+            <div key={wsId} style={{ 
+              backgroundColor: '#1e293b', 
+              color: 'white', 
+              padding: '14px 24px', 
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '24px',
+              boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)',
+              animation: 'slideIn 0.3s ease-out forwards'
+            }}>
+              <span style={{ fontSize: '14.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Đang xóa Workspace <b>{ws.title}</b>...
+              </span>
+              <button 
+                onClick={() => handleUndoDelete(wsId)}
+                style={{ 
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)', 
+                  border: '1px solid rgba(59, 130, 246, 0.2)', 
+                  color: '#60a5fa', 
+                  fontWeight: '600', 
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => { e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'; e.target.style.color = '#93c5fd'; }}
+                onMouseOut={(e) => { e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.1)'; e.target.style.color = '#60a5fa'; }}
+              >
+                HOÀN TÁC (5s)
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      <style>{`
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
+
       {/* Dashboard Inner Body */}
       <main className="dashboard-main-content">
         <div className="dashboard-inner-container">
@@ -279,6 +399,7 @@ function DashboardPage() {
                     key={ws.id}
                     title={ws.title}
                     accountsCount={ws.accountsCount}
+                    avatarUrl={ws.avatarUrl}
                     onEditClick={() => handleSettingsClick(ws)}
                     onDeleteClick={() => handleDeleteWorkspace(ws.id)}
                     onCardClick={() => handleCardClick(ws)}
@@ -322,6 +443,7 @@ function DashboardPage() {
                   role={ws.role}
                   title={ws.title}
                   campaigns={ws.campaigns}
+                  avatarUrl={ws.avatarUrl}
                   onSettingsClick={() => handleSettingsClick(ws)}
                   onCardClick={() => handleCardClick(ws)}
                 />

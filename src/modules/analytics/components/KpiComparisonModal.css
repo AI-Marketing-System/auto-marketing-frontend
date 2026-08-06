@@ -1,0 +1,430 @@
+/* ============================================================
+   KPI Comparison Modal — polished violet theme
+   ============================================================ */
+
+/* ---------- Overlay ---------- */
+.kpi-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+  animation: kpi-fadeIn 0.25s ease-out;
+}
+
+@keyframes kpi-fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---------- Content card ---------- */
+.kpi-modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 740px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow:
+    0 25px 60px -12px rgba(15, 23, 42, 0.18),
+    0 0 0 1px rgba(226, 232, 240, 0.6);
+  animation: kpi-slideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes kpi-slideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* ---------- Header ---------- */
+.kpi-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 28px 18px;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border-bottom: 1px solid rgba(196, 181, 253, 0.35);
+}
+
+.kpi-modal-header h2 {
+  margin: 0;
+  color: #1e1b4b;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.kpi-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+
+.kpi-close-btn:hover {
+  background: #ffffff;
+  color: #1e1b4b;
+  transform: rotate(90deg);
+}
+
+/* ---------- Post info strip ---------- */
+.kpi-modal-post-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 28px;
+  background: #fafafa;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.kpi-fanpage-avatar {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-post-details {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.kpi-post-details strong {
+  color: #1e293b;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.kpi-post-details p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Body ---------- */
+.kpi-modal-body {
+  padding: 28px 28px 32px;
+}
+
+/* ---------- Loading ---------- */
+.kpi-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 220px;
+  color: #64748b;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.kpi-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid #e2e8f0;
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: kpi-spin 0.7s linear infinite;
+}
+
+@keyframes kpi-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   Form
+   ============================================================ */
+.kpi-form-instruction {
+  margin: 0 0 24px;
+  color: #64748b;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.kpi-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+/* last two fields in a 2-col row */
+.kpi-form-grid .kpi-form-group:nth-child(4) {
+  grid-column: 1 / 2;
+}
+.kpi-form-grid .kpi-form-group:nth-child(5) {
+  grid-column: 2 / 3;
+}
+
+.kpi-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.kpi-form-group label {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #334155;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.kpi-form-group input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.kpi-form-group input::-webkit-outer-spin-button,
+.kpi-form-group input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.kpi-form-group input::placeholder {
+  color: #cbd5e1;
+}
+
+.kpi-form-group input:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.kpi-form-group--focused input,
+.kpi-form-group input:focus {
+  border-color: #7c3aed;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+/* ---------- Actions ---------- */
+.kpi-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.btn-cancel,
+.btn-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+.btn-cancel:active,
+.btn-submit:active,
+.btn-edit:active {
+  transform: scale(0.97);
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+.btn-cancel:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px -3px rgba(124, 58, 237, 0.45);
+}
+.btn-submit:hover {
+  background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+  box-shadow: 0 6px 20px -4px rgba(124, 58, 237, 0.55);
+  transform: translateY(-1px);
+}
+.btn-submit:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ============================================================
+   Chart view
+   ============================================================ */
+.kpi-chart-container {
+  animation: kpi-fadeIn 0.3s ease-out;
+}
+
+.kpi-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.kpi-chart-header h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.btn-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #7c3aed;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-edit:hover {
+  border-color: #c4b5fd;
+  background: #f5f3ff;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.12);
+  transform: translateY(-1px);
+}
+
+.btn-edit:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.kpi-chart-wrapper {
+  padding: 16px 8px 8px;
+  border-radius: 14px;
+  background: #fafafe;
+  border: 1px solid #f1f5f9;
+}
+
+/* ---------- Tooltip ---------- */
+.kpi-tooltip {
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid #e2e8f0;
+  padding: 16px 18px;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(10px);
+}
+
+.kpi-tooltip p {
+  margin: 5px 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.kpi-tooltip-title {
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 10px !important;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.92rem;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 640px) {
+  .kpi-modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .kpi-modal-content {
+    max-height: 85vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .kpi-modal-header {
+    padding: 16px 20px 14px;
+  }
+
+  .kpi-modal-header h2 {
+    font-size: 1.05rem;
+  }
+
+  .kpi-modal-post-info {
+    padding: 14px 20px;
+  }
+
+  .kpi-modal-body {
+    padding: 20px;
+  }
+
+  .kpi-form-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .kpi-form-grid .kpi-form-group:nth-child(4),
+  .kpi-form-grid .kpi-form-group:nth-child(5) {
+    grid-column: auto;
+  }
+
+  .kpi-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .btn-cancel,
+  .btn-submit {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .kpi-chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .btn-edit {
+    align-self: flex-start;
+  }
+}
