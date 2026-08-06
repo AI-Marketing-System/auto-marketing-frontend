@@ -74,7 +74,10 @@ export function QuotaBar({
       {!isUnlimited && (
         <div className="quota-bar-subtext">
           <span>Đã sử dụng {percentage}%</span>
-          {ratio >= dangerThreshold && <span className="quota-bar-danger-text">Sắp hết hạn mức</span>}
+          {ratio >= 1
+            ? <span className="quota-bar-danger-text">Đã hết hạn mức</span>
+            : ratio >= dangerThreshold && <span className="quota-bar-danger-text">Sắp hết hạn mức</span>
+          }
         </div>
       )}
     </div>

@@ -118,11 +118,8 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
         if (resJson.data && resJson.data.paymentUrl) {
           window.location.href = resJson.data.paymentUrl;
         } else {
-          setPaymentTx({
-            transactionId: resJson.data.id,
-            amount: checkoutPlan.price,
-            planName: checkoutPlan.name,
-          });
+          alert('Hệ thống đang bảo trì cổng thanh toán. Vui lòng thử lại sau.');
+          onClose();
         }
       }
     } catch (error) {
@@ -499,43 +496,6 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
           </div>
         )}
 
-        {/* PHÂN CẢNH 3: GIAO DIỆN QUÉT MÃ QR THANH TOÁN */}
-        {paymentTx && (
-          <div className="payment-qr-container">
-            <h2 className="modal-title">Quét mã QR để thanh toán</h2>
-            <p className="payment-guide">
-              Mã giao dịch: <strong>#{paymentTx.transactionId}</strong>. Vui lòng quét mã QR dưới
-              đây bằng ứng dụng MoMo để thanh toán <strong>{formatPrice(paymentTx.amount)}</strong>.
-            </p>
-
-            <div className="qr-image-wrapper">
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=MoMoPaidDemo_Tx_${paymentTx.transactionId}`}
-                alt="QR Code thanh toan MoMo"
-                className="qr-img"
-              />
-              <span className="qr-brand-label">MoMo Scan</span>
-            </div>
-
-            <p className="sandbox-hint">
-              * Đây là môi trường thử nghiệm (Sandbox). Bạn nhấn vào nút bên dưới để hoàn tất việc
-              xác nhận nhận tiền từ cổng thanh toán.
-            </p>
-
-            <div className="payment-actions">
-              <button
-                className="btn-pay-confirm"
-                onClick={handleConfirmPayment}
-                disabled={confirming}
-              >
-                {confirming ? 'Đang xác nhận...' : 'Tôi đã thanh toán thành công'}
-              </button>
-              <button className="btn-pay-cancel" onClick={() => setPaymentTx(null)}>
-                Quay lại
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

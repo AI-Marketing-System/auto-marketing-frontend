@@ -63,7 +63,7 @@ export function QuotaModal({ isOpen, onClose, onOpenUpgrade }) {
 
               {/* Fanpage / Workspace quota */}
               <QuotaBar
-                label="Fanpage / Workspace (Sát hạn mức nhất)"
+                label="Fanpage / Workspace"
                 current={quota.currentFanpagesCount ?? 0}
                 max={quota.maxFanpages}
                 unit="fanpage"
