@@ -78,9 +78,12 @@ function DashboardPage() {
           avatar: data.avatar || null,
         }),
       })
-        .then((res) => {
-          if (!res.ok) throw new Error('Không thể cập nhật thông tin workspace');
-          return res.json();
+        .then(async (res) => {
+          const resJson = await res.json().catch(() => null);
+          if (!res.ok) {
+            throw new Error(resJson?.message || 'Không thể cập nhật thông tin workspace');
+          }
+          return resJson;
         })
         .then((resJson) => {
           if (resJson && resJson.success && resJson.data) {
@@ -100,8 +103,9 @@ function DashboardPage() {
             );
             setEditingWorkspace(null);
             setIsModalOpen(false);
+            window.dispatchEvent(new CustomEvent('quota:changed'));
           } else {
-            alert(resJson.message || 'Cập nhật workspace thất bại');
+            alert(resJson?.message || 'Cập nhật workspace thất bại');
           }
         })
         .catch((err) => {
@@ -121,9 +125,12 @@ function DashboardPage() {
           avatar: data.avatar || null,
         }),
       })
-        .then((res) => {
-          if (!res.ok) throw new Error('Không thể tạo workspace mới');
-          return res.json();
+        .then(async (res) => {
+          const resJson = await res.json().catch(() => null);
+          if (!res.ok) {
+            throw new Error(resJson?.message || 'Không thể tạo workspace mới');
+          }
+          return resJson;
         })
         .then((resJson) => {
           if (resJson && resJson.success && resJson.data) {
@@ -140,8 +147,9 @@ function DashboardPage() {
               },
             ]);
             setIsModalOpen(false);
+            window.dispatchEvent(new CustomEvent('quota:changed'));
           } else {
-            alert(resJson.message || 'Tạo workspace thất bại');
+            alert(resJson?.message || 'Tạo workspace thất bại');
           }
         })
         .catch((err) => {

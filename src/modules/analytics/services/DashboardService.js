@@ -9,6 +9,42 @@ const getCollection = (response) => {
   return [];
 };
 
+const getTopPostsCollection = (response) => {
+  const topPosts = [
+    response?.topPosts,
+    response?.data?.topPosts,
+    response?.data?.data?.topPosts,
+    response?.data?.items,
+    response?.data?.data
+  ].find(Array.isArray);
+
+  return topPosts || getCollection(response);
+};
+
+const buildTopPostsQuery = (params = {}) => {
+  let timeRange = '7d';
+  if (params.period === 'day') timeRange = '1d';
+  else if (params.period === 'week') timeRange = '7d';
+  else if (params.period === 'month') timeRange = '30d';
+
+  const queryParams = new URLSearchParams();
+  if (params.workspaceId) queryParams.append('workspaceId', params.workspaceId);
+  queryParams.append('timeRange', timeRange);
+  queryParams.append('sortBy', params.sortBy || 'engagement');
+  queryParams.append('page', params.page || 0);
+  queryParams.append('size', params.limit || 5);
+
+  if (params.fanpageIds && params.fanpageIds.length > 0) {
+    params.fanpageIds.forEach((id) => queryParams.append('fanpageIds', id));
+  }
+
+  if (params.campaignIds && params.campaignIds.length > 0) {
+    params.campaignIds.forEach((id) => queryParams.append('campaignIds', id));
+  }
+
+  return queryParams.toString();
+};
+
 const PUBLISHED_STATUSES = new Set(['SUCCESS', 'PUBLISHED', 'POSTED']);
 
 export const DashboardService = {
@@ -70,6 +106,16 @@ export const DashboardService = {
       console.error('Error fetching heatmap data:', error);
       return [];
     }
+  },
+
+  getTopPosts: async (params = {}) => {
+    const query = buildTopPostsQuery(params);
+    const response = await requestJson(`/posts/top?${query}`, { method: 'GET' });
+    return {
+      data: getTopPostsCollection(response),
+      totalPages: response?.data?.totalPages || response?.totalPages || 0,
+      currentPage: response?.data?.currentPage || response?.currentPage || 0,
+    };
   },
 
   getPublishedPostCounts: async (workspaceId) => {

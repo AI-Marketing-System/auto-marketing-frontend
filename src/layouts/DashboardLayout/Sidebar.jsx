@@ -286,7 +286,7 @@ export default function Sidebar({ variant = 'dashboard' }) {
     return (
       <NavLink
         key={`planner-${ws.id}`}
-        to={`/workspaces/${ws.id}/planner`}
+        to={`/workspaces/${ws.id}/planner/stage`}
         className={({ isActive }) =>
           `sidebar__ws-sublink${isActive ? ' sidebar__ws-sublink--active' : ''}`
         }

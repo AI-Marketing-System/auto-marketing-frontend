@@ -44,14 +44,16 @@ function PlanCampaignCard({ campaign, index, expanded, onToggleExpand, onChange 
         {dateRange && <span className="wp-pill wp-pill--date">{dateRange}</span>}
         <span className="wp-pill">{campaign.topics.length} chủ đề</span>
         <span className="wp-pill">{totalPosts} bài</span>
-        <button
-          type="button"
-          className="wp-icon-btn wp-icon-btn--delete"
-          onClick={handleRemove}
-          title="Xoá chiến dịch"
-        >
-          <TrashIcon size={16} />
-        </button>
+        <div className="wp-hover-actions">
+          <button
+            type="button"
+            className="wp-icon-btn wp-icon-btn--delete"
+            onClick={handleRemove}
+            title="Xoá chiến dịch"
+          >
+            <TrashIcon size={16} />
+          </button>
+        </div>
       </header>
 
       {isOpen && (

@@ -20,13 +20,20 @@
   to   { opacity: 1; }
 }
 
+@keyframes cp-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+
 /* ─── Modal shell ─── */
 .cp-modal {
   background: #fff;
   border-radius: 16px;
-  width: 900px;
-  max-width: 100%;
-  max-height: 90vh;
+  width: 1180px;
+  max-width: 95vw;
+  height: 88vh;
+  max-height: 880px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
@@ -44,21 +51,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 16px 24px;
   border-bottom: 1px solid #f1f5f9;
   flex-shrink: 0;
 }
 
 .cp-modal__title {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: #0f172a;
 }
 
 .cp-modal__close {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   border: none;
   background: #f1f5f9;
@@ -78,7 +85,7 @@
 /* ─── Modal body (two-column) ─── */
 .cp-modal__body {
   display: grid;
-  grid-template-columns: 1fr 260px;
+  grid-template-columns: 1fr 300px;
   /* flex: 1 làm nó chiếm hết khoảng giữa header và footer */
   flex: 1;
   /* min-height: 0 quan trọng: cho phép flex child co lại và scroll */
@@ -86,31 +93,36 @@
   overflow: hidden;
 }
 
-/* ─── Left panel ─── */
+/* ─── Left panel (Main Editor) ─── */
 .cp-left {
   display: flex;
   flex-direction: column;
   border-right: 1px solid #f1f5f9;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 20px;
+  padding: 24px;
+  padding-bottom: 40px;
   gap: 16px;
   /* min-height: 0 quan trọng trong grid/flex để scroll hoạt động */
   min-height: 0;
 }
 
-.cp-left::-webkit-scrollbar { width: 5px; }
-.cp-left::-webkit-scrollbar-track { background: transparent; }
-.cp-left::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+.cp-left > * {
+  flex-shrink: 0;
+}
 
-/* ─── Right panel ─── */
+.cp-left::-webkit-scrollbar { width: 6px; }
+.cp-left::-webkit-scrollbar-track { background: transparent; }
+.cp-left::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+/* ─── Right panel (Post Settings) ─── */
 .cp-right {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 12px 16px;
-  gap: 10px;
+  padding: 16px 20px;
+  gap: 12px;
   background: #fafbff;
   min-height: 0;
 }
@@ -202,15 +214,15 @@
 
 .cp-editor__area {
   width: 100%;
-  min-height: 110px;
-  padding: 12px 14px;
-  font-size: 13.5px;
+  min-height: 140px;
+  padding: 14px 16px;
+  font-size: 14px;
   line-height: 1.6;
   color: #1e293b;
   background: transparent;
   border: none;
   outline: none;
-  resize: none;
+  resize: vertical;
   font-family: inherit;
 }
 
@@ -283,10 +295,14 @@
 .cp-dropzone {
   border: 1.5px dashed #cbd5e1;
   border-radius: 10px;
-  padding: 14px;
-  text-align: center;
-  color: #94a3b8;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #64748b;
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
   background: #fafbff;
@@ -299,7 +315,7 @@
   background: #f5f3ff;
 }
 
-.cp-dropzone__emoji { font-size: 20px; margin-bottom: 4px; }
+.cp-dropzone__emoji { font-size: 16px; margin: 0; }
 
 /* ─── Preview images ─── */
 .cp-media-preview {
@@ -349,6 +365,8 @@
   border-radius: 12px;
   overflow: hidden;
   background: #fff;
+  flex-shrink: 0;
+  margin-bottom: 8px;
 }
 
 .cp-ai__header {
@@ -919,3 +937,120 @@
     border-radius: 12px;
   }
 }
+
+/* ════════════════════════════════
+   BRAND TONE & HASHTAG MANAGER
+   ════════════════════════════════ */
+.cp-tone-chip--brand {
+  border-color: #8b5cf6;
+  background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+  color: #6d28d9;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cp-tone-chip--brand:hover {
+  border-color: #7c3aed;
+  background: #ede9fe;
+}
+.cp-tone-chip--brand.cp-tone-chip--active {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+  color: #fff;
+  border-color: #7c3aed;
+}
+
+.cp-tone-badge {
+  font-size: 9px;
+  font-weight: 700;
+  background: rgba(124, 58, 237, 0.15);
+  color: #6d28d9;
+  padding: 1px 4px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.cp-tone-chip--active .cp-tone-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.cp-hashtags-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.cp-hashtags-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.cp-hashtags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.cp-hashtag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #ede9fe;
+  color: #6d28d9;
+  border-radius: 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.cp-hashtag-pill:hover {
+  background: #ddd6fe;
+}
+
+.cp-hashtag-remove {
+  border: none;
+  background: transparent;
+  color: #7c3aed;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  padding: 0;
+  line-height: 1;
+}
+.cp-hashtag-remove:hover {
+  background: #c4b5fd;
+  color: #4c1d95;
+}
+
+.cp-hashtag-input {
+  border: 1px dashed #cbd5e1;
+  background: #fff;
+  border-radius: 14px;
+  padding: 3px 10px;
+  font-size: 11.5px;
+  color: #1e293b;
+  outline: none;
+  width: 140px;
+  transition: all 0.15s;
+}
+.cp-hashtag-input:focus {
+  border-color: #7c3aed;
+  width: 180px;
+  border-style: solid;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.1);
+}
+

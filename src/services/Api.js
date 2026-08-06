@@ -74,6 +74,15 @@ export async function requestJson(path, options = {}, baseUrl) {
   if (!response.ok) {
     if (response.status === 401) {
       clearStoredAuthTokens();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:expired'));
+      }
+    }
+
+    if (response.status === 402) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('subscription:payment_required', { detail: body }));
+      }
     }
 
     const error = new Error(body?.message || `Request failed with status ${response.status}`);
