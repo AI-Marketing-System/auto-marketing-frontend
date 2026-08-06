@@ -44,33 +44,29 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
 
   if (!isOpen) return null;
 
-  const getPlanFeatures = (planName) => {
-    const name = planName.toLowerCase();
-    if (name === 'starter') {
-      return [
-'Tối đa 5 không gian làm việc quản lý chiến dịch',
-        'Kết nối 3 tài khoản mạng xã hội đồng thời',
-        '5,000 từ khóa AI tạo content hàng tháng',
-        'Hỗ trợ qua Email trong 24h',
-      ];
-    } else if (name === 'pro') {
-      return [
-        'Phản hồi AI thông minh hơn, nhanh hơn',
-'Tối đa 15 không gian làm việc nhóm',
-        'Kết nối 10 tài khoản mạng xã hội đa nền tảng',
-        '50,000 từ khóa AI và phân tích đối thủ',
-        'Thêm bộ nhớ ngữ cảnh thương hiệu nâng cao',
-      ];
-    } else if (name === 'business') {
-      return [
-        'Tất cả tính năng cao cấp của gói Pro',
-'Tối đa 99 không gian làm việc cho doanh nghiệp lớn',
-        'Không giới hạn tài khoản mạng xã hội',
-        '500,000 từ khóa AI tạo nội dung tự động',
-        'Hỗ trợ kỹ thuật 24/7 ưu tiên riêng biệt',
-      ];
+  const getPlanFeatures = (plan) => {
+    if (!plan) return ['Tính năng cơ bản của hệ thống'];
+    if (typeof plan === 'string') {
+      const found = plans.find((p) => p.name.toLowerCase() === plan.toLowerCase());
+      if (found) plan = found;
     }
-    return ['Tính năng cơ bản của hệ thống'];
+    const features = [];
+    if (plan.maxWorkspaces !== undefined && plan.maxWorkspaces !== null) {
+      features.push(`Tối đa ${plan.maxWorkspaces.toLocaleString('vi-VN')} Workspace`);
+    }
+    if (plan.maxSocialAccounts !== undefined && plan.maxSocialAccounts !== null) {
+      features.push(`Kết nối ${plan.maxSocialAccounts.toLocaleString('vi-VN')} tài khoản mạng xã hội`);
+    }
+    if (plan.maxFanpages !== undefined && plan.maxFanpages !== null) {
+      features.push(`Tối đa ${plan.maxFanpages.toLocaleString('vi-VN')} Fanpage / Workspace`);
+    }
+    if (plan.aiTokenLimit !== undefined && plan.aiTokenLimit !== null) {
+      features.push(`${plan.aiTokenLimit.toLocaleString('vi-VN')} AI Tokens hàng tháng`);
+    }
+    if (features.length === 0) {
+      features.push('Tính năng cơ bản của hệ thống');
+    }
+    return features;
   };
 
   const handleGoToCheckout = (plan, isTrial, isRenew = false) => {
@@ -439,7 +435,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgradeSuccess, curren
 
                   <div className="summary-features-label">Các tính năng hàng đầu</div>
                   <ul className="summary-features-list">
-                    {getPlanFeatures(checkoutPlan.name).map((feat, idx) => (
+                    {getPlanFeatures(checkoutPlan).map((feat, idx) => (
                       <li key={idx} className="summary-feat-item">
                         <svg
                           className="feat-bolt-icon"
