@@ -228,8 +228,13 @@ export default function Sidebar({ variant = 'dashboard' }) {
       // but reloading the workspace list will at least update the sidebar.
     };
 
+    const handleInvitationAccepted = () => {
+      fetchAllWorkspaces();
+    };
+
     window.addEventListener('workspace:role_updated', handleRoleUpdated);
     window.addEventListener('workspace:member_removed', handleMemberRemoved);
+    window.addEventListener('workspace:invitation_accepted', handleInvitationAccepted);
 
     const fetchInvitationsCount = () => {
       requestJson('/workspaces/invitations', {}, API_BASE_URL)
@@ -266,8 +271,10 @@ export default function Sidebar({ variant = 'dashboard' }) {
               }, 1000); // 1s delay to allow backend transaction to commit
             } else if (message.body && message.body.includes('ROLE_UPDATED')) {
               window.dispatchEvent(new CustomEvent('workspace:role_updated'));
-            } else if (message.body && message.body.includes('MEMBER_REMOVED')) {
-              window.dispatchEvent(new CustomEvent('workspace:member_removed'));
+            } else if (message.body && message.body.startsWith('MEMBER_REMOVED')) {
+              const parts = message.body.split(':');
+              const workspaceId = parts.length > 1 ? parts[1] : null;
+              window.dispatchEvent(new CustomEvent('workspace:member_removed', { detail: { workspaceId } }));
             }
           });
         },
@@ -291,6 +298,7 @@ export default function Sidebar({ variant = 'dashboard' }) {
       }
       window.removeEventListener('workspace:role_updated', handleRoleUpdated);
       window.removeEventListener('workspace:member_removed', handleMemberRemoved);
+      window.removeEventListener('workspace:invitation_accepted', handleInvitationAccepted);
     };
   }, [variant, location.pathname, user?.id]);
 

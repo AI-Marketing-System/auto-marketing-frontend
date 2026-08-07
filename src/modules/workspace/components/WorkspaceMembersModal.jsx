@@ -18,7 +18,7 @@ const adjustColor = (colorCode) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-const WorkspaceMembersModal = ({ isOpen, onClose, workspaceId, workspaceName, currentUserRole, currentUserId }) => {
+const WorkspaceMembersModal = ({ isOpen, onClose, workspaceId, workspaceName, currentUserRole, currentUserId, isTrueOwner, onLeaveSuccess }) => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -68,6 +68,31 @@ const WorkspaceMembersModal = ({ isOpen, onClose, workspaceId, workspaceName, cu
     });
   };
 
+  const handleLeaveWorkspace = () => {
+    setConfirmConfig({
+      title: 'Thoát Workspace',
+      message: 'Bạn có chắc chắn muốn thoát khỏi workspace này không? Bạn sẽ mất quyền truy cập vào các tài nguyên bên trong.',
+      type: 'danger',
+      onConfirm: async () => {
+        setConfirmConfig(null);
+        try {
+          setActionLoading(currentUserId);
+          await workspaceApi.leaveWorkspace(workspaceId);
+          if (onLeaveSuccess) {
+            onLeaveSuccess(workspaceId);
+          } else {
+            onClose();
+          }
+        } catch (err) {
+          alert(err.message || 'Lỗi khi thoát workspace');
+        } finally {
+          setActionLoading(null);
+        }
+      },
+      onCancel: () => setConfirmConfig(null)
+    });
+  };
+
   const handleChangeRole = (userId, newRole) => {
     const displayRole = newRole === 'OWNER' ? 'Admin' : newRole;
     setConfirmConfig({
@@ -93,11 +118,18 @@ const WorkspaceMembersModal = ({ isOpen, onClose, workspaceId, workspaceName, cu
   if (!isOpen) return null;
 
   // Lọc
-  const filteredMembers = members.filter(m => {
+  let filteredMembers = members.filter(m => {
     const matchSearch = (m.fullName || '').toLowerCase().includes(search.toLowerCase()) || 
                         (m.email || '').toLowerCase().includes(search.toLowerCase());
     const matchRole = filterRole === 'ALL' || m.role === filterRole;
     return matchSearch && matchRole;
+  });
+
+  // Sort so current user is always first
+  filteredMembers.sort((a, b) => {
+    if (a.userId === currentUserId) return -1;
+    if (b.userId === currentUserId) return 1;
+    return 0;
   });
 
   const canManage = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
@@ -146,7 +178,7 @@ const WorkspaceMembersModal = ({ isOpen, onClose, workspaceId, workspaceName, cu
                     <th>Vai trò</th>
                     <th>Trạng thái</th>
                     <th>Ngày tham gia</th>
-                    {canManage && <th></th>}
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -164,7 +196,7 @@ const WorkspaceMembersModal = ({ isOpen, onClose, workspaceId, workspaceName, cu
                         </div>
                       </td>
                       <td>
-                        {canManage && member.userId !== currentUserId ? (
+                        {canManage && member.userId !== currentUserId && (isTrueOwner || member.role !== 'OWNER') ? (
                           <select 
                             className={`wm-role-select wm-role-${member.role.toLowerCase()}`}
                             value={member.role}
@@ -186,22 +218,36 @@ const WorkspaceMembersModal = ({ isOpen, onClose, workspaceId, workspaceName, cu
                         </span>
                       </td>
                       <td className="wm-text-muted">
-                        {member.joinedAt ? new Date(member.joinedAt).toLocaleDateString('vi-VN') : '-'}
+                        {member.joinedAt ? new Date(member.joinedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}
                       </td>
-                      {canManage && (
-                        <td className="wm-actions">
-                          {member.role !== 'OWNER' && member.userId !== currentUserId && (
+                      <td className="wm-actions">
+                        {member.userId === currentUserId ? (
+                          !isTrueOwner && (
                             <button 
                               className="wm-btn-remove" 
-                              onClick={() => handleRemoveMember(member.userId, member.fullName || member.email)}
-                              disabled={actionLoading === member.userId}
-                              title="Xóa khỏi Workspace"
+                              style={{ width: '32px', height: '32px', padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={handleLeaveWorkspace}
+                              disabled={actionLoading === currentUserId}
+                              title="Rời khỏi Workspace"
                             >
-                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                              </svg>
                             </button>
-                          )}
-                        </td>
-                      )}
+                          )
+                        ) : canManage && (isTrueOwner || member.role !== 'OWNER') ? (
+                          <button 
+                            className="wm-btn-remove" 
+                            onClick={() => handleRemoveMember(member.userId, member.fullName || member.email)}
+                            disabled={actionLoading === member.userId}
+                            title="Xóa khỏi Workspace"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                          </button>
+                        ) : null}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

@@ -841,6 +841,11 @@ function CampaignListPage() {
         workspaceName={selectedWorkspace?.name}
         currentUserRole={selectedWorkspace?.role}
         currentUserId={user?.id}
+        isTrueOwner={selectedWorkspace?.ownerId === user?.id}
+        onLeaveSuccess={() => {
+          setIsWorkspaceMembersModalOpen(false);
+          navigate('/dashboard');
+        }}
       />
     </div>
   );

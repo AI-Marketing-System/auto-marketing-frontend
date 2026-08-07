@@ -112,15 +112,35 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
     }
   }, [location, navigate]);
 
+  const [kickedWorkspaceId, setKickedWorkspaceId] = useState(null);
+
   useEffect(() => {
     const handlePaymentRequired = () => {
       setIsUpgradeModalOpen(true);
     };
+
+    const handleMemberRemoved = (e) => {
+      const removedWorkspaceId = e.detail?.workspaceId;
+      const currentWorkspaceMatch = location.pathname.match(/\/workspaces\/([^/]+)/);
+      const currentWorkspaceId = currentWorkspaceMatch ? currentWorkspaceMatch[1] : null;
+
+      if (removedWorkspaceId && currentWorkspaceId === removedWorkspaceId) {
+        setKickedWorkspaceId(removedWorkspaceId);
+      }
+    };
+
     window.addEventListener('subscription:payment_required', handlePaymentRequired);
+    window.addEventListener('workspace:member_removed', handleMemberRemoved);
     return () => {
       window.removeEventListener('subscription:payment_required', handlePaymentRequired);
+      window.removeEventListener('workspace:member_removed', handleMemberRemoved);
     };
-  }, []);
+  }, [location.pathname]);
+
+  const handleKickedAcknowledge = () => {
+    setKickedWorkspaceId(null);
+    navigate('/dashboard');
+  };
 
   return (
     <QuotaProvider>
@@ -196,6 +216,69 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
           subscription={subscription}
           onCancelSuccess={fetchSubscription}
         />
+
+        {kickedWorkspaceId && (
+          <div style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999
+          }}>
+            <div style={{
+              background: '#fff',
+              padding: '32px',
+              borderRadius: '16px',
+              maxWidth: '400px',
+              width: '90%',
+              textAlign: 'center',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+            }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: '#fee2e2',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 24px'
+              }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <h3 style={{ margin: '0 0 12px', fontSize: '20px', color: '#0f172a' }}>Quyền truy cập bị thu hồi</h3>
+              <p style={{ margin: '0 0 24px', color: '#475569', lineHeight: 1.5 }}>
+                Quản trị viên đã xóa bạn khỏi Workspace này. Bạn không thể tiếp tục thao tác và các thay đổi chưa lưu sẽ không được giữ lại.
+              </p>
+              <button 
+                onClick={handleKickedAcknowledge}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: '#3b82f6',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.background = '#2563eb'}
+                onMouseOut={(e) => e.target.style.background = '#3b82f6'}
+              >
+                Quay lại trang chủ
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </QuotaProvider>
   );
