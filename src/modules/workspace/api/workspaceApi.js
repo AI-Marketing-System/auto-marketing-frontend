@@ -43,4 +43,10 @@ export const workspaceApi = {
       method: 'PUT',
     });
   },
+
+  leaveWorkspace: (workspaceId) => {
+    return requestJson(`/workspaces/${workspaceId}/members/leave`, {
+      method: 'POST',
+    });
+  },
 };

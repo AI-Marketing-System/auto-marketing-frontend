@@ -41,6 +41,7 @@ const InvitationsPage = () => {
       await workspaceApi.acceptInvitation(workspaceId);
       // Remove the invitation from the list
       setInvitations((prev) => prev.filter((inv) => inv.workspaceId !== workspaceId));
+      window.dispatchEvent(new CustomEvent('workspace:invitation_accepted'));
     } catch (err) {
       alert(err.message || 'Lỗi khi chấp nhận lời mời');
     }
