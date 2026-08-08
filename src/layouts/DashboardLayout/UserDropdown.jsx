@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import LoginModal from '../../modules/auth/components/LoginModal';
 import './DashboardLayout.css';
 
 export default function UserDropdown({
@@ -12,12 +13,16 @@ export default function UserDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('main'); // 'main' or 'accounts'
-  const { user, logout } = useAuth();
+  const { user, logout, sessions, switchAccount } = useAuth();
   const navigate = useNavigate();
   const ref = useRef(null);
+  
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
+      // Don't close if clicking inside login modal
+      if (e.target.closest('.login-modal-overlay')) return;
       if (ref.current && !ref.current.contains(e.target)) {
         setOpen(false);
         setActiveTab('main');
@@ -31,7 +36,6 @@ export default function UserDropdown({
     setOpen(false);
     setActiveTab('main');
     await logout('/api/v1');
-    navigate('/login', { replace: true });
   };
 
   const getInitials = (name) => {
@@ -46,9 +50,7 @@ export default function UserDropdown({
 
   return (
     <div className="user-dropdown" ref={ref}>
-      {/* Khối Pill Widget thống nhất bao bọc toàn bộ thông tin */}
       <div className="user-dropdown__pill-container">
-        {/* Click vào Avatar + Tên để mở rộng Dropdown */}
         <div className="user-dropdown__profile-trigger" onClick={() => setOpen((v) => !v)}>
           <div className="user-dropdown__avatar-circle">{getInitials(user?.fullName)}</div>
           <div className="user-dropdown__profile-details">
@@ -59,7 +61,6 @@ export default function UserDropdown({
           </div>
         </div>
 
-        {/* Nút nâng cấp nằm gọn bên phải cùng */}
         {subscription?.planName !== 'Admin' && (
           <button type="button" className="user-dropdown__btn-upgrade" onClick={onUpgradeClick}>
             Nâng cấp
@@ -71,7 +72,6 @@ export default function UserDropdown({
         <div className="user-dropdown__menu">
           {activeTab === 'main' ? (
             <>
-              {/* Profile Header Button */}
               <div className="user-dropdown__header-item" onClick={() => setActiveTab('accounts')}>
                 <div className="user-dropdown__avatar-circle">{getInitials(user?.fullName)}</div>
                 <div className="user-dropdown__profile-details">
@@ -98,7 +98,6 @@ export default function UserDropdown({
 
               <div className="user-dropdown__divider" />
 
-              {/* Menu Items */}
               {subscription?.planName !== 'Admin' && (
                 <button
                   className="user-dropdown__item"
@@ -272,7 +271,6 @@ export default function UserDropdown({
             </>
           ) : (
             <>
-              {/* Back Header */}
               <div className="user-dropdown__back-header" onClick={() => setActiveTab('main')}>
                 <span className="user-dropdown__chevron-left">
                   <svg
@@ -288,41 +286,54 @@ export default function UserDropdown({
                     <polyline points="15 18 9 12 15 6"></polyline>
                   </svg>
                 </span>
-                <span>{user?.email}</span>
+                <span>Tài khoản</span>
               </div>
 
               <div className="user-dropdown__divider" />
 
-              {/* Account details */}
-              <div className="user-dropdown__account-item active">
-                <div className="user-dropdown__avatar-circle mini">
-                  {getInitials(user?.fullName)}
+              {/* List of active sessions */}
+              {sessions?.map((s) => (
+                <div 
+                  key={s.user.id} 
+                  className={`user-dropdown__account-item ${user?.id === s.user.id ? 'active' : ''}`}
+                  onClick={() => {
+                    if (user?.id !== s.user.id) {
+                      switchAccount(s.user.id);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="user-dropdown__avatar-circle mini">
+                    {getInitials(s.user?.fullName)}
+                  </div>
+                  <div className="user-dropdown__account-details">
+                    <span className="user-dropdown__account-name">{s.user?.fullName}</span>
+                    <span className="user-dropdown__account-email">{s.user?.email}</span>
+                  </div>
+                  {user?.id === s.user.id && (
+                    <span className="user-dropdown__checkmark">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    </span>
+                  )}
                 </div>
-                <div className="user-dropdown__account-details">
-                  <span className="user-dropdown__account-name">{user?.fullName}</span>
-                  <span className="user-dropdown__account-email">{user?.email}</span>
-                </div>
-                <span className="user-dropdown__checkmark">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </span>
-              </div>
+              ))}
 
               <div className="user-dropdown__divider" />
 
               <button
                 className="user-dropdown__item add-account-btn"
-                onClick={() => alert('Chức năng Thêm tài khoản đang phát triển.')}
+                onClick={() => setIsLoginModalOpen(true)}
               >
                 <span className="add-account-icon">+</span>
                 <span>Thêm tài khoản</span>
@@ -331,6 +342,15 @@ export default function UserDropdown({
           )}
         </div>
       )}
+      
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)} 
+        onSuccess={() => {
+           setOpen(false);
+           setActiveTab('main');
+        }}
+      />
     </div>
   );
 }

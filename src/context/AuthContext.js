@@ -3,19 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { authApi } from '../modules/auth/api/authApi';
 import { API_BASE_URL } from '../config/env';
 
-const ACCESS_TOKEN_KEY = 'marqops.authLab.accessToken';
-const REFRESH_TOKEN_KEY = 'marqops.authLab.refreshToken';
+const SESSIONS_KEY = 'marqops.authLab.sessions';
+const ACTIVE_ACCOUNT_ID_KEY = 'marqops.authLab.activeAccountId';
 
 const AuthContext = createContext(null);
 
-function getStoredTokens() {
+function getStoredSessions() {
   try {
-    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
-    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-    return { accessToken, refreshToken };
+    const data = localStorage.getItem(SESSIONS_KEY);
+    return data ? JSON.parse(data) : [];
   } catch {
-    return { accessToken: null, refreshToken: null };
+    return [];
   }
+}
+
+function getStoredActiveAccountId() {
+  return localStorage.getItem(ACTIVE_ACCOUNT_ID_KEY);
 }
 
 function decodeTokenPayload(token) {
@@ -40,87 +43,83 @@ function mapRole(roles) {
   return 'USER';
 }
 
+function extractUserFromToken(token) {
+  const payload = decodeTokenPayload(token);
+  if (!payload) return null;
+  return {
+    id: payload.userId || payload.id || payload.sub,
+    userId: payload.userId,
+    email: payload.email || payload.sub,
+    fullName: payload.fullName || payload.name,
+    roles: payload.roles || payload.authorities || [],
+    role: mapRole(payload.roles || payload.authorities),
+  };
+}
+
 export function AuthProvider({ children }) {
   const navigate = useNavigate();
-  const [accessToken, setAccessToken] = useState(() => getStoredTokens().accessToken);
-  const [refreshToken, setRefreshToken] = useState(() => getStoredTokens().refreshToken);
-  const [user, setUser] = useState(() => {
-    const token = getStoredTokens().accessToken;
-    if (!token) return null;
-    const payload = decodeTokenPayload(token);
-    if (!payload) return null;
-    return {
-      id: payload.userId || payload.id || payload.sub,
-      userId: payload.userId,
-      email: payload.email || payload.sub,
-      fullName: payload.fullName || payload.name,
-      roles: payload.roles || payload.authorities || [],
-      role: mapRole(payload.roles || payload.authorities),
-    };
-  });
+  
+  const [sessions, setSessions] = useState(() => getStoredSessions());
+  const [activeAccountId, setActiveAccountId] = useState(() => getStoredActiveAccountId());
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  const isAuthenticated = !!accessToken;
-
   const [isSessionExpired, setIsSessionExpired] = useState(false);
 
-  const setTokens = useCallback((newAccessToken, newRefreshToken) => {
-    setAccessToken(newAccessToken);
-    setRefreshToken(newRefreshToken);
-    if (newAccessToken) {
-      localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
-    } else {
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
-    }
-    if (newRefreshToken) {
-      localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
-    } else {
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
-    }
-  }, []);
+  const activeSession = sessions.find((s) => String(s.user?.id) === String(activeAccountId)) || sessions[0];
+  
+  const accessToken = activeSession?.accessToken || null;
+  const refreshToken = activeSession?.refreshToken || null;
+  const user = activeSession?.user || null;
+  const isAuthenticated = !!accessToken;
 
-  const updateUserFromToken = useCallback((token) => {
-    const payload = decodeTokenPayload(token);
-    if (!payload) {
-      setUser(null);
-      return;
+  useEffect(() => {
+    if (activeSession) {
+      localStorage.setItem(ACTIVE_ACCOUNT_ID_KEY, String(activeSession.user.id));
+      if (String(activeAccountId) !== String(activeSession.user.id)) {
+        setActiveAccountId(String(activeSession.user.id));
+      }
+    } else {
+      localStorage.removeItem(ACTIVE_ACCOUNT_ID_KEY);
     }
-    setUser({
-      id: payload.userId || payload.id || payload.sub,
-      userId: payload.userId,
-      email: payload.email || payload.sub,
-      fullName: payload.fullName || payload.name,
-      roles: payload.roles || payload.authorities || [],
-      role: mapRole(payload.roles || payload.authorities),
-    });
-  }, []);
+    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+  }, [sessions, activeSession, activeAccountId]);
+
+  // Migration from old single-token format
+  useEffect(() => {
+    const oldAccess = localStorage.getItem('marqops.authLab.accessToken');
+    const oldRefresh = localStorage.getItem('marqops.authLab.refreshToken');
+    if (oldAccess && sessions.length === 0) {
+      const u = extractUserFromToken(oldAccess);
+      if (u) {
+        setSessions([{ accessToken: oldAccess, refreshToken: oldRefresh, user: u }]);
+        setActiveAccountId(String(u.id));
+        localStorage.removeItem('marqops.authLab.accessToken');
+        localStorage.removeItem('marqops.authLab.refreshToken');
+      }
+    }
+  }, [sessions.length]);
+
+  const switchAccount = useCallback((userId) => {
+    const sessionExists = sessions.some((s) => String(s.user.id) === String(userId));
+    if (sessionExists) {
+      setActiveAccountId(String(userId));
+      navigate('/dashboard', { replace: true });
+    }
+  }, [sessions, navigate]);
 
   const handleSessionExpired = useCallback(() => {
-    setTokens(null, null);
-    setUser(null);
-    setIsSessionExpired(true);
-    navigate('/login', { replace: true, state: { sessionExpired: true } });
-  }, [setTokens, navigate]);
-
-  const logout = useCallback(
-    async (apiBaseUrl) => {
-      try {
-        if (accessToken) {
-          await authApi.logout({ email: user?.email || '' }, apiBaseUrl || API_BASE_URL);
-        }
-      } catch {
-        // ignore logout API errors, still clear local session
-      } finally {
-        setTokens(null, null);
-        setUser(null);
-        setError(null);
-        setIsSessionExpired(false);
-        navigate('/login', { replace: true });
+    setSessions((prev) => {
+      const newSessions = prev.filter((s) => String(s.user.id) !== String(activeAccountId));
+      if (newSessions.length === 0) {
+        setIsSessionExpired(true);
+        navigate('/login', { replace: true, state: { sessionExpired: true } });
+      } else {
+        setActiveAccountId(String(newSessions[0].user.id));
       }
-    },
-    [setTokens, navigate, user, accessToken]
-  );
+      return newSessions;
+    });
+  }, [activeAccountId, navigate]);
 
   const login = useCallback(
     async (credentials, apiBaseUrl) => {
@@ -143,11 +142,22 @@ export function AuthProvider({ children }) {
         const data = body?.data || body;
         const token = data?.accessToken;
         const refresh = data?.refreshToken;
-        if (!token) {
-          throw new Error('Missing accessToken in response');
-        }
-        setTokens(token, refresh);
-        updateUserFromToken(token);
+        if (!token) throw new Error('Missing accessToken in response');
+        
+        const u = extractUserFromToken(token);
+        if (!u) throw new Error('Invalid token payload');
+
+        setSessions((prev) => {
+          const index = prev.findIndex((s) => String(s.user.id) === String(u.id));
+          const newSessions = [...prev];
+          if (index >= 0) {
+            newSessions[index] = { accessToken: token, refreshToken: refresh, user: u };
+          } else {
+            newSessions.push({ accessToken: token, refreshToken: refresh, user: u });
+          }
+          return newSessions;
+        });
+        setActiveAccountId(String(u.id));
         return data;
       } catch (e) {
         setError(e.message);
@@ -156,7 +166,35 @@ export function AuthProvider({ children }) {
         setIsLoading(false);
       }
     },
-    [setTokens, updateUserFromToken]
+    []
+  );
+
+  const logout = useCallback(
+    async (apiBaseUrl, targetUserId = null) => {
+      const uidToLogout = targetUserId || activeAccountId;
+      const sessionToLogout = sessions.find((s) => String(s.user.id) === String(uidToLogout));
+      
+      try {
+        if (sessionToLogout?.accessToken) {
+          await authApi.logout({ email: sessionToLogout.user?.email || '' }, apiBaseUrl || API_BASE_URL);
+        }
+      } catch {
+        // ignore logout API errors
+      } finally {
+        setSessions((prev) => {
+          const newSessions = prev.filter((s) => String(s.user.id) !== String(uidToLogout));
+          if (newSessions.length === 0) {
+            setIsSessionExpired(false);
+            navigate('/login', { replace: true });
+          } else if (uidToLogout === activeAccountId) {
+            setActiveAccountId(String(newSessions[0].user.id));
+            navigate('/dashboard', { replace: true });
+          }
+          return newSessions;
+        });
+      }
+    },
+    [sessions, activeAccountId, navigate]
   );
 
   const refreshAccessToken = useCallback(
@@ -177,49 +215,27 @@ export function AuthProvider({ children }) {
         }
         const data = body?.data || body;
         const newToken = data?.accessToken;
-        if (!newToken) {
-          throw new Error('Missing accessToken in refresh response');
-        }
-        setTokens(newToken, refreshToken);
-        updateUserFromToken(newToken);
+        if (!newToken) throw new Error('Missing accessToken in refresh response');
+        
+        const u = extractUserFromToken(newToken) || user;
+        setSessions((prev) => {
+          const index = prev.findIndex((s) => String(s.user.id) === String(activeAccountId));
+          if (index < 0) return prev;
+          const newSessions = [...prev];
+          newSessions[index] = { ...newSessions[index], accessToken: newToken, user: u };
+          return newSessions;
+        });
         return newToken;
       } catch (e) {
         logout(apiBaseUrl);
         return null;
       }
     },
-    [refreshToken, setTokens, updateUserFromToken, logout]
+    [refreshToken, user, activeAccountId, logout]
   );
 
   useEffect(() => {
-    const token = getStoredTokens().accessToken;
-    if (token) {
-      const payload = decodeTokenPayload(token);
-      if (payload && payload.exp && payload.exp * 1000 <= Date.now()) {
-        handleSessionExpired();
-        return;
-      }
-      setAccessToken(token);
-      updateUserFromToken(token);
-    }
-  }, [updateUserFromToken, handleSessionExpired]);
-
-  // Listen for 401 unauthorized custom event from API calls
-  useEffect(() => {
-    const onAuthExpired = () => {
-      handleSessionExpired();
-    };
-
-    window.addEventListener('auth:expired', onAuthExpired);
-    return () => {
-      window.removeEventListener('auth:expired', onAuthExpired);
-    };
-  }, [handleSessionExpired]);
-
-  // Expiration timer check for active session
-  useEffect(() => {
     if (!accessToken) return;
-
     const payload = decodeTokenPayload(accessToken);
     if (!payload || !payload.exp) return;
 
@@ -230,18 +246,41 @@ export function AuthProvider({ children }) {
       handleSessionExpired();
       return;
     }
-
     const timer = setTimeout(() => {
       handleSessionExpired();
     }, timeoutMs);
-
     return () => clearTimeout(timer);
   }, [accessToken, handleSessionExpired]);
+
+  useEffect(() => {
+    const onAuthExpired = () => handleSessionExpired();
+    window.addEventListener('auth:expired', onAuthExpired);
+    return () => window.removeEventListener('auth:expired', onAuthExpired);
+  }, [handleSessionExpired]);
+
+  const setTokens = useCallback((newAccessToken, newRefreshToken, targetUserId = null) => {
+     setSessions((prev) => {
+       const uid = targetUserId || activeAccountId;
+       const index = prev.findIndex((s) => String(s.user.id) === String(uid));
+       if (index === -1) return prev; 
+       
+       if (!newAccessToken) {
+         return prev.filter((s) => String(s.user.id) !== String(uid));
+       }
+       
+       const newSessions = [...prev];
+       const u = extractUserFromToken(newAccessToken) || newSessions[index].user;
+       newSessions[index] = { ...newSessions[index], accessToken: newAccessToken, refreshToken: newRefreshToken, user: u };
+       return newSessions;
+     });
+  }, [activeAccountId]);
 
   const value = {
     accessToken,
     refreshToken,
     user,
+    sessions,          // Newly exposed
+    switchAccount,     // Newly exposed
     isAuthenticated,
     isLoading,
     error,
@@ -251,7 +290,6 @@ export function AuthProvider({ children }) {
     logout,
     refreshAccessToken,
     setTokens,
-    updateUserFromToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
