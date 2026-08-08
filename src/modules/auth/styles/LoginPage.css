@@ -225,6 +225,10 @@
   transition: all 0.2s ease;
   margin-top: 10px;
   box-sizing: border-box;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .btn-submit:hover {

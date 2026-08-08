@@ -122,18 +122,6 @@ function LoginPage() {
           </div>
         ) : null}
 
-        {responseBody ? (
-          <div className="auth-response-panel" style={{ marginTop: 18 }}>
-            <div className="auth-response-panel__header">
-              <h2 className="auth-response-panel__title">Response</h2>
-              <div className="auth-response-panel__meta">
-                <span className="auth-pill">POST</span>
-                <span className="auth-pill">/api/v1/auth/login</span>
-              </div>
-            </div>
-            <pre>{JSON.stringify(responseBody, null, 2)}</pre>
-          </div>
-        ) : null}
 
         <div className="login-footer">
           Chưa có tài khoản?
