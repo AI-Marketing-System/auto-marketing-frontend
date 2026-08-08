@@ -36,11 +36,15 @@ export default function PostScheduler({
   return (
     <div className="cp-right">
       {/* ── Quản lý bài viết title ── */}
-      <div className="cp-section-title" style={{ marginBottom: 2 }}>Quản lý bài viết</div>
+      <div className="cp-section-title" style={{ marginBottom: 2 }}>
+        Quản lý bài viết
+      </div>
 
       {/* ── Topic ── */}
       <div className="cp-section" style={{ gap: 5, marginTop: 0 }}>
-        <div className="cp-section-title" style={{ marginBottom: 0 }}>Chủ đề bài viết (Topic) *</div>
+        <div className="cp-section-title" style={{ marginBottom: 0 }}>
+          Chủ đề bài viết (Topic) *
+        </div>
         {topics && topics.length > 0 ? (
           <select
             id="cp-topic-select"
@@ -70,7 +74,7 @@ export default function PostScheduler({
           <input
             id="cp-topic-input"
             className="cp-topic-input"
-            placeholder="+ Thêm chủ đề"
+            placeholder="Thêm chủ đề"
             value={topicName || topic}
             disabled={!!topicName}
             onChange={(e) => onTopicChange?.(e.target.value)}
@@ -87,7 +91,14 @@ export default function PostScheduler({
             <div className="cp-evergreen__label">
               Evergreen Content
               <span title="Bài đăng nhiều lần – khi chủ đề trên không còn tồn tại bài mới mẻ, MarqQuo Slot sẽ tự động sắp xếp lại bài viết mới nhau">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#94a3b8"
+                  strokeWidth="2"
+                >
                   <circle cx="12" cy="12" r="10" />
                   <line x1="12" y1="16" x2="12" y2="12" />
                   <line x1="12" y1="8" x2="12.01" y2="8" />
@@ -104,8 +115,8 @@ export default function PostScheduler({
             </label>
           </div>
           <div className="cp-evergreen__hint">
-            Bài đăng nhiều lần — khi chủ đề trên không còn tồn tại bài viết mới
-            mẻ, MarqQuo Slot sẽ tự động sắp xếp lại bài viết mới nhau.
+            Bài đăng nhiều lần — khi chủ đề trên không còn tồn tại bài viết mới mẻ, MarqQuo Slot sẽ
+            tự động sắp xếp lại bài viết mới nhau.
           </div>
         </div>
       </div>
@@ -115,7 +126,9 @@ export default function PostScheduler({
       {/* ── Schedule mode ── */}
       <div className="cp-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <div className="cp-method-section-row">
-          <div className="cp-section-title" style={{ marginBottom: 0 }}>Cách đăng bài</div>
+          <div className="cp-section-title" style={{ marginBottom: 0 }}>
+            Cách đăng bài
+          </div>
         </div>
 
         {/* Option 1: Đăng ngay */}
@@ -128,7 +141,15 @@ export default function PostScheduler({
           <div className="cp-method-radio" />
           <div className="cp-method-text">
             <strong>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: 6, verticalAlign: 'middle' }}>
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                style={{ marginRight: 6, verticalAlign: 'middle' }}
+              >
                 <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" />
               </svg>
               Đăng ngay
@@ -147,7 +168,15 @@ export default function PostScheduler({
           <div className="cp-method-radio" />
           <div className="cp-method-text">
             <strong>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: 6, verticalAlign: 'middle' }}>
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                style={{ marginRight: 6, verticalAlign: 'middle' }}
+              >
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
@@ -189,23 +218,45 @@ export default function PostScheduler({
 
           {/* ── Preview lịch đăng ── */}
           {selectedDate && time && (
-            <div style={{
-              padding: '10px 12px',
-              background: 'linear-gradient(135deg, #eef2ff, #f5f3ff)',
-              borderRadius: 8, border: '1px solid #c7d2fe',
-              fontSize: 12, color: '#4338ca', fontWeight: 500,
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <div
+              style={{
+                padding: '10px 12px',
+                background: 'linear-gradient(135deg, #eef2ff, #f5f3ff)',
+                borderRadius: 8,
+                border: '1px solid #c7d2fe',
+                fontSize: 12,
+                color: '#4338ca',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
               {(() => {
                 try {
                   const [h, m] = time.split(':').map(Number);
-                  const dt = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), h, m);
+                  const dt = new Date(
+                    selectedDate.getFullYear(),
+                    selectedDate.getMonth(),
+                    selectedDate.getDate(),
+                    h,
+                    m
+                  );
                   return `Sẽ đăng lúc: ${dt.toLocaleString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
-                } catch { return `Sẽ đăng lúc: ${time}`; }
+                } catch {
+                  return `Sẽ đăng lúc: ${time}`;
+                }
               })()}
             </div>
           )}

@@ -9,7 +9,6 @@ import {
   SparkleIcon,
   PlusIcon,
   TrashIcon,
-  FolderIcon,
   TargetIcon,
   FileTextIcon,
 } from '../components/PlannerIcons';
@@ -17,6 +16,16 @@ import PlannerAlert from '../components/PlannerAlert';
 import PlannerDropzone from '../components/PlannerDropzone';
 import PlannerLoadingOverlay from '../components/PlannerLoadingOverlay';
 import { PLAN_STAGES, SEED_INPUT_FIELDS } from '../utils/stagedPlannerConstants';
+import {
+  STAGED_INIT_COPY,
+  STAGED_CAMPAIGNS_COPY,
+  STAGED_TOPICS_COPY,
+  STAGED_POSTS_COPY,
+  STAGED_REVIEW_COPY,
+  STAGED_REGEN_COPY,
+  STAGED_DRAFT_COPY,
+  STAGED_ERROR_COPY,
+} from '../utils/stagedPlannerCopy';
 import {
   initDraft,
   generateCampaigns,
@@ -147,7 +156,7 @@ function StagedPlannerPage() {
       if (status === 402) {
         setShowUpgrade(true);
       } else {
-        setError(err.message || 'Có lỗi xảy ra trong quá trình xử lý');
+        setError(err.message || STAGED_ERROR_COPY.generic);
       }
       // Khác với trước đây, không throw err nữa để tránh bung popup Uncaught Runtime Errors
       // Các callback truyền vào callApi nếu gặp lỗi thì sẽ dừng lại tại dòng lỗi, 
@@ -203,7 +212,7 @@ function StagedPlannerPage() {
         setCampaigns(Array.isArray(data.campaigns) ? data.campaigns : []);
         setStage(PLAN_STAGES.CAMPAIGNS_GENERATED);
       }
-    }, 'AI đang phân tích thông tin và khởi tạo danh sách chiến dịch...');
+    }, STAGED_INIT_COPY.loadingMsg);
   }, [workspaceId, seedInput, pendingFiles, selectedDocIds, callApi, processTokenAwareResponse]);
 
   // ─── Regenerate Campaigns ───────────────────────────────────────────────
@@ -219,7 +228,7 @@ function StagedPlannerPage() {
         });
         return processTokenAwareResponse(raw);
       },
-      'AI đang sinh lại danh sách chiến dịch...'
+      STAGED_CAMPAIGNS_COPY.regenLoadingMsg
     );
     if (data) {
       setOverview({
@@ -254,7 +263,7 @@ function StagedPlannerPage() {
         setCampaigns(updated.plan.campaigns);
       }
       setStage(PLAN_STAGES.TOPICS_GENERATED);
-    }, 'AI đang tạo danh sách chủ đề cho toàn bộ các chiến dịch...');
+    }, STAGED_CAMPAIGNS_COPY.proceedLoadingMsg);
     setFreeText('');
   }, [workspaceId, campaigns, overview, freeText, syncStructureToBackend, callApi, processTokenAwareResponse]);
 
@@ -273,7 +282,7 @@ function StagedPlannerPage() {
       if (updated?.plan?.campaigns) {
         setCampaigns(updated.plan.campaigns);
       }
-    }, 'AI đang sinh lại danh sách chủ đề...');
+    }, STAGED_TOPICS_COPY.regenLoadingMsg);
     setFreeText('');
   }, [workspaceId, campaigns, overview, freeText, syncStructureToBackend, callApi, processTokenAwareResponse]);
 
@@ -295,7 +304,7 @@ function StagedPlannerPage() {
         setCampaigns(updated.plan.campaigns);
       }
       setStage(PLAN_STAGES.POSTS_GENERATED);
-    }, 'AI đang tạo danh sách bài viết skeleton cho toàn bộ các chủ đề...');
+    }, STAGED_TOPICS_COPY.proceedLoadingMsg);
     setFreeText('');
   }, [workspaceId, campaigns, overview, freeText, syncStructureToBackend, callApi, processTokenAwareResponse]);
 
@@ -312,7 +321,7 @@ function StagedPlannerPage() {
       if (updated?.plan?.campaigns) {
         setCampaigns(updated.plan.campaigns);
       }
-    }, 'AI đang sinh lại danh sách bài viết skeleton...');
+    }, STAGED_POSTS_COPY.regenLoadingMsg);
     setFreeText('');
   }, [workspaceId, campaigns, overview, freeText, syncStructureToBackend, callApi]);
 
@@ -323,7 +332,7 @@ function StagedPlannerPage() {
     await callApi(async () => {
       await confirmStage(workspaceId, PLAN_STAGES.CONFIRMED);
       setStage(PLAN_STAGES.CONFIRMED);
-    }, 'Đang chuyển sang màn hình Review tổng thể...');
+    }, STAGED_POSTS_COPY.proceedLoadingMsg);
   }, [workspaceId, campaigns, overview, syncStructureToBackend, callApi]);
 
   // ─── Finalize & Materialize Plan ─────────────────────────────────────────
@@ -333,7 +342,7 @@ function StagedPlannerPage() {
     await callApi(async () => {
       await finalizeAndMaterializePlan(workspaceId);
       navigate(`/workspaces/${workspaceId}/campaigns`);
-    }, 'Đang khởi tạo các Chiến dịch, Chủ đề & Bài viết vào Cơ sở dữ liệu...');
+    }, STAGED_REVIEW_COPY.finalizeLoadingMsg);
   }, [workspaceId, campaigns, overview, syncStructureToBackend, callApi, navigate]);
 
   // ─── Manual Handlers (Add / Edit / Delete) ─────────────────────────────
@@ -346,9 +355,9 @@ function StagedPlannerPage() {
     setCampaigns((prev) => [
       ...prev,
       {
-        name: `Chiến dịch mới #${prev.length + 1}`,
-        objective: 'Tăng nhận diện thương hiệu & tương tác khách hàng',
-        description: 'Mô tả chi tiết chiến dịch',
+        name: STAGED_CAMPAIGNS_COPY.newCampaignDefaults.name(prev.length + 1),
+        objective: STAGED_CAMPAIGNS_COPY.newCampaignDefaults.objective,
+        description: STAGED_CAMPAIGNS_COPY.newCampaignDefaults.description,
         startDate: new Date().toISOString().split('T')[0],
         endDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
         topics: [],
@@ -366,7 +375,7 @@ function StagedPlannerPage() {
   };
 
   const handleDeleteCampaign = (ci) => {
-    if (!window.confirm('Xoá chiến dịch này và tất cả chủ đề/bài viết liên quan?')) return;
+    if (!window.confirm(STAGED_CAMPAIGNS_COPY.deleteConfirm)) return;
     setCampaigns((prev) => prev.filter((_, idx) => idx !== ci));
   };
 
@@ -378,8 +387,8 @@ function StagedPlannerPage() {
       if (camp) {
         const topics = Array.isArray(camp.topics) ? [...camp.topics] : [];
         topics.push({
-          name: `Chủ đề mới #${topics.length + 1}`,
-          description: 'Mô tả ngắn cho chủ đề này',
+          name: STAGED_TOPICS_COPY.newTopicDefaults.name(topics.length + 1),
+          description: STAGED_TOPICS_COPY.newTopicDefaults.description,
           posts: [],
           source: 'USER_CREATED',
         });
@@ -425,15 +434,15 @@ function StagedPlannerPage() {
         if (topic) {
           const posts = Array.isArray(topic.posts) ? [...topic.posts] : [];
           posts.push({
-            title: `Bài viết mới #${posts.length + 1}`,
-            objective: 'Thu hút sự chú ý của khách hàng',
-            contentBrief: 'Tóm tắt nội dung chính cần truyền tải',
-            mediaSuggestion: 'Hình ảnh thiết kế banner sản phẩm',
-            hashtagsSuggestion: '#Marketing #AutoMarketing',
-            platformSuggestion: 'Facebook',
-            scheduleSuggestion: 'Buổi sáng (8h-9h)',
-            confidence: 0.9,
-            note: 'Tự thêm thủ công',
+            title: STAGED_POSTS_COPY.newPostDefaults.title(posts.length + 1),
+            objective: STAGED_POSTS_COPY.newPostDefaults.objective,
+            contentBrief: STAGED_POSTS_COPY.newPostDefaults.contentBrief,
+            mediaSuggestion: STAGED_POSTS_COPY.newPostDefaults.mediaSuggestion,
+            hashtagsSuggestion: STAGED_POSTS_COPY.newPostDefaults.hashtagsSuggestion,
+            platformSuggestion: STAGED_POSTS_COPY.newPostDefaults.platformSuggestion,
+            scheduleSuggestion: STAGED_POSTS_COPY.newPostDefaults.scheduleSuggestion,
+            confidence: STAGED_POSTS_COPY.newPostDefaults.confidence,
+            note: STAGED_POSTS_COPY.newPostDefaults.note,
             source: 'USER_CREATED',
           });
           topics[ti] = { ...topic, posts };
@@ -589,7 +598,7 @@ function LoadingSplash() {
       <div className="sp-card">
         <div className="sp-loading">
           <div className="sp-loading__spinner" />
-          <p className="sp-loading__text">Đang tải cấu trúc kế hoạch...</p>
+          <p className="sp-loading__text">{STAGED_DRAFT_COPY.loading}</p>
         </div>
       </div>
     </div>
@@ -605,11 +614,8 @@ function InitStep({ seedInput, onChange, pendingFiles, setPendingFiles, onStartP
   return (
     <section className="sp-card">
       <div className="sp-step-header">
-        <h2 className="sp-step-title">Bước 1 — Khởi tạo Thông tin Doanh nghiệp</h2>
-        <p className="sp-step-subtitle">
-          Cung cấp các thông tin nền tảng về thương hiệu và tài liệu đính kèm. AI sẽ phân tích
-          chuyên sâu để lên kế hoạch.
-        </p>
+        <h2 className="sp-step-title">{STAGED_INIT_COPY.stepTitle}</h2>
+        <p className="sp-step-subtitle">{STAGED_INIT_COPY.stepSubtitle}</p>
       </div>
 
       <div className="sp-grid-2">
@@ -634,7 +640,7 @@ function InitStep({ seedInput, onChange, pendingFiles, setPendingFiles, onStartP
 
       {/* File Dropzone */}
       <div className="sp-file-section">
-        <label className="sp-field__label">File tài liệu đính kèm (Tuỳ chọn)</label>
+        <label className="sp-field__label">{STAGED_INIT_COPY.fileLabel}</label>
         <PlannerDropzone onFiles={(files) => setPendingFiles((p) => [...p, ...files])} />
         {pendingFiles.length > 0 && (
           <div className="sp-file-list">
@@ -665,7 +671,7 @@ function InitStep({ seedInput, onChange, pendingFiles, setPendingFiles, onStartP
           onClick={onStartPlan}
           disabled={!isFormValid || loading}
         >
-          Tạo Kế Hoạch
+          {STAGED_INIT_COPY.submitBtn}
         </button>
       </div>
     </section>
@@ -694,13 +700,8 @@ function CampaignsStep({
         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}
       >
         <div>
-          <h2 className="sp-step-title">
-            Bước 2 — Danh sách Chiến dịch Quảng bá ({campaigns.length})
-          </h2>
-          <p className="sp-step-subtitle">
-            Xem, chỉnh sửa hoặc thêm/xoá các chiến dịch trước khi chuyển sang sinh các chủ đề chi
-            tiết.
-          </p>
+          <h2 className="sp-step-title">{STAGED_CAMPAIGNS_COPY.stepTitle}</h2>
+          <p className="sp-step-subtitle">{STAGED_CAMPAIGNS_COPY.stepSubtitle}</p>
         </div>
         <button
           type="button"
@@ -708,7 +709,7 @@ function CampaignsStep({
           onClick={onAddCampaign}
           disabled={loading}
         >
-          <PlusIcon size={14} /> Thêm chiến dịch
+          <PlusIcon size={14} /> {STAGED_CAMPAIGNS_COPY.addBtn}
         </button>
       </div>
 
@@ -722,6 +723,7 @@ function CampaignsStep({
       <div className="sp-thread">
         {campaigns.map((c, ci) => (
           <div key={ci} className="sp-thread__campaign sp-hover-reveal">
+            {/* ── Campaign Header (gradient tím) ── */}
             <div className="sp-thread__campaign-header">
               <div className="sp-thread__campaign-title-group">
                 <span className="sp-thread__campaign-number">{ci + 1}</span>
@@ -748,38 +750,40 @@ function CampaignsStep({
               </div>
             </div>
 
-            <div className="sp-grid-2">
-              <FieldRow
-                label="Mục tiêu chiến dịch"
-                value={c.objective}
-                onChange={(v) => onCampaignChange(ci, 'objective', v)}
-                disabled={loading}
-              />
-              <FieldRow
-                label="Mô tả chiến dịch"
-                value={c.description}
-                onChange={(v) => onCampaignChange(ci, 'description', v)}
-                type="textarea"
-                rows={2}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="sp-grid-2" style={{ marginTop: 16 }}>
-              <FieldRow
-                label="Ngày bắt đầu"
-                value={c.startDate}
-                onChange={(v) => onCampaignChange(ci, 'startDate', v)}
-                type="date"
-                disabled={loading}
-              />
-              <FieldRow
-                label="Ngày kết thúc"
-                value={c.endDate}
-                onChange={(v) => onCampaignChange(ci, 'endDate', v)}
-                type="date"
-                disabled={loading}
-              />
+            {/* ── Campaign Body ── */}
+            <div className="sp-thread__campaign-body">
+              <div className="sp-grid-2">
+                <FieldRow
+                  label="Mục tiêu chiến dịch"
+                  value={c.objective}
+                  onChange={(v) => onCampaignChange(ci, 'objective', v)}
+                  disabled={loading}
+                />
+                <FieldRow
+                  label="Mô tả chiến dịch"
+                  value={c.description}
+                  onChange={(v) => onCampaignChange(ci, 'description', v)}
+                  type="textarea"
+                  rows={2}
+                  disabled={loading}
+                />
+              </div>
+              <div className="sp-grid-2" style={{ marginTop: 14 }}>
+                <FieldRow
+                  label="Ngày bắt đầu"
+                  value={c.startDate}
+                  onChange={(v) => onCampaignChange(ci, 'startDate', v)}
+                  type="date"
+                  disabled={loading}
+                />
+                <FieldRow
+                  label="Ngày kết thúc"
+                  value={c.endDate}
+                  onChange={(v) => onCampaignChange(ci, 'endDate', v)}
+                  type="date"
+                  disabled={loading}
+                />
+              </div>
             </div>
           </div>
         ))}
@@ -792,7 +796,7 @@ function CampaignsStep({
           onClick={onProceedToTopics}
           disabled={loading || campaigns.length === 0}
         >
-          Tiếp tục — Sinh Chủ Đề
+          {STAGED_CAMPAIGNS_COPY.proceedBtn}
         </button>
       </div>
     </section>
@@ -816,11 +820,8 @@ function TopicsStep({
   return (
     <section className="sp-card">
       <div className="sp-step-header">
-        <h2 className="sp-step-title">Bước 3 — Danh sách Chủ đề Nội dung theo Chiến dịch</h2>
-        <p className="sp-step-subtitle">
-          Kiểm tra các chủ đề được AI khởi tạo cho từng chiến dịch. Bạn có thể tự do thêm/sửa/xoá
-          bằng tay hoặc sinh lại.
-        </p>
+        <h2 className="sp-step-title">{STAGED_TOPICS_COPY.stepTitle}</h2>
+        <p className="sp-step-subtitle">{STAGED_TOPICS_COPY.stepSubtitle}</p>
       </div>
 
       <RegenerateBar
@@ -833,22 +834,11 @@ function TopicsStep({
       <div className="sp-thread">
         {campaigns.map((c, ci) => (
           <div key={ci} className="sp-thread__campaign">
+            {/* ── Campaign Header (gradient) ── */}
             <div className="sp-thread__campaign-header">
               <div className="sp-thread__campaign-title-group">
-                <FolderIcon
-                  size={16}
-                  style={{ color: 'var(--sp-text-secondary)', flexShrink: 0 }}
-                />
-                <span
-                  className="sp-field__title-input"
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 600,
-                    border: 'none',
-                    padding: 0,
-                    cursor: 'default',
-                  }}
-                >
+                <span className="sp-thread__campaign-number">{ci + 1}</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--sp-text-primary)' }}>
                   {c.name || `Chiến dịch #${ci + 1}`}
                 </span>
               </div>
@@ -858,71 +848,64 @@ function TopicsStep({
                 onClick={() => onAddTopic(ci)}
                 disabled={loading}
               >
-                <PlusIcon size={13} /> Thêm chủ đề
+                <PlusIcon size={13} /> {STAGED_TOPICS_COPY.addBtn}
               </button>
             </div>
 
-            {c.objective && (
-              <p
-                style={{
-                  fontSize: 13,
-                  color: 'var(--sp-text-secondary)',
-                  margin: '-12px 0 16px',
-                  lineHeight: 1.5,
-                }}
-              >
-                {c.objective}
-              </p>
-            )}
+            {/* ── Topic tree list ── */}
+            <div className="sp-thread__campaign-body">
+              {c.objective && (
+                <p className="sp-campaign-objective">{c.objective}</p>
+              )}
 
-            <div>
               {Array.isArray(c.topics) && c.topics.length > 0 ? (
-                c.topics.map((t, ti) => (
-                  <div key={ti} className="sp-thread__topic sp-hover-reveal">
-                    <div className="sp-thread__topic-header">
-                      <div className="sp-thread__topic-title-group">
-                        <span className="sp-thread__topic-icon">
-                          <TargetIcon size={14} />
-                        </span>
-                        <input
-                          type="text"
-                          className="sp-field__title-input"
-                          value={t.name || ''}
-                          onChange={(e) => onTopicChange(ci, ti, 'name', e.target.value)}
-                          placeholder="Tên chủ đề"
-                          disabled={loading}
-                          style={{ fontSize: 14, fontWeight: 500 }}
-                        />
+                <ul className="sp-thread__topic-list">
+                  {c.topics.map((t, ti) => (
+                    <li key={ti} className="sp-thread__topic sp-hover-reveal">
+                      <div className="sp-thread__topic-header">
+                        <div className="sp-thread__topic-title-group">
+                          <span className="sp-thread__topic-index">#{ti + 1}</span>
+                          <span className="sp-thread__topic-icon">
+                            <TargetIcon size={14} />
+                          </span>
+                          <input
+                            type="text"
+                            className="sp-field__title-input"
+                            value={t.name || ''}
+                            onChange={(e) => onTopicChange(ci, ti, 'name', e.target.value)}
+                            placeholder="Tên chủ đề"
+                            disabled={loading}
+                            style={{ fontSize: 14, fontWeight: 600 }}
+                          />
+                        </div>
+                        <div className="sp-thread__topic-actions sp-hover-reveal__actions">
+                          <EntitySourceBadge source={t.source} />
+                          <button
+                            type="button"
+                            className="sp-btn sp-btn--danger"
+                            onClick={() => onDeleteTopic(ci, ti)}
+                            disabled={loading}
+                            title="Xoá chủ đề"
+                          >
+                            <TrashIcon size={15} />
+                          </button>
+                        </div>
                       </div>
-                      <div className="sp-thread__topic-actions sp-hover-reveal__actions">
-                        <EntitySourceBadge source={t.source} />
-                        <button
-                          type="button"
-                          className="sp-btn sp-btn--danger"
-                          onClick={() => onDeleteTopic(ci, ti)}
-                          disabled={loading}
-                          title="Xoá chủ đề"
-                        >
-                          <TrashIcon size={15} />
-                        </button>
-                      </div>
-                    </div>
-                    <FieldRow
-                      label="Mô tả nội dung chủ đề"
-                      value={t.description}
-                      onChange={(v) => onTopicChange(ci, ti, 'description', v)}
-                      type="textarea"
-                      rows={2}
-                      disabled={loading}
-                    />
-                  </div>
-                ))
+                      <FieldRow
+                        label="Mô tả nội dung chủ đề"
+                        value={t.description}
+                        onChange={(v) => onTopicChange(ci, ti, 'description', v)}
+                        type="textarea"
+                        rows={2}
+                        disabled={loading}
+                      />
+                    </li>
+                  ))}
+                </ul>
               ) : (
                 <div className="sp-empty">
-                  <div className="sp-empty__icon">
-                    <TargetIcon size={16} />
-                  </div>
-                  <p className="sp-empty__text">Chưa có chủ đề nào trong chiến dịch này.</p>
+                  <div className="sp-empty__icon"><TargetIcon size={16} /></div>
+                  <p className="sp-empty__text">{STAGED_TOPICS_COPY.emptyHint}</p>
                 </div>
               )}
             </div>
@@ -937,7 +920,7 @@ function TopicsStep({
           onClick={onProceedToPosts}
           disabled={loading}
         >
-          Tiếp tục — Sinh Khung Bài Viết
+          {STAGED_TOPICS_COPY.proceedBtn}
         </button>
       </div>
     </section>
@@ -961,10 +944,8 @@ function PostsStep({
   return (
     <section className="sp-card">
       <div className="sp-step-header">
-        <h2 className="sp-step-title">Bước 4 — Khung Bài viết Skeleton</h2>
-        <p className="sp-step-subtitle">
-          Review và điều chỉnh trực tiếp các định hướng nội dung bài viết trước khi chốt tổng thể.
-        </p>
+        <h2 className="sp-step-title">{STAGED_POSTS_COPY.stepTitle}</h2>
+        <p className="sp-step-subtitle">{STAGED_POSTS_COPY.stepSubtitle}</p>
       </div>
 
       <RegenerateBar
@@ -977,35 +958,28 @@ function PostsStep({
       <div className="sp-thread">
         {campaigns.map((c, ci) => (
           <div key={ci} className="sp-thread__campaign">
-            <div className="sp-thread__campaign-header" style={{ marginBottom: 16 }}>
+            {/* ── Campaign Header ── */}
+            <div className="sp-thread__campaign-header">
               <div className="sp-thread__campaign-title-group">
-                <FolderIcon
-                  size={16}
-                  style={{ color: 'var(--sp-text-secondary)', flexShrink: 0 }}
-                />
-                <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--sp-text-primary)' }}>
-                  Chiến dịch: {c.name || `#${ci + 1}`}
+                <span className="sp-thread__campaign-number">{ci + 1}</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--sp-text-primary)' }}>
+                  {c.name || `Chiến dịch #${ci + 1}`}
                 </span>
               </div>
             </div>
 
-            <div>
+            {/* ── Topic + Post tree ── */}
+            <div className="sp-thread__campaign-body">
               {Array.isArray(c.topics) &&
                 c.topics.map((t, ti) => (
-                  <div key={ti} className="sp-thread__topic">
+                  <div key={ti} className="sp-thread__topic" style={{ marginBottom: ti < c.topics.length - 1 ? 20 : 0 }}>
+                    {/* Topic header */}
                     <div className="sp-thread__topic-header">
                       <div className="sp-thread__topic-title-group">
-                        <span className="sp-thread__topic-icon">
-                          <TargetIcon size={14} />
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 500,
-                            color: 'var(--sp-text-secondary)',
-                          }}
-                        >
-                          Chủ đề: {t.name || `#${ti + 1}`}
+                        <span className="sp-thread__topic-index">#{ti + 1}</span>
+                        <span className="sp-thread__topic-icon"><TargetIcon size={14} /></span>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--sp-text-primary)' }}>
+                          {t.name || `Chủ đề #${ti + 1}`}
                         </span>
                       </div>
                       <button
@@ -1014,29 +988,26 @@ function PostsStep({
                         onClick={() => onAddPost(ci, ti)}
                         disabled={loading}
                       >
-                        <PlusIcon size={12} /> Thêm bài viết
+                        <PlusIcon size={12} /> {STAGED_POSTS_COPY.addBtn}
                       </button>
                     </div>
 
-                    <div>
-                      {Array.isArray(t.posts) && t.posts.length > 0 ? (
-                        t.posts.map((p, pi) => (
-                          <div key={pi} className="sp-thread__post sp-hover-reveal">
+                    {/* Post list with tree connector */}
+                    {Array.isArray(t.posts) && t.posts.length > 0 ? (
+                      <ul className="sp-thread__post-list">
+                        {t.posts.map((p, pi) => (
+                          <li key={pi} className="sp-thread__post sp-hover-reveal">
                             <div className="sp-thread__post-header">
                               <div className="sp-thread__post-title-group">
-                                <span className="sp-thread__post-icon">
-                                  <FileTextIcon size={13} />
-                                </span>
+                                <span className="sp-thread__post-icon"><FileTextIcon size={13} /></span>
                                 <input
                                   type="text"
                                   className="sp-field__title-input"
                                   value={p.title || ''}
-                                  onChange={(e) =>
-                                    onPostChange(ci, ti, pi, 'title', e.target.value)
-                                  }
+                                  onChange={(e) => onPostChange(ci, ti, pi, 'title', e.target.value)}
                                   placeholder="Tiêu đề bài viết"
                                   disabled={loading}
-                                  style={{ fontSize: 14, fontWeight: 500 }}
+                                  style={{ fontSize: 14, fontWeight: 600 }}
                                 />
                               </div>
                               <div className="sp-thread__post-actions sp-hover-reveal__actions">
@@ -1068,9 +1039,9 @@ function PostsStep({
                               />
                             </div>
 
-                            <div style={{ marginTop: 16 }}>
+                            <div style={{ marginTop: 14 }}>
                               <FieldRow
-                                label="Content Brief (Tóm tắt nội dung)"
+                                label="Content Brief"
                                 value={p.contentBrief}
                                 onChange={(v) => onPostChange(ci, ti, pi, 'contentBrief', v)}
                                 type="textarea"
@@ -1079,7 +1050,7 @@ function PostsStep({
                               />
                             </div>
 
-                            <div className="sp-grid-3" style={{ marginTop: 16 }}>
+                            <div className="sp-grid-3" style={{ marginTop: 14 }}>
                               <FieldRow
                                 label="Nền tảng"
                                 value={p.platformSuggestion}
@@ -1099,17 +1070,15 @@ function PostsStep({
                                 disabled={loading}
                               />
                             </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="sp-empty">
-                          <div className="sp-empty__icon">
-                            <FileTextIcon size={15} />
-                          </div>
-                          <p className="sp-empty__text">Chưa có bài viết nào trong chủ đề này.</p>
-                        </div>
-                      )}
-                    </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="sp-empty" style={{ padding: '14px 0' }}>
+                        <div className="sp-empty__icon"><FileTextIcon size={15} /></div>
+                        <p className="sp-empty__text">{STAGED_POSTS_COPY.emptyHint}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
             </div>
@@ -1124,7 +1093,7 @@ function PostsStep({
           onClick={onProceedToReview}
           disabled={loading}
         >
-          Tiếp tục — Review & Hoàn Tất
+          {STAGED_POSTS_COPY.proceedBtn}
         </button>
       </div>
     </section>
@@ -1155,16 +1124,14 @@ function ConfirmedStep({
     <section className="sp-card">
       <div className="sp-review-header">
         <div className="sp-review-icon">
-          <SparkleIcon size={22} />
+          <SparkleIcon size={24} />
         </div>
-        <h2 className="sp-review-title">Review Tổng Thể Kế Hoạch</h2>
-        <p className="sp-review-subtitle">
-          Toàn bộ kế hoạch đã được tạo. Bạn có thể xem lại chi tiết trước khi chốt.
-        </p>
+        <h2 className="sp-review-title">{STAGED_REVIEW_COPY.stepTitle}</h2>
+        <p className="sp-review-subtitle">{STAGED_REVIEW_COPY.stepSubtitle}</p>
       </div>
 
       <div className="sp-brand-info">
-        <h3 className="sp-section-title">Thông tin Thương hiệu</h3>
+        <h3 className="sp-section-title">{STAGED_REVIEW_COPY.brandInfoTitle}</h3>
         <div className="sp-brand-info__grid">
           <div>
             <span className="sp-brand-info__label">Tên công ty:</span>{' '}
@@ -1194,11 +1161,11 @@ function ConfirmedStep({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 24,
+          marginBottom: 20,
         }}
       >
         <h3 className="sp-section-title" style={{ margin: 0 }}>
-          Chi tiết Kế Hoạch
+          {STAGED_REVIEW_COPY.planDetailTitle(campaigns.length)}
         </h3>
         <button
           type="button"
@@ -1206,79 +1173,34 @@ function ConfirmedStep({
           onClick={onAddCampaign}
           disabled={loading}
         >
-          <PlusIcon size={13} /> Thêm chiến dịch
+          <PlusIcon size={13} /> {STAGED_CAMPAIGNS_COPY.addBtn}
         </button>
       </div>
 
       <div className="sp-thread">
         {campaigns.map((c, ci) => (
           <div key={ci} className="sp-thread__campaign">
+            {/* ── Campaign Header ── */}
             <div className="sp-thread__campaign-header">
-              <div
-                className="sp-thread__campaign-title-group"
-                style={{ flexDirection: 'column', alignItems: 'stretch', gap: 12 }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="sp-thread__campaign-number">{ci + 1}</span>
-                  <input
-                    type="text"
-                    className="sp-field__title-input"
-                    value={c.name || ''}
-                    onChange={(e) => onCampaignChange(ci, 'name', e.target.value)}
-                    placeholder="Tên chiến dịch"
-                    disabled={loading}
-                  />
-                </div>
-                <div className="sp-grid-2">
-                  <FieldRow
-                    label="Mục tiêu"
-                    value={c.objective}
-                    onChange={(v) => onCampaignChange(ci, 'objective', v)}
-                    disabled={loading}
-                  />
-                  <div className="sp-field">
-                    <label className="sp-field__label">Thời gian</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <input
-                        type="date"
-                        className="sp-field__input"
-                        value={c.startDate || ''}
-                        onChange={(e) => onCampaignChange(ci, 'startDate', e.target.value)}
-                        disabled={loading}
-                      />
-                      <span style={{ color: 'var(--sp-text-muted)' }}>—</span>
-                      <input
-                        type="date"
-                        className="sp-field__input"
-                        value={c.endDate || ''}
-                        onChange={(e) => onCampaignChange(ci, 'endDate', e.target.value)}
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <FieldRow
-                    label="Mô tả"
-                    value={c.description}
-                    onChange={(v) => onCampaignChange(ci, 'description', v)}
-                    type="textarea"
-                    rows={2}
-                    disabled={loading}
-                  />
-                </div>
+              <div className="sp-thread__campaign-title-group">
+                <span className="sp-thread__campaign-number">{ci + 1}</span>
+                <input
+                  type="text"
+                  className="sp-field__title-input"
+                  value={c.name || ''}
+                  onChange={(e) => onCampaignChange(ci, 'name', e.target.value)}
+                  placeholder="Tên chiến dịch"
+                  disabled={loading}
+                />
               </div>
-              <div
-                className="sp-thread__campaign-actions"
-                style={{ flexDirection: 'column', gap: 8 }}
-              >
+              <div className="sp-thread__campaign-actions">
                 <button
                   type="button"
                   className="sp-btn sp-btn--dashed sp-btn--sm"
                   onClick={() => onAddTopic(ci)}
                   disabled={loading}
                 >
-                  <PlusIcon size={12} /> Thêm chủ đề
+                  <PlusIcon size={12} /> {STAGED_TOPICS_COPY.addBtn}
                 </button>
                 <button
                   type="button"
@@ -1292,19 +1214,57 @@ function ConfirmedStep({
               </div>
             </div>
 
-            <div>
-              {Array.isArray(c.topics) &&
-                c.topics.map((t, ti) => (
-                  <div key={ti} className="sp-thread__topic">
-                    <div className="sp-thread__topic-header">
-                      <div
-                        className="sp-thread__topic-title-group"
-                        style={{ flexDirection: 'column', alignItems: 'stretch', gap: 12 }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span className="sp-thread__topic-icon">
-                            <TargetIcon size={14} />
-                          </span>
+            {/* ── Campaign Body ── */}
+            <div className="sp-thread__campaign-body">
+              <div className="sp-grid-2">
+                <FieldRow
+                  label="Mục tiêu"
+                  value={c.objective}
+                  onChange={(v) => onCampaignChange(ci, 'objective', v)}
+                  disabled={loading}
+                />
+                <div className="sp-field">
+                  <label className="sp-field__label">Thời gian</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="date"
+                      className="sp-field__input"
+                      value={c.startDate || ''}
+                      onChange={(e) => onCampaignChange(ci, 'startDate', e.target.value)}
+                      disabled={loading}
+                    />
+                    <span style={{ color: 'var(--sp-text-muted)', flexShrink: 0 }}>—</span>
+                    <input
+                      type="date"
+                      className="sp-field__input"
+                      value={c.endDate || ''}
+                      onChange={(e) => onCampaignChange(ci, 'endDate', e.target.value)}
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <FieldRow
+                  label="Mô tả"
+                  value={c.description}
+                  onChange={(v) => onCampaignChange(ci, 'description', v)}
+                  type="textarea"
+                  rows={2}
+                  disabled={loading}
+                />
+              </div>
+
+              {/* ── Topic tree ── */}
+              {Array.isArray(c.topics) && c.topics.length > 0 && (
+                <ul className="sp-thread__topic-list" style={{ marginTop: 20 }}>
+                  {c.topics.map((t, ti) => (
+                    <li key={ti} className="sp-thread__topic">
+                      {/* Topic header */}
+                      <div className="sp-thread__topic-header">
+                        <div className="sp-thread__topic-title-group">
+                          <span className="sp-thread__topic-index">#{ti + 1}</span>
+                          <span className="sp-thread__topic-icon"><TargetIcon size={14} /></span>
                           <input
                             type="text"
                             className="sp-field__title-input"
@@ -1312,137 +1272,122 @@ function ConfirmedStep({
                             onChange={(e) => onTopicChange(ci, ti, 'name', e.target.value)}
                             placeholder="Tên chủ đề"
                             disabled={loading}
-                            style={{ fontSize: 14, fontWeight: 500 }}
+                            style={{ fontSize: 14, fontWeight: 600 }}
                           />
                         </div>
-                        <div>
-                          <FieldRow
-                            label="Mô tả nội dung"
-                            value={t.description}
-                            onChange={(v) => onTopicChange(ci, ti, 'description', v)}
-                            type="textarea"
-                            rows={2}
+                        <div className="sp-thread__topic-actions">
+                          <button
+                            type="button"
+                            className="sp-btn sp-btn--dashed sp-btn--sm"
+                            onClick={() => onAddPost(ci, ti)}
                             disabled={loading}
-                          />
+                          >
+                            <PlusIcon size={11} /> {STAGED_POSTS_COPY.addBtn}
+                          </button>
+                          <button
+                            type="button"
+                            className="sp-btn sp-btn--danger"
+                            onClick={() => onDeleteTopic(ci, ti)}
+                            disabled={loading}
+                            title="Xoá chủ đề"
+                          >
+                            <TrashIcon size={14} />
+                          </button>
                         </div>
                       </div>
-                      <div
-                        className="sp-thread__topic-actions"
-                        style={{ flexDirection: 'column', gap: 8 }}
-                      >
-                        <button
-                          type="button"
-                          className="sp-btn sp-btn--dashed sp-btn--sm"
-                          onClick={() => onAddPost(ci, ti)}
-                          disabled={loading}
-                        >
-                          <PlusIcon size={12} /> Bài viết
-                        </button>
-                        <button
-                          type="button"
-                          className="sp-btn sp-btn--danger"
-                          onClick={() => onDeleteTopic(ci, ti)}
-                          disabled={loading}
-                          title="Xoá chủ đề"
-                        >
-                          <TrashIcon size={14} />
-                        </button>
-                      </div>
-                    </div>
 
-                    <div>
-                      {Array.isArray(t.posts) &&
-                        t.posts.map((p, pi) => (
-                          <div key={pi} className="sp-thread__post sp-hover-reveal">
-                            <div className="sp-thread__post-header">
-                              <div
-                                className="sp-thread__post-title-group"
-                                style={{ flexDirection: 'column', alignItems: 'stretch', gap: 12 }}
-                              >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                  <span className="sp-thread__post-icon">
-                                    <FileTextIcon size={13} />
-                                  </span>
+                      <FieldRow
+                        label="Mô tả nội dung"
+                        value={t.description}
+                        onChange={(v) => onTopicChange(ci, ti, 'description', v)}
+                        type="textarea"
+                        rows={2}
+                        disabled={loading}
+                      />
+
+                      {/* ── Post tree ── */}
+                      {Array.isArray(t.posts) && t.posts.length > 0 && (
+                        <ul className="sp-thread__post-list">
+                          {t.posts.map((p, pi) => (
+                            <li key={pi} className="sp-thread__post sp-hover-reveal">
+                              <div className="sp-thread__post-header">
+                                <div className="sp-thread__post-title-group">
+                                  <span className="sp-thread__post-icon"><FileTextIcon size={13} /></span>
                                   <input
                                     type="text"
                                     className="sp-field__title-input"
                                     value={p.title || ''}
-                                    onChange={(e) =>
-                                      onPostChange(ci, ti, pi, 'title', e.target.value)
-                                    }
+                                    onChange={(e) => onPostChange(ci, ti, pi, 'title', e.target.value)}
                                     placeholder="Tiêu đề bài viết"
                                     disabled={loading}
-                                    style={{ fontSize: 14, fontWeight: 500 }}
+                                    style={{ fontSize: 14, fontWeight: 600 }}
                                   />
                                 </div>
-                                <div className="sp-grid-2">
-                                  <FieldRow
-                                    label="Mục tiêu"
-                                    value={p.objective}
-                                    onChange={(v) => onPostChange(ci, ti, pi, 'objective', v)}
+                                <div className="sp-thread__post-actions sp-hover-reveal__actions">
+                                  <button
+                                    type="button"
+                                    className="sp-btn sp-btn--danger"
+                                    onClick={() => onDeletePost(ci, ti, pi)}
                                     disabled={loading}
-                                  />
-                                  <FieldRow
-                                    label="Gợi ý Media"
-                                    value={p.mediaSuggestion}
-                                    onChange={(v) => onPostChange(ci, ti, pi, 'mediaSuggestion', v)}
-                                    disabled={loading}
-                                  />
-                                </div>
-                                <div>
-                                  <FieldRow
-                                    label="Content Brief"
-                                    value={p.contentBrief}
-                                    onChange={(v) => onPostChange(ci, ti, pi, 'contentBrief', v)}
-                                    type="textarea"
-                                    rows={2}
-                                    disabled={loading}
-                                  />
-                                </div>
-                                <div className="sp-grid-3">
-                                  <FieldRow
-                                    label="Nền tảng"
-                                    value={p.platformSuggestion}
-                                    onChange={(v) =>
-                                      onPostChange(ci, ti, pi, 'platformSuggestion', v)
-                                    }
-                                    disabled={loading}
-                                  />
-                                  <FieldRow
-                                    label="Lịch đăng"
-                                    value={p.scheduleSuggestion}
-                                    onChange={(v) =>
-                                      onPostChange(ci, ti, pi, 'scheduleSuggestion', v)
-                                    }
-                                    disabled={loading}
-                                  />
-                                  <FieldRow
-                                    label="Hashtag"
-                                    value={p.hashtagsSuggestion}
-                                    onChange={(v) =>
-                                      onPostChange(ci, ti, pi, 'hashtagsSuggestion', v)
-                                    }
-                                    disabled={loading}
-                                  />
+                                    title="Xoá bài viết"
+                                  >
+                                    <TrashIcon size={14} />
+                                  </button>
                                 </div>
                               </div>
-                              <div className="sp-thread__post-actions sp-hover-reveal__actions">
-                                <button
-                                  type="button"
-                                  className="sp-btn sp-btn--danger"
-                                  onClick={() => onDeletePost(ci, ti, pi)}
+
+                              <div className="sp-grid-2">
+                                <FieldRow
+                                  label="Mục tiêu"
+                                  value={p.objective}
+                                  onChange={(v) => onPostChange(ci, ti, pi, 'objective', v)}
                                   disabled={loading}
-                                  title="Xoá bài viết"
-                                >
-                                  <TrashIcon size={14} />
-                                </button>
+                                />
+                                <FieldRow
+                                  label="Gợi ý Media"
+                                  value={p.mediaSuggestion}
+                                  onChange={(v) => onPostChange(ci, ti, pi, 'mediaSuggestion', v)}
+                                  disabled={loading}
+                                />
                               </div>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                ))}
+                              <div style={{ marginTop: 12 }}>
+                                <FieldRow
+                                  label="Content Brief"
+                                  value={p.contentBrief}
+                                  onChange={(v) => onPostChange(ci, ti, pi, 'contentBrief', v)}
+                                  type="textarea"
+                                  rows={2}
+                                  disabled={loading}
+                                />
+                              </div>
+                              <div className="sp-grid-3" style={{ marginTop: 12 }}>
+                                <FieldRow
+                                  label="Nền tảng"
+                                  value={p.platformSuggestion}
+                                  onChange={(v) => onPostChange(ci, ti, pi, 'platformSuggestion', v)}
+                                  disabled={loading}
+                                />
+                                <FieldRow
+                                  label="Lịch đăng"
+                                  value={p.scheduleSuggestion}
+                                  onChange={(v) => onPostChange(ci, ti, pi, 'scheduleSuggestion', v)}
+                                  disabled={loading}
+                                />
+                                <FieldRow
+                                  label="Hashtag"
+                                  value={p.hashtagsSuggestion}
+                                  onChange={(v) => onPostChange(ci, ti, pi, 'hashtagsSuggestion', v)}
+                                  disabled={loading}
+                                />
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         ))}
@@ -1454,9 +1399,9 @@ function ConfirmedStep({
           className="sp-btn sp-btn--primary"
           onClick={onFinalize}
           disabled={loading}
-          style={{ padding: '12px 32px' }}
+          style={{ padding: '12px 32px', fontSize: 15 }}
         >
-          🚀 Khởi Tạo Kế Hoạch Workspace
+          {STAGED_REVIEW_COPY.finalizeBtn}
         </button>
       </div>
     </section>
