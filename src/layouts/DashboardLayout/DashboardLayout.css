@@ -41,6 +41,20 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow-y: auto;
+}
+
+.sidebar__nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar__nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar__nav::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
 }
 
 .sidebar__link {
@@ -379,6 +393,7 @@
 .user-dropdown__avatar-circle {
   width: 32px;
   height: 32px;
+  flex-shrink: 0;
   border-radius: 50%;
   background-color: #ef4444;
   /* Màu đỏ nổi bật như ảnh bạn chụp */
@@ -603,17 +618,24 @@
   flex-direction: column;
   text-align: left;
   line-height: 1.3;
+  overflow: hidden;
 }
 
 .user-dropdown__account-name {
   font-size: 13px;
   font-weight: 600;
   color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-dropdown__account-email {
   font-size: 11px;
   color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-dropdown__checkmark {
@@ -634,9 +656,32 @@
   margin-right: 4px;
 }
 
+.user-dropdown__back-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  transition: color 0.2s, background-color 0.2s;
+  overflow: hidden;
+}
+
+.user-dropdown__back-header:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.user-dropdown__back-header span:last-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: 8px;
+}
+
 .user-dropdown button,
 .user-dropdown__header-item,
-.user-dropdown__back-header,
 .user-dropdown__pill-container {
   font-family: inherit;
 }
@@ -714,4 +759,67 @@
 .user-dropdown__cancel-sub-btn:hover {
   background-color: #fca5a5;
   color: #991b1b;
+}
+
+/* Role Updated Toast Notification */
+.role-updated-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 320px;
+  z-index: 9999;
+  border-left: 4px solid #3b82f6;
+  animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.role-toast-icon {
+  color: #3b82f6;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.role-toast-content {
+  flex: 1;
+}
+
+.role-toast-content strong {
+  display: block;
+  font-size: 14px;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.role-toast-content p {
+  margin: 0;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.role-toast-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  margin: -4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.role-toast-close:hover {
+  background-color: #f1f5f9;
+  color: #475569;
 }

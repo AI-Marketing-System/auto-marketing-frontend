@@ -18,4 +18,35 @@ export const workspaceApi = {
       method: 'POST',
     });
   },
+
+  getWorkspaceMembers: (workspaceId) => {
+    return requestJson(`/workspaces/${workspaceId}/members`, {
+      method: 'GET',
+    });
+  },
+
+  inviteMember: (workspaceId, data) => {
+    return requestJson(`/workspaces/${workspaceId}/members/invite`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  removeMember: (workspaceId, userId) => {
+    return requestJson(`/workspaces/${workspaceId}/members/${userId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  updateMemberRole: (workspaceId, userId, role) => {
+    return requestJson(`/workspaces/${workspaceId}/members/${userId}/role?newRole=${role}`, {
+      method: 'PUT',
+    });
+  },
+
+  leaveWorkspace: (workspaceId) => {
+    return requestJson(`/workspaces/${workspaceId}/members/leave`, {
+      method: 'POST',
+    });
+  },
 };

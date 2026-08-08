@@ -26,7 +26,7 @@ import { API_BASE_URL } from '../../../config/env';
 /**
  * Maps the API schedules data list to the calendar posts structure
  */
-function mapSchedulesToCalendarPosts(schedules, weekDays, fanpagesMap = {}) {
+function mapSchedulesToCalendarPosts(schedules, weekDays, fanpagesMap = {}, topics = [], campaigns = []) {
 
   return schedules.map((sch) => {
     let dateStr = sch.publishTime;
@@ -71,7 +71,6 @@ function mapSchedulesToCalendarPosts(schedules, weekDays, fanpagesMap = {}) {
         color = '#7c3aed';
     }
 
-    // Thu thập danh sách fanpage được lên lịch và map thông tin từ fanpagesMap
     const targetFanpages = (sch.targets || []).map((t) => {
       const fp = fanpagesMap[t.fanpageId];
       return {
@@ -81,6 +80,9 @@ function mapSchedulesToCalendarPosts(schedules, weekDays, fanpagesMap = {}) {
         targetStatus: t.status,
       };
     });
+
+    const topic = topics.find(t => t.id == sch.topicId);
+    const campaign = topic ? campaigns.find(c => c.id == topic.campaignId) : null;
 
     return {
       id: sch.scheduleId,
@@ -94,6 +96,8 @@ function mapSchedulesToCalendarPosts(schedules, weekDays, fanpagesMap = {}) {
       image: sch.postImageUrl || null,
       publishTime: sch.publishTime,
       status: sch.status,
+      campaignName: campaign ? campaign.title : null,
+      topicName: topic ? topic.title : null,
     };
   }).filter((p) => p.dayIdx !== -1);
 }
@@ -262,13 +266,15 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
     };
   }, [workspaceId, triggerFetchSchedules]);
 
-  // Map schedules to posts inside current week view
   useEffect(() => {
-    if (weekDays.length > 0) {
-      const mapped = mapSchedulesToCalendarPosts(schedules, weekDays, fanpagesMap);
+    if (schedules.length > 0 && weekDays.length > 0) {
+      const mapped = mapSchedulesToCalendarPosts(schedules, weekDays, fanpagesMap, topics, campaigns);
       setPosts(mapped);
+    } else {
+      setPosts([]);
     }
-  }, [schedules, weekDays, fanpages]); // re-map khi fanpages được tải xong
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schedules, weekDays, fanpages, topics, campaigns]); // re-map khi fanpages/topics/campaigns được tải xong
 
   // ── Handlers điều hướng tuần ──
   const goToPrevWeek = () =>
@@ -294,6 +300,9 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
       postContent: post.postContent,
       publishTime: post.publishTime,
       status: post.status,
+      campaignName: post.campaignName,
+      topicName: post.topicName,
+      image: post.image,
     });
     setShowDetailModal(true);
   };

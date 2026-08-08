@@ -149,7 +149,9 @@ function StagedPlannerPage() {
       } else {
         setError(err.message || 'Có lỗi xảy ra trong quá trình xử lý');
       }
-      throw err;
+      // Khác với trước đây, không throw err nữa để tránh bung popup Uncaught Runtime Errors
+      // Các callback truyền vào callApi nếu gặp lỗi thì sẽ dừng lại tại dòng lỗi, 
+      // sau đó lỗi ném ra bị callApi bắt và xử lý hiển thị UI.
     } finally {
       setLoading(false);
       setLoadMsg('');

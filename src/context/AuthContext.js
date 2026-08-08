@@ -50,7 +50,8 @@ export function AuthProvider({ children }) {
     const payload = decodeTokenPayload(token);
     if (!payload) return null;
     return {
-      id: payload.sub || payload.userId || payload.id,
+      id: payload.userId || payload.id || payload.sub,
+      userId: payload.userId,
       email: payload.email || payload.sub,
       fullName: payload.fullName || payload.name,
       roles: payload.roles || payload.authorities || [],
@@ -86,7 +87,8 @@ export function AuthProvider({ children }) {
       return;
     }
     setUser({
-      id: payload.sub || payload.userId || payload.id,
+      id: payload.userId || payload.id || payload.sub,
+      userId: payload.userId,
       email: payload.email || payload.sub,
       fullName: payload.fullName || payload.name,
       roles: payload.roles || payload.authorities || [],

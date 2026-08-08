@@ -6,6 +6,9 @@ import InviteMemberModal from '../../workspace/components/InviteMemberModal';
 import CampaignCard from '../components/CampaignCard';
 import CampaignActions from '../components/CampaignActions';
 import WorkspaceFanpageBar from '../components/WorkspaceFanpageBar';
+import AvatarGroup from '../../workspace/components/AvatarGroup';
+import WorkspaceMembersModal from '../../workspace/components/WorkspaceMembersModal';
+import { workspaceApi as wsApi } from '../../workspace/api/workspaceApi';
 import {
   campaignApi,
   mapSortField,
@@ -57,6 +60,8 @@ function CampaignListPage() {
   const [viewMode, setViewMode] = useState('cards');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isWorkspaceMembersModalOpen, setIsWorkspaceMembersModalOpen] = useState(false);
+  const [workspaceMembers, setWorkspaceMembers] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [allCampaigns, setAllCampaigns] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -97,6 +102,16 @@ function CampaignListPage() {
     setWorkspaceFilter(currentWorkspaceId ?? 'ALL');
     setPage(0);
   }, [currentWorkspaceId]);
+
+  useEffect(() => {
+    if (workspaceFilter !== 'ALL') {
+      wsApi.getWorkspaceMembers(workspaceFilter)
+        .then(res => setWorkspaceMembers(res.data || []))
+        .catch(console.error);
+    } else {
+      setWorkspaceMembers([]);
+    }
+  }, [workspaceFilter]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSearchQuery(searchInput.trim()), 350);
@@ -385,34 +400,15 @@ function CampaignListPage() {
                     ? selectedWorkspace.name
                     : 'Chọn workspace'}
               </h1>
-              {workspaceFilter !== 'ALL' && selectedWorkspace && selectedWorkspace.role === 'OWNER' && (
-                <button
-                  type="button"
-                  className="btn-invite-member"
-                  onClick={() => setIsInviteModalOpen(true)}
-                  title="Mời thành viên"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#64748b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '4px',
-                    borderRadius: '6px',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#e2e8f0'; e.currentTarget.style.color = '#0f172a'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#64748b'; }}
-                >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="8.5" cy="7" r="4"></circle>
-                    <line x1="20" y1="8" x2="20" y2="14"></line>
-                    <line x1="23" y1="11" x2="17" y2="11"></line>
-                  </svg>
-                </button>
+              {workspaceFilter !== 'ALL' && selectedWorkspace && (
+                <div style={{ marginLeft: '12px' }}>
+                  <AvatarGroup 
+                    members={workspaceMembers} 
+                    max={4}
+                    onAddClick={() => setIsInviteModalOpen(true)}
+                    onGroupClick={() => setIsWorkspaceMembersModalOpen(true)}
+                  />
+                </div>
               )}
             </div>
             <p className="campaign-hero-subtitle">
@@ -836,6 +832,20 @@ function CampaignListPage() {
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         workspaceId={activeWorkspaceId ?? currentWorkspaceId}
+      />
+
+      <WorkspaceMembersModal
+        isOpen={isWorkspaceMembersModalOpen}
+        onClose={() => setIsWorkspaceMembersModalOpen(false)}
+        workspaceId={activeWorkspaceId ?? currentWorkspaceId}
+        workspaceName={selectedWorkspace?.name}
+        currentUserRole={selectedWorkspace?.role}
+        currentUserId={user?.id}
+        isTrueOwner={selectedWorkspace?.ownerId === user?.id}
+        onLeaveSuccess={() => {
+          setIsWorkspaceMembersModalOpen(false);
+          navigate('/dashboard');
+        }}
       />
     </div>
   );
