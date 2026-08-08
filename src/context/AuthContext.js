@@ -170,10 +170,9 @@ export function AuthProvider({ children }) {
   );
 
   const logout = useCallback(
-    async (apiBaseUrl, targetUserId = null) => {
-      const uidToLogout = targetUserId || activeAccountId;
-      const sessionToLogout = sessions.find((s) => String(s.user.id) === String(uidToLogout));
-      
+    async (apiBaseUrl) => {
+      // Optional: Call logout API for the active session (or all sessions)
+      const sessionToLogout = sessions.find((s) => String(s.user.id) === String(activeAccountId));
       try {
         if (sessionToLogout?.accessToken) {
           await authApi.logout({ email: sessionToLogout.user?.email || '' }, apiBaseUrl || API_BASE_URL);
@@ -181,17 +180,10 @@ export function AuthProvider({ children }) {
       } catch {
         // ignore logout API errors
       } finally {
-        setSessions((prev) => {
-          const newSessions = prev.filter((s) => String(s.user.id) !== String(uidToLogout));
-          if (newSessions.length === 0) {
-            setIsSessionExpired(false);
-            navigate('/login', { replace: true });
-          } else if (uidToLogout === activeAccountId) {
-            setActiveAccountId(String(newSessions[0].user.id));
-            navigate('/dashboard', { replace: true });
-          }
-          return newSessions;
-        });
+        setSessions([]);
+        setActiveAccountId(null);
+        setIsSessionExpired(false);
+        navigate('/login', { replace: true });
       }
     },
     [sessions, activeAccountId, navigate]

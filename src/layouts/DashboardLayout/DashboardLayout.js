@@ -183,7 +183,8 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
                 onUpgradeClick={() => setIsUpgradeModalOpen(true)}
                 onQuotaClick={() => setIsQuotaModalOpen(true)}
                 onProfileClick={() => {
-                  navigate('/profile');
+                  setSettingsActiveTab('account');
+                  setIsSettingsOpen(true);
                 }}
                 onSettingsClick={() => {
                   setSettingsActiveTab('billing');
