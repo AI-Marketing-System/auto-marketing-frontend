@@ -9,7 +9,7 @@ import CreateWorkspaceModal from '../components/CreateWorkspaceModal';
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(false);
   const [sharedWorkspaces, setSharedWorkspaces] = useState([]);
@@ -20,10 +20,9 @@ function DashboardPage() {
 
   const fetchWorkspaces = () => {
     setLoading(true);
-    const token = localStorage.getItem('marqops.authLab.accessToken');
     fetch(`${API_BASE_URL}/workspaces`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     })
       .then((res) => {
@@ -48,10 +47,9 @@ function DashboardPage() {
 
   const fetchSharedWorkspaces = () => {
     setLoadingShared(true);
-    const token = localStorage.getItem('marqops.authLab.accessToken');
     fetch(`${API_BASE_URL}/workspaces/member`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     })
       .then((res) => {
@@ -85,14 +83,13 @@ function DashboardPage() {
   };
 
   const handleModalSubmit = (data) => {
-    const token = localStorage.getItem('marqops.authLab.accessToken');
     if (editingWorkspace) {
       // Edit Workspace
       fetch(`${API_BASE_URL}/workspaces/${editingWorkspace.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           name: data.title,
@@ -139,7 +136,7 @@ function DashboardPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           name: data.title,
@@ -201,11 +198,10 @@ function DashboardPage() {
 
     // 2. Set timeout 5s để xóa thật
     const timeoutId = setTimeout(() => {
-      const token = localStorage.getItem('marqops.authLab.accessToken');
       fetch(`${API_BASE_URL}/workspaces/${workspaceId}`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       })
         .then((res) => {

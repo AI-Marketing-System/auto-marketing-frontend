@@ -183,8 +183,7 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
                 onUpgradeClick={() => setIsUpgradeModalOpen(true)}
                 onQuotaClick={() => setIsQuotaModalOpen(true)}
                 onProfileClick={() => {
-                  setSettingsActiveTab('account');
-                  setIsSettingsOpen(true);
+                  navigate('/profile');
                 }}
                 onSettingsClick={() => {
                   setSettingsActiveTab('billing');
@@ -257,7 +256,7 @@ export default function DashboardLayout({ children, variant = 'dashboard' }) {
               <p style={{ margin: '0 0 24px', color: '#475569', lineHeight: 1.5 }}>
                 Quản trị viên đã xóa bạn khỏi Workspace này. Bạn không thể tiếp tục thao tác và các thay đổi chưa lưu sẽ không được giữ lại.
               </p>
-              <button 
+              <button
                 onClick={handleKickedAcknowledge}
                 style={{
                   width: '100%',

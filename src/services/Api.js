@@ -2,6 +2,8 @@ const DEFAULT_API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || '/api/v1').r
 
 const ACCESS_TOKEN_STORAGE_KEY = 'marqops.authLab.accessToken';
 const REFRESH_TOKEN_STORAGE_KEY = 'marqops.authLab.refreshToken';
+const SESSIONS_KEY = 'marqops.authLab.sessions';
+const ACTIVE_ACCOUNT_ID_KEY = 'marqops.authLab.activeAccountId';
 
 function clearStoredAuthTokens() {
   if (typeof window === 'undefined') {
@@ -37,7 +39,7 @@ function getAuthHeaders(path, options = {}) {
     typeof path === 'string' && (path.startsWith('/auth/') || path === '/auth');
 
   if (!isPublicAuthRoute && typeof window !== 'undefined') {
-    const accessToken = window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+    const accessToken = getAccessToken();
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -109,5 +111,18 @@ export function getApiBaseUrl() {
 
 export function getAccessToken() {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  try {
+    const sessionsStr = window.localStorage.getItem(SESSIONS_KEY);
+    const activeAccountId = window.localStorage.getItem(ACTIVE_ACCOUNT_ID_KEY);
+    if (sessionsStr) {
+      const sessions = JSON.parse(sessionsStr);
+      if (sessions && sessions.length > 0) {
+         const activeSession = sessions.find(s => String(s.user?.id) === String(activeAccountId)) || sessions[0];
+         return activeSession?.accessToken || null;
+      }
+    }
+  } catch (e) {
+    // Ignore parse error
+  }
+  return window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
 }
