@@ -15,7 +15,8 @@ import {
   planDraftApi,
   plannerApi,
 } from '../api/plannerApi';
-import { documentApi, parseDocumentsResponse } from '../../campaigns/api/documentApi';
+import { documentApi } from '../../campaigns/api/documentApi';
+import { useWorkspaceDocuments } from '../hooks/useWorkspaceDocuments';
 import { API_BASE_URL } from '../../../config/env';
 import { detectDocumentType, downloadDocument, formatTime } from '../utils/documentFormat';
 import {
@@ -79,17 +80,18 @@ function PlannerWorkspaceView({ workspaceId }) {
   const [introCollapsed, setIntroCollapsed] = useState(false);
 
   // ----- thư viện tài liệu -----
-  const [documents, setDocuments] = useState([]);
-  const [docsLoading, setDocsLoading] = useState(false);
-  const [docsError, setDocsError] = useState(null);
-  const [totalCount, setTotalCount] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    documents, docsLoading, docsError, totalCount,
+    searchQuery, setSearchQuery, selectedDocIds, setSelectedDocIds,
+    handleToggleDoc, handleSelectAllSupported, handleClearSelection,
+    loadDocuments, handleDeleteDocument
+  } = useWorkspaceDocuments(workspaceId);
+
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [previewDoc, setPreviewDoc] = useState(null);
 
   // ----- lựa chọn -----
-  const [selectedDocIds, setSelectedDocIds] = useState([]);
   const [pendingFiles, setPendingFiles] = useState([]);
   const [alsoSaveToLibrary, setAlsoSaveToLibrary] = useState(true);
 
@@ -115,36 +117,6 @@ function PlannerWorkspaceView({ workspaceId }) {
   const isOwnPlan = planState.workspaceId === workspaceId;
   const plan = isOwnPlan ? planState.plan : null;
   const expanded = isOwnPlan ? planState.expanded : {};
-
-  const loadDocuments = useCallback(async () => {
-    if (!workspaceId) return;
-
-    // Xoá danh sách cũ trước khi gọi, để tên tài liệu của workspace trước không hiện dưới workspace
-    // hiện tại trong lúc chờ response.
-    setDocuments([]);
-    setTotalCount(0);
-    setDocsLoading(true);
-    setDocsError(null);
-    try {
-      // Luôn xin page 0: `parseDocumentsResponse` map `number` từ `page` của backend vốn là 1-based,
-      // nên không đọc giá trị đó.
-      const response = await documentApi.list(API_BASE_URL, workspaceId, { page: 0, size: 100 });
-      const parsed = parseDocumentsResponse(response);
-      setDocuments(parsed.documents);
-      setTotalCount(parsed.totalElements);
-      // Bỏ khỏi lựa chọn những tài liệu đã bị xoá ở nơi khác.
-      const availableIds = new Set(parsed.documents.map((doc) => doc.id));
-      setSelectedDocIds((prev) => prev.filter((id) => availableIds.has(id)));
-    } catch (err) {
-      setDocsError(err.message || 'Không thể tải tài liệu');
-    } finally {
-      setDocsLoading(false);
-    }
-  }, [workspaceId]);
-
-  useEffect(() => {
-    loadDocuments();
-  }, [loadDocuments]);
 
   // Nạp bản nháp từ máy chủ. `draftLoading` khởi tạo là true nên frame đầu tiên là khối đang tải,
   // không bao giờ là panel chọn tài liệu rồi mới nhảy sang màn kết quả.
@@ -282,17 +254,7 @@ function PlannerWorkspaceView({ workspaceId }) {
     [pendingFiles, selectedDocIds, documents]
   );
 
-  // ----- lựa chọn tài liệu -----
-
-  const handleToggleDoc = (docId) => {
-    setSelectedDocIds((prev) =>
-      prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]
-    );
-  };
-
-  const handleSelectAllSupported = () => {
-    setSelectedDocIds(documents.filter(isDocumentSelectable).map((doc) => doc.id));
-  };
+  // ----- lựa chọn tài liệu (kéo thả) -----
 
   const handleAddFiles = (files) => {
     setPendingFiles((prev) => [
@@ -315,67 +277,52 @@ function PlannerWorkspaceView({ workspaceId }) {
     setPendingFiles((prev) => prev.filter((item) => item.key !== key));
   };
 
-  // ----- thư viện: upload / xoá -----
+  const uploadToLibrary = async (files) => {
+    if (!files || files.length === 0 || !workspaceId) return;
 
-  const uploadToLibrary = useCallback(
-    async (files) => {
-      if (!files || files.length === 0 || !workspaceId) return;
+    setUploadError(null);
 
-      setUploadError(null);
-
-      for (const file of files) {
-        const ext = getFileExtension(file.name);
-        if (!DOCUMENT_LIBRARY_EXTENSIONS.includes(ext)) {
-          setUploadError(`File "${file.name}" không đúng định dạng thư viện hỗ trợ.`);
-          return;
-        }
-        if (file.size > DOCUMENT_LIBRARY_MAX_FILE_SIZE_MB * 1024 * 1024) {
-          setUploadError(
-            `File "${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)}MB) vượt quá dung lượng ` +
-              `tối đa cho phép (${DOCUMENT_LIBRARY_MAX_FILE_SIZE_MB}MB).`
-          );
-          return;
-        }
+    for (const file of files) {
+      const ext = getFileExtension(file.name);
+      if (!DOCUMENT_LIBRARY_EXTENSIONS.includes(ext)) {
+        setUploadError(`File "${file.name}" không đúng định dạng thư viện hỗ trợ.`);
+        return;
       }
-
-      setUploading(true);
-      try {
-        await Promise.all(
-          files.map((file) => {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('folderPath', '/documents');
-            formData.append('documentType', detectDocumentType(file.name));
-            return documentApi.upload(API_BASE_URL, workspaceId, formData);
-          })
+      if (file.size > DOCUMENT_LIBRARY_MAX_FILE_SIZE_MB * 1024 * 1024) {
+        setUploadError(
+          `File "${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)}MB) vượt quá dung lượng ` +
+            `tối đa cho phép (${DOCUMENT_LIBRARY_MAX_FILE_SIZE_MB}MB).`
         );
-        await loadDocuments();
-      } catch (err) {
-        const rawMsg = err.message || '';
-        if (rawMsg.includes('Invalid Signature')) {
-          setUploadError(PLANNER_UPLOAD_ERROR_COPY.cloudinarySignature);
-        } else if (err.status === 413 || rawMsg.includes('vượt quá')) {
-          setUploadError(PLANNER_UPLOAD_ERROR_COPY.tooLarge);
-        } else if (err.status === 400 || rawMsg.includes('not supported')) {
-          setUploadError(PLANNER_UPLOAD_ERROR_COPY.unsupported);
-        } else {
-          setUploadError(rawMsg || PLANNER_UPLOAD_ERROR_COPY.fallback);
-        }
-        throw err;
-      } finally {
-        setUploading(false);
+        return;
       }
-    },
-    [workspaceId, loadDocuments]
-  );
+    }
 
-  const handleDeleteDocument = async (documentId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa tài liệu này?')) return;
+    setUploading(true);
     try {
-      await documentApi.delete(API_BASE_URL, workspaceId, documentId);
+      await Promise.all(
+        files.map((file) => {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('folderPath', '/documents');
+          formData.append('documentType', detectDocumentType(file.name));
+          return documentApi.upload(API_BASE_URL, workspaceId, formData);
+        })
+      );
       await loadDocuments();
     } catch (err) {
-      setDocsError(err.message || 'Không thể xóa tài liệu');
+      const rawMsg = err.message || '';
+      if (rawMsg.includes('Invalid Signature')) {
+        setUploadError(PLANNER_UPLOAD_ERROR_COPY.cloudinarySignature);
+      } else if (err.status === 413 || rawMsg.includes('vượt quá')) {
+        setUploadError(PLANNER_UPLOAD_ERROR_COPY.tooLarge);
+      } else if (err.status === 400 || rawMsg.includes('not supported')) {
+        setUploadError(PLANNER_UPLOAD_ERROR_COPY.unsupported);
+      } else {
+        setUploadError(rawMsg || PLANNER_UPLOAD_ERROR_COPY.fallback);
+      }
+      throw err;
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -629,11 +576,11 @@ function PlannerWorkspaceView({ workspaceId }) {
             docsError={docsError}
             totalCount={totalCount}
             searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
+            onSearchChange={(val) => setSearchQuery(val)}
             selectedDocIds={selectedDocIds}
             onToggleDoc={handleToggleDoc}
             onSelectAllSupported={handleSelectAllSupported}
-            onClearSelection={() => setSelectedDocIds([])}
+            onClearSelection={handleClearSelection}
             onReloadDocuments={loadDocuments}
             onDeleteDocument={handleDeleteDocument}
             onPreviewDocument={setPreviewDoc}

@@ -453,6 +453,7 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
         onDraft={handleDraftPost}
         workspaceId={workspaceId}
         topics={topics}
+        brandTone={selectedWorkspace?.brandTone || ''}
       />
 
       {/* 6. Modal lên lịch bài viết có sẵn khi click vào ô lịch */}

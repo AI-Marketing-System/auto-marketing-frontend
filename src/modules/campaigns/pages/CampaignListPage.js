@@ -8,7 +8,10 @@ import CampaignActions from '../components/CampaignActions';
 import WorkspaceFanpageBar from '../components/WorkspaceFanpageBar';
 import AvatarGroup from '../../workspace/components/AvatarGroup';
 import WorkspaceMembersModal from '../../workspace/components/WorkspaceMembersModal';
+import WorkspaceContentSummary from '../components/WorkspaceContentSummary';
+import WorkspaceDocumentModal from '../components/WorkspaceDocumentModal';
 import { workspaceApi as wsApi } from '../../workspace/api/workspaceApi';
+import { documentApi } from '../api/documentApi';
 import {
   campaignApi,
   mapSortField,
@@ -78,6 +81,9 @@ function CampaignListPage() {
   const [actionModal, setActionModal] = useState(null);
   const [actionPendingId, setActionPendingId] = useState(null);
 
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [workspaceDocCount, setWorkspaceDocCount] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -108,8 +114,13 @@ function CampaignListPage() {
       wsApi.getWorkspaceMembers(workspaceFilter)
         .then(res => setWorkspaceMembers(res.data || []))
         .catch(console.error);
+        
+      documentApi.list(API_BASE_URL, workspaceFilter, { page: 0, size: 1 })
+        .then(res => setWorkspaceDocCount(res?.data?.totalElements || 0))
+        .catch(() => setWorkspaceDocCount(0));
     } else {
       setWorkspaceMembers([]);
+      setWorkspaceDocCount(0);
     }
   }, [workspaceFilter]);
 
@@ -469,6 +480,52 @@ function CampaignListPage() {
             </button>
           </div>
         </section>
+
+        {workspaceFilter !== 'ALL' && (
+          <div style={{ marginBottom: '24px' }}>
+            <WorkspaceContentSummary workspaceId={workspaceFilter} />
+            
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'linear-gradient(to right, #f8fafc, #f1f5f9)',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              marginTop: '16px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ background: '#e0e7ff', color: '#4f46e5', padding: '10px', borderRadius: '10px' }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#1e293b' }}>
+                    Thư viện tài liệu AI <span style={{ color: '#64748b', fontWeight: 400 }}>({workspaceDocCount} tài liệu)</span>
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>
+                    Nơi lưu trữ các tài liệu (Brand Guidelines, Catalogue...) để AI đọc hiểu và lập kế hoạch Marketing chuẩn xác hơn.
+                  </p>
+                </div>
+              </div>
+              <button 
+                className="wp-btn"
+                style={{ background: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', fontWeight: 500, padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s' }}
+                onMouseOver={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = '#94a3b8'; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                onClick={() => setIsDocModalOpen(true)}
+              >
+                Quản lý tài liệu
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="workspace-selector-card">
           <div className="workspace-selector-dropdown">
@@ -847,6 +904,19 @@ function CampaignListPage() {
           navigate('/dashboard');
         }}
       />
+      {workspaceFilter !== 'ALL' && (
+        <WorkspaceDocumentModal 
+          workspaceId={workspaceFilter} 
+          isOpen={isDocModalOpen} 
+          onClose={() => {
+            setIsDocModalOpen(false);
+            // Cập nhật lại count sau khi modal đóng (lỡ user có upload/xóa)
+            documentApi.list(API_BASE_URL, workspaceFilter, { page: 0, size: 1 })
+              .then(res => setWorkspaceDocCount(res?.data?.totalElements || 0))
+              .catch(() => {});
+          }} 
+        />
+      )}
     </div>
   );
 }

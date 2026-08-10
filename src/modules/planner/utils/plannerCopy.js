@@ -81,9 +81,9 @@ export const PLANNER_SECTION_LABELS = {
   backToCampaigns: 'Về trang chiến dịch',
   expandAll: 'Mở tất cả',
   collapseAll: 'Thu gọn tất cả',
-  addCampaign: '+ Thêm chiến dịch',
-  addTopic: '+ Thêm chủ đề',
-  addPost: '+ Thêm bài viết',
+  addCampaign: 'Thêm chiến dịch',
+  addTopic: 'Thêm chủ đề',
+  addPost: 'Thêm bài viết',
 };
 
 export const PLANNER_FIELD_LABELS = {
@@ -113,8 +113,8 @@ export const PLANNER_EMPTY_STATES = {
   noCampaigns:
     'AI không đề xuất được chiến dịch nào từ tài liệu này. Hãy thử bổ sung tài liệu chi tiết hơn ' +
     'về sản phẩm và khách hàng.',
-  noTopics: 'Chiến dịch này chưa có chủ đề. Bấm "+ Thêm chủ đề" để tự thêm.',
-  noPosts: 'Chủ đề này chưa có bài viết. Bấm "+ Thêm bài viết" để tự thêm.',
+  noTopics: 'Chiến dịch này chưa có chủ đề. Bấm "Thêm chủ đề" để tự thêm.',
+  noPosts: 'Chủ đề này chưa có bài viết. Bấm "Thêm bài viết" để tự thêm.',
   emptyField: '(AI không đưa ra nội dung — bấm để tự điền)',
   noDocuments: 'Chưa có tài liệu nào',
   noDocumentsHint: 'Kéo thả file vào khu vực upload để thêm tài liệu',
@@ -158,8 +158,7 @@ export const PLANNER_SELECTION_COPY = {
   alsoSaveHint: 'Bỏ tích nếu bạn chỉ muốn AI đọc một lần mà không lưu file lại.',
   selectAll: 'Chọn tất cả tài liệu AI đọc được',
   clearSelection: 'Bỏ chọn tất cả',
-  summary: ({ fileCount, totalLabel }) =>
-    `Đã chọn ${fileCount} tài liệu · tổng ${totalLabel}`,
+  summary: ({ fileCount, totalLabel }) => `Đã chọn ${fileCount} tài liệu · tổng ${totalLabel}`,
   limitsHint: `${PLANNER_LIMITS_LABEL}. Định dạng: ${PLANNER_FORMATS_LABEL}.`,
   dropzoneText: 'Kéo thả tài liệu vào đây, hoặc bấm để chọn file',
   dropzoneHint: 'Hỗ trợ nhiều file cùng lúc',
@@ -279,7 +278,12 @@ export function resolvePlannerError(err) {
     return { kind: 'aborted' };
   }
   if (err?.status === undefined || err?.status === null) {
-    return { kind: 'error', status: null, ...PLANNER_ERROR_COPY.offline, serverMessage: err?.message || '' };
+    return {
+      kind: 'error',
+      status: null,
+      ...PLANNER_ERROR_COPY.offline,
+      serverMessage: err?.message || '',
+    };
   }
 
   const copy = PLANNER_ERROR_COPY[err.status] || PLANNER_ERROR_COPY.default;

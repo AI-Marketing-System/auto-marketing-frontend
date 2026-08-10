@@ -101,6 +101,10 @@ export default function CreatePostModal({
   const [selectedDate, setSelectedDate] = useState(getDefaultDate);
   const [time, setTime]                 = useState('09:00');
 
+  // AI suggestion hints (từ skeleton post — chỉ dùng hiển thị, không bắt buộc)
+  const [aiScheduleSuggestion, setAiScheduleSuggestion] = useState('');
+  const [mediaSuggestion, setMediaSuggestion]           = useState('');
+
   const [submitType, setSubmitType] = useState(null); // 'draft' | 'submit' | null
 
   // ── Sync initialData khi modal mở ────────────────────────
@@ -117,6 +121,9 @@ export default function CreatePostModal({
         setHashtags(initTags);
         setTopic(initialData.topicId || '');
         setMediaFiles(initialData.medias || []);
+        // Gán AI suggestion hints
+        setAiScheduleSuggestion(initialData.scheduleSuggestion || '');
+        setMediaSuggestion(initialData.mediaSuggestion || '');
       } else {
         setContent('');
         setHashtags([]);
@@ -124,6 +131,8 @@ export default function CreatePostModal({
         setTime('09:00');
         setTopic(topicId || '');
         setMediaFiles([]);
+        setAiScheduleSuggestion('');
+        setMediaSuggestion('');
       }
       setAiMediaFiles([]);
       setSubmitType(null);
@@ -263,6 +272,7 @@ export default function CreatePostModal({
               hashtags={hashtags}
               currentContent={content}
               onAiMediaChange={handleAiMediaChange}
+              mediaSuggestion={mediaSuggestion}
             />
           </div>
 
@@ -281,6 +291,7 @@ export default function CreatePostModal({
             time={time}
             onTimeChange={setTime}
             CalendarComponent={PostCalendar}
+            aiScheduleSuggestion={aiScheduleSuggestion}
           />
         </div>
 

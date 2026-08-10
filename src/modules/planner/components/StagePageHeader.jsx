@@ -14,11 +14,11 @@ function StagePageHeader({ workspaceId }) {
           <p className="sp-header-subtitle">Quy trình sinh kế hoạch Marketing từng bước tự động</p>
         </div>
       </div>
-      <div className="sp-header-actions">
+      {/* <div className="sp-header-actions">
         <Link className="sp-btn sp-btn--ghost sp-btn--sm" to={`/workspaces/${workspaceId}/planner`}>
           <ArrowLeftIcon size={14} /> Phân tích nhanh
         </Link>
-      </div>
+      </div> */}
     </header>
   );
 }

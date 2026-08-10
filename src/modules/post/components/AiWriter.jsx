@@ -25,6 +25,7 @@ export default function AiWriter({
   hashtags = [],
   currentContent = '',
   onAiMediaChange,
+  mediaSuggestion = '',  // Gợi ý media từ AI skeleton
 }) {
   const { quota } = useQuota();
   const [activeTab, setActiveTab]   = useState('write');   // 'write' | 'read'
@@ -41,6 +42,9 @@ export default function AiWriter({
   const [generatedImages, setGeneratedImages] = useState([]);
   const [imageCount, setImageCount]           = useState(1);
   const [reloadingIndex, setReloadingIndex]   = useState(null);
+
+  // Prompt gen ảnh — khởi tạo từ mediaSuggestion, có thể chỉnh sửa trước khi gen
+  const [imagePrompt, setImagePrompt] = useState(mediaSuggestion || '');
 
   const updateFilesToParent = (base64Array) => {
     try {
@@ -71,6 +75,11 @@ export default function AiWriter({
     }
   }, [initialPrompt, initialTone, brandTone]);
 
+  // Sync mediaSuggestion vào imagePrompt khi modal mở
+  React.useEffect(() => {
+    if (mediaSuggestion) setImagePrompt(mediaSuggestion);
+  }, [mediaSuggestion]);
+
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
     setLoading(true);
@@ -95,7 +104,11 @@ export default function AiWriter({
         const generatedHashtags = generatedData.hashtags || [];
 
         onInsert?.(generatedText, generatedHashtags);
-        window.dispatchEvent(new CustomEvent('quota:changed'));
+        window.dispatchEvent(
+          new CustomEvent('quota:changed', {
+            detail: { remainingTokens: generatedData.remainingToken, tokensUsed: generatedData.tokensUsed },
+          })
+        );
         // Hiển thị toast token nếu backend trả về thông tin
         if (generatedData.tokensUsed !== undefined) {
           showTokenToast(generatedData.tokensUsed, generatedData.remainingToken);
@@ -117,15 +130,20 @@ export default function AiWriter({
   };
 
   const handleGenerateImage = async () => {
-    const textToGenerate = currentContent.trim() || prompt.trim();
-    if (!textToGenerate) return;
-    
+    // Build prompt: ưu tiên mediaSuggestion (imagePrompt) + nội dung bài
+    const postText  = currentContent.trim() || prompt.trim();
+    const imgHint   = imagePrompt.trim();
+    const finalPrompt = imgHint
+      ? `[Yêu cầu hình ảnh - quan trọng]: ${imgHint}\n[Nội dung bài viết - tham khảo]: ${postText}`
+      : postText;
+    if (!finalPrompt.trim()) return;
+
     setImgLoading(true);
     setImgErrorMsg(null);
 
     try {
       const payload = {
-        prompt: textToGenerate,
+        prompt: finalPrompt,
         count: imageCount
       };
 
@@ -133,7 +151,11 @@ export default function AiWriter({
       if (res && res.success && res.data && res.data.images) {
         setGeneratedImages(res.data.images);
         updateFilesToParent(res.data.images);
-        window.dispatchEvent(new CustomEvent('quota:changed'));
+        window.dispatchEvent(
+          new CustomEvent('quota:changed', {
+            detail: { remainingTokens: res.data.remainingToken, tokensUsed: res.data.tokensUsed },
+          })
+        );
         // Hiển thị toast token
         if (res.data.tokensUsed !== undefined) {
           showTokenToast(res.data.tokensUsed, res.data.remainingToken);
@@ -163,13 +185,17 @@ export default function AiWriter({
   };
 
   const handleReloadImage = async (indexToReload) => {
-    const textToGenerate = currentContent.trim() || prompt.trim();
-    if (!textToGenerate) return;
+    const postText  = currentContent.trim() || prompt.trim();
+    const imgHint   = imagePrompt.trim();
+    const finalPrompt = imgHint
+      ? `[Yêu cầu hình ảnh - quan trọng]: ${imgHint}\n[Nội dung bài viết - tham khảo]: ${postText}`
+      : postText;
+    if (!finalPrompt.trim()) return;
 
     setReloadingIndex(indexToReload);
     try {
       const payload = {
-        prompt: textToGenerate,
+        prompt: finalPrompt,
         count: 1 // Chỉ lấy 1 ảnh mới
       };
 
@@ -180,7 +206,11 @@ export default function AiWriter({
         setGeneratedImages(newImages);
         updateFilesToParent(newImages);
         // Bổ sung: dispatch quota:changed và hiện toast sau reload ảnh
-        window.dispatchEvent(new CustomEvent('quota:changed'));
+        window.dispatchEvent(
+          new CustomEvent('quota:changed', {
+            detail: { remainingTokens: res.data.remainingToken, tokensUsed: res.data.tokensUsed },
+          })
+        );
         if (res.data.tokensUsed !== undefined) {
           showTokenToast(res.data.tokensUsed, res.data.remainingToken);
         }
@@ -371,6 +401,55 @@ export default function AiWriter({
           </div>
         </div>
 
+        {/* Editable image prompt — ưu tiên từ mediaSuggestion */}
+        <div style={{ marginBottom: 8 }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            marginBottom: 4,
+            fontSize: 12,
+            color: '#475569',
+            fontWeight: 500,
+          }}>
+            <span>Mô tả hình ảnh cần tạo</span>
+            {mediaSuggestion && (
+              <span style={{
+                background: 'linear-gradient(90deg,#7c3aed,#a855f7)',
+                color: '#fff',
+                fontSize: 10,
+                fontWeight: 700,
+                borderRadius: 6,
+                padding: '1px 6px',
+                letterSpacing: 0.3,
+              }}>
+                🤖 AI gợi ý
+              </span>
+            )}
+          </div>
+          <textarea
+            id="cp-ai-image-prompt"
+            value={imagePrompt}
+            onChange={(e) => setImagePrompt(e.target.value)}
+            rows={2}
+            placeholder="Mô tả yêu cầu hình ảnh (VD: Banner sản phẩm nền trắng, ảnh thực tế...)"
+            style={{
+              width: '100%',
+              fontSize: 12,
+              padding: '7px 10px',
+              border: '1px solid',
+              borderColor: mediaSuggestion ? '#c4b5fd' : '#e2e8f0',
+              borderRadius: 7,
+              resize: 'vertical',
+              outline: 'none',
+              color: '#1e293b',
+              background: mediaSuggestion ? '#fdf4ff' : '#fff',
+              lineHeight: 1.45,
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
         <div 
           className={`cp-ai-image ${imgLoading ? 'cp-ai-image--loading' : ''}`} 
           id="cp-ai-image-btn"
@@ -384,7 +463,7 @@ export default function AiWriter({
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
           )}
-          {imgLoading ? 'Đang tạo ảnh...' : `Tạo ${imageCount} ảnh cho bài viết`}
+          {imgLoading ? 'Đang tạo ảnh...' : `Tạo ${imageCount} ảnh cho bài viết (~${(imageCount * 1000).toLocaleString('vi-VN')} token)`}
           <span className="cp-ai-image__badge">AI</span>
         </div>
         

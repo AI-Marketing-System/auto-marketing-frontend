@@ -1,153 +1,127 @@
 /* ============================================================
-   StagedPlannerPage.css — Modern SaaS Redesign
-   Design inspiration: Linear, Vercel, Stripe, Notion
+   StagedPlannerPage.css — Kế thừa ngôn ngữ thiết kế từ WorkspacePlannerPage
+   Design: Linear · Vercel · Stripe — violet-purple gradient system
    ============================================================ */
 
-/* ─── Design Tokens ─────────────────────────────────────── */
+/* ─── Design Tokens (align với wp- namespace) ─────────────── */
 :root {
   --sp-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --sp-brand: #4f46e5; /* Indigo 600 */
-  --sp-brand-hover: #4338ca; /* Indigo 700 */
-  --sp-brand-light: #e0e7ff; /* Indigo 100 */
-  --sp-text-primary: #1e293b; /* Slate 800 */
-  --sp-text-secondary: #64748b; /* Slate 500 */
-  --sp-text-muted: #94a3b8; /* Slate 400 */
-  --sp-bg-page: #f8fafc;
-  --sp-bg-card: #ffffff;
-  --sp-bg-subtle: #f8fafc; /* Softer background */
-  --sp-bg-hover: #f1f5f9;
-  --sp-border: #e2e8f0;
+
+  /* Brand — violet/purple gradient như WorkspacePlannerPage */
+  --sp-brand:        #7c3aed;
+  --sp-brand-2:      #a855f7;
+  --sp-brand-hover:  #6d28d9;
+  --sp-brand-light:  #f5f3ff;
+  --sp-brand-border: #ddd6fe;
+
+  /* Text */
+  --sp-text-primary:   #1e293b;
+  --sp-text-secondary: #64748b;
+  --sp-text-muted:     #94a3b8;
+
+  /* Backgrounds */
+  --sp-bg-page:    #f8fafc;
+  --sp-bg-card:    #ffffff;
+  --sp-bg-subtle:  #f8fafc;
+  --sp-bg-hover:   #f1f5f9;
+  --sp-bg-violet:  #faf5ff;
+
+  /* Borders */
+  --sp-border:       #e2e8f0;
   --sp-border-light: #f1f5f9;
-  --sp-ring: #4f46e5;
-  --sp-radius-sm: 6px;
-  --sp-radius-md: 8px;
-  --sp-radius-lg: 12px;
-  --sp-radius-xl: 16px;
+  --sp-border-focus: rgba(139, 92, 246, 0.5);
+
+  /* Shadows */
   --sp-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --sp-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-  --sp-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
-  --sp-transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --sp-shadow-md: 0 4px 20px rgba(15, 23, 42, 0.06);
+  --sp-shadow-lg: 0 8px 30px rgba(124, 58, 237, 0.10);
+  --sp-shadow-campaign: 0 10px 40px rgba(124, 58, 237, 0.12);
+
+  /* Radius */
+  --sp-radius-sm: 6px;
+  --sp-radius-md: 10px;
+  --sp-radius-lg: 14px;
+  --sp-radius-xl: 16px;
+
+  /* Transition */
+  --sp-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ─── Page Container ────────────────────────────────────── */
+/* ─── Page Container ────────────────────────────────────────── */
 .sp-page {
   font-family: var(--sp-font);
   color: var(--sp-text-primary);
-  max-width: 1120px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 32px 24px 64px;
+  padding: 24px 28px 64px;
   position: relative;
   min-height: 80vh;
 }
 
-/* ─── Card ──────────────────────────────────────────────── */
+/* ─── Card (tương tự wp-card nhưng lớn hơn) ──────────────── */
 .sp-card {
   background: var(--sp-bg-card);
   border: 1px solid var(--sp-border);
   border-radius: var(--sp-radius-xl);
-  padding: 40px;
-  margin-bottom: 24px;
-  box-shadow: var(--sp-shadow-sm);
-  transition: box-shadow var(--sp-transition);
+  padding: 28px;
+  margin-bottom: 20px;
+  box-shadow: var(--sp-shadow-md);
+  transition: box-shadow var(--sp-transition), border-color var(--sp-transition);
 }
 
 .sp-card:hover {
-  box-shadow: var(--sp-shadow-md);
+  box-shadow: var(--sp-shadow-lg);
 }
 
-/* ─── Page Header ───────────────────────────────────────── */
-.sp-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 32px;
-  gap: 16px;
-}
-
-.sp-header-left {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.sp-header-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--sp-radius-lg);
-  background: linear-gradient(135deg, var(--sp-brand) 0%, var(--sp-brand-hover) 100%);
-  color: #fff;
-  flex-shrink: 0;
-}
-
-.sp-header-title {
-  font-size: 24px;
-  font-weight: 600;
+/* ─── Step Title ────────────────────────────────────────────── */
+.sp-step-title {
+  font-size: 18px;
+  font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--sp-text-primary);
   margin: 0;
-  line-height: 1.3;
-}
-
-.sp-header-subtitle {
-  font-size: 14px;
-  color: var(--sp-text-secondary);
-  margin: 4px 0 0;
-  line-height: 1.5;
-}
-
-.sp-header-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-/* ─── Step Title ────────────────────────────────────────── */
-.sp-step-title {
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--sp-text-primary);
-  margin: 0;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .sp-step-subtitle {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--sp-text-secondary);
   margin: 6px 0 0;
-  line-height: 1.5;
+  line-height: 1.55;
+  max-width: 70ch;
 }
 
 .sp-step-header {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
-/* ─── Section Title ─────────────────────────────────────── */
+/* ─── Section Title ─────────────────────────────────────────── */
 .sp-section-title {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--sp-text-primary);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--sp-brand);
   margin: 0 0 16px;
 }
 
-/* ─── Buttons ───────────────────────────────────────────── */
+/* ─── Buttons ───────────────────────────────────────────────── */
 .sp-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 18px;
+  padding: 9px 17px;
   border-radius: var(--sp-radius-md);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13.5px;
+  font-weight: 600;
   font-family: var(--sp-font);
   line-height: 1.4;
   cursor: pointer;
   transition: all var(--sp-transition);
-  border: 1px solid transparent;
+  border: 1px solid var(--sp-border);
+  background: var(--sp-bg-card);
+  color: var(--sp-text-primary);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -158,42 +132,36 @@
   pointer-events: none;
 }
 
-/* Primary */
+.sp-btn:hover:not(:disabled) {
+  background: var(--sp-bg-hover);
+  border-color: #cbd5e1;
+}
+
+/* Primary — gradient tím như wp-btn--primary */
 .sp-btn--primary {
-  background: var(--sp-brand);
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  border-color: transparent;
   color: #fff;
-  border-color: var(--sp-brand);
-  box-shadow: var(--sp-shadow-sm);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
 }
 
 .sp-btn--primary:hover:not(:disabled) {
-  background: var(--sp-brand-hover);
-  border-color: var(--sp-brand-hover);
-  box-shadow: var(--sp-shadow-md);
-}
-
-/* Secondary */
-.sp-btn--secondary {
-  background: var(--sp-bg-card);
-  color: var(--sp-text-primary);
-  border-color: var(--sp-border);
-}
-
-.sp-btn--secondary:hover:not(:disabled) {
-  background: var(--sp-bg-subtle);
-  border-color: #cbd5e1;
+  background: linear-gradient(135deg, #6d28d9, #7e22ce);
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
 }
 
 /* Ghost */
 .sp-btn--ghost {
   background: transparent;
-  color: var(--sp-text-secondary);
   border-color: transparent;
+  color: var(--sp-text-secondary);
 }
 
 .sp-btn--ghost:hover:not(:disabled) {
   background: var(--sp-bg-subtle);
   color: var(--sp-text-primary);
+  border-color: var(--sp-border);
 }
 
 /* Danger */
@@ -202,48 +170,75 @@
   color: #ef4444;
   border-color: transparent;
   padding: 6px;
+  border-radius: 8px;
 }
 
 .sp-btn--danger:hover:not(:disabled) {
   background: #fef2f2;
   color: #dc2626;
+  border-color: #fecaca;
 }
 
-/* Dashed (for add buttons) */
+/* Dashed — add button */
 .sp-btn--dashed {
   background: transparent;
-  color: var(--sp-text-secondary);
-  border: 1px dashed var(--sp-border);
+  color: var(--sp-brand);
+  border: 1px dashed #c4b5fd;
   border-radius: var(--sp-radius-md);
-  padding: 8px 16px;
+  padding: 8px 14px;
   font-size: 13px;
 }
 
 .sp-btn--dashed:hover:not(:disabled) {
-  border-color: #94a3b8;
-  color: var(--sp-text-primary);
-  background: var(--sp-bg-subtle);
+  background: rgba(124, 58, 237, 0.06);
+  border-color: var(--sp-brand);
+  color: var(--sp-brand-hover);
 }
 
 /* Small variant */
 .sp-btn--sm {
-  padding: 5px 12px;
-  font-size: 13px;
+  padding: 5px 11px;
+  font-size: 12.5px;
   border-radius: var(--sp-radius-sm);
 }
 
-/* ─── Form Fields ───────────────────────────────────────── */
+/* Icon-only button (like wp-icon-btn) */
+.sp-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--sp-text-secondary);
+  transition: all var(--sp-transition);
+}
+
+.sp-icon-btn:hover {
+  background: var(--sp-bg-hover);
+  color: var(--sp-text-primary);
+}
+
+.sp-icon-btn--delete:hover {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* ─── Form Fields ───────────────────────────────────────────── */
 .sp-field {
   width: 100%;
 }
 
 .sp-field__label {
   display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--sp-text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sp-text-secondary);
   margin-bottom: 6px;
-  line-height: 1.4;
 }
 
 .sp-field__required {
@@ -256,7 +251,7 @@
   width: 100%;
   padding: 10px 14px;
   border-radius: var(--sp-radius-md);
-  border: 1px solid var(--sp-border);
+  border: 1px solid #c4b5fd;
   background: var(--sp-bg-card);
   font-size: 14px;
   font-family: var(--sp-font);
@@ -264,6 +259,7 @@
   line-height: 1.6;
   transition: all var(--sp-transition);
   box-sizing: border-box;
+  box-shadow: 0 1px 4px rgba(124, 58, 237, 0.06);
 }
 
 .sp-field__input::placeholder,
@@ -273,14 +269,14 @@
 
 .sp-field__input:hover:not(:disabled),
 .sp-field__textarea:hover:not(:disabled) {
-  border-color: #cbd5e1;
+  border-color: #a78bfa;
 }
 
 .sp-field__input:focus,
 .sp-field__textarea:focus {
   outline: none;
-  border-color: var(--sp-text-primary);
-  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08);
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
 }
 
 .sp-field__input:disabled,
@@ -288,17 +284,19 @@
   background: var(--sp-bg-subtle);
   color: var(--sp-text-secondary);
   cursor: not-allowed;
+  border-color: var(--sp-border);
 }
 
 .sp-field__textarea {
   resize: vertical;
-  min-height: 120px;
+  min-height: 80px;
+  overflow-y: hidden;
 }
 
-/* Title input (for campaign/topic/post names) */
+/* Title inline input — như wp-campaign__name */
 .sp-field__title-input {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.01em;
   padding: 6px 10px;
   border: 1px solid transparent;
@@ -311,69 +309,88 @@
 }
 
 .sp-field__title-input:hover:not(:disabled) {
-  border-color: var(--sp-border);
+  border-color: #e2e8f0;
   background: var(--sp-bg-subtle);
 }
 
 .sp-field__title-input:focus {
   outline: none;
-  border-color: var(--sp-text-primary);
+  border-color: #8b5cf6;
   background: var(--sp-bg-card);
-  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
 }
 
 .sp-field__title-input:disabled {
   color: var(--sp-text-secondary);
-  cursor: not-allowed;
+  cursor: default;
 }
 
-/* ─── Grid Layouts ──────────────────────────────────────── */
+/* ─── Grid Layouts ──────────────────────────────────────────── */
 .sp-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 16px;
 }
 
 .sp-grid-3 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 20px;
+  gap: 16px;
 }
 
 .sp-grid-full {
   grid-column: 1 / -1;
 }
 
-/* ─── Thread Hierarchy ──────────────────────────────────── */
+/* ─── Thread / Campaign Hierarchy ───────────────────────────── */
 .sp-thread {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Campaign — clone của wp-campaign */
+.sp-thread__campaign {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: var(--sp-radius-xl);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible;
   position: relative;
 }
 
-/* Campaign level */
-.sp-thread__campaign {
-  margin-bottom: 32px;
-  padding: 28px;
-  background: var(--sp-bg-card);
-  border-radius: var(--sp-radius-xl);
-  border: 1px solid var(--sp-border);
-  box-shadow: var(--sp-shadow-md);
-  transition: box-shadow var(--sp-transition);
-}
-
 .sp-thread__campaign:hover {
-  box-shadow: var(--sp-shadow-lg);
+  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.09);
+  border-color: rgba(139, 92, 246, 0.3);
 }
 
-.sp-thread__campaign:last-child {
-  margin-bottom: 0;
-}
-
+/* Campaign header — gradient tím như wp-campaign__head */
 .sp-thread__campaign-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: linear-gradient(180deg, #faf5ff 0%, #ffffff 100%);
+  border-radius: var(--sp-radius-xl) var(--sp-radius-xl) 0 0;
+  border-bottom: 1px solid var(--sp-border);
   gap: 12px;
+  transition: background var(--sp-transition);
+}
+
+.sp-thread__campaign-header:hover {
+  background: linear-gradient(180deg, #f3e8ff 0%, #faf5ff 100%);
+}
+
+.sp-thread__campaign-body {
+  padding: 20px 24px 24px;
+}
+
+/* Legacy: nếu không dùng sp-thread__campaign-body, dùng padding trực tiếp */
+.sp-thread__campaign > .sp-grid-2,
+.sp-thread__campaign > .sp-grid-3 {
+  padding: 0 24px 24px;
 }
 
 .sp-thread__campaign-title-group {
@@ -384,36 +401,64 @@
   min-width: 0;
 }
 
+/* Number badge — như wp-campaign__badge */
 .sp-thread__campaign-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   width: 28px;
   height: 28px;
-  border-radius: 50%;
-  background: var(--sp-brand);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #8b5cf6, #a855f7);
   color: #fff;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 800;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
 .sp-thread__campaign-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
-/* Topic level */
-.sp-thread__topic {
-  padding: 24px;
-  background: var(--sp-bg-page);
-  border: 1px solid var(--sp-border);
-  border-radius: var(--sp-radius-lg);
-  margin-top: 24px;
+/* Topic list — tạo tree connector như wp-topic-list */
+.sp-thread__topic-list {
+  list-style: none;
+  margin: 0 0 0 12px;
+  padding: 0 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   position: relative;
-  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+  border-left: 2px solid #e2e8f0;
+}
+
+/* Topic item */
+.sp-thread__topic {
+  position: relative;
+  padding: 18px 20px;
+  background: var(--sp-bg-violet);
+  border: 1px solid var(--sp-brand-border);
+  border-radius: var(--sp-radius-lg);
+  transition: box-shadow var(--sp-transition), border-color var(--sp-transition);
+}
+
+/* Tree connector line — ::before trên topic */
+.sp-thread__topic-list > .sp-thread__topic::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: -20px;
+  width: 16px;
+  height: 2px;
+  background: #c4b5fd;
+}
+
+.sp-thread__topic:hover {
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.08);
+  border-color: rgba(139, 92, 246, 0.4);
 }
 
 .sp-thread__topic-header {
@@ -433,7 +478,7 @@
 }
 
 .sp-thread__topic-icon {
-  color: var(--sp-text-secondary);
+  color: var(--sp-brand);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -446,31 +491,62 @@
   flex-shrink: 0;
 }
 
-/* Post level */
+/* Topic index badge — như wp-topic__index */
+.sp-thread__topic-index {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8b5cf6;
+  background: #f5f3ff;
+  padding: 3px 7px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+/* Post list — dashed connector như wp-post-list */
+.sp-thread__post-list {
+  list-style: none;
+  margin: 14px 0 0 12px;
+  padding: 0 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  border-left: 2px dashed #c4b5fd;
+}
+
+/* Post item — như wp-post */
 .sp-thread__post {
-  padding: 20px;
+  position: relative;
+  padding: 16px 18px;
   background: var(--sp-bg-card);
   border: 1px solid var(--sp-border);
   border-radius: var(--sp-radius-md);
-  margin-top: 16px;
-  position: relative;
   box-shadow: var(--sp-shadow-sm);
-  transition: box-shadow var(--sp-transition);
+  transition: box-shadow var(--sp-transition), border-color var(--sp-transition);
+}
+
+.sp-thread__post-list > .sp-thread__post::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: -20px;
+  width: 16px;
+  height: 2px;
+  background: #c4b5fd;
 }
 
 .sp-thread__post:hover {
   box-shadow: var(--sp-shadow-md);
-}
-
-.sp-thread__post:first-child {
-  margin-top: 0;
+  border-color: #c4b5fd;
 }
 
 .sp-thread__post-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   gap: 12px;
 }
 
@@ -492,50 +568,50 @@
 .sp-thread__post-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
-/* ─── Hover Reveal ──────────────────────────────────────── */
+/* ─── Hover Reveal ──────────────────────────────────────────── */
 .sp-hover-reveal {
   position: relative;
 }
 
 .sp-hover-reveal__actions {
   opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 150ms ease,
-    visibility 150ms ease;
+  pointer-events: none;
+  transition: opacity 200ms ease;
 }
 
 .sp-hover-reveal:hover .sp-hover-reveal__actions {
   opacity: 1;
-  visibility: visible;
+  pointer-events: auto;
 }
 
-/* ─── Regenerate Bar ────────────────────────────────────── */
+/* ─── Regenerate Bar ────────────────────────────────────────── */
 .sp-regen-bar {
-  background: var(--sp-bg-subtle);
-  border: 1px solid var(--sp-border);
+  background: var(--sp-bg-violet);
+  border: 1px solid var(--sp-brand-border);
   border-radius: var(--sp-radius-lg);
-  padding: 20px;
-  margin-bottom: 28px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
 }
 
 .sp-regen-bar__label {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--sp-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sp-brand);
   margin-bottom: 10px;
 }
 
 .sp-regen-bar__row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
 }
 
@@ -543,12 +619,13 @@
   flex: 1;
   padding: 9px 12px;
   border-radius: var(--sp-radius-md);
-  border: 1px solid var(--sp-border);
+  border: 1px solid #c4b5fd;
   background: var(--sp-bg-card);
   font-size: 14px;
   font-family: var(--sp-font);
   color: var(--sp-text-primary);
   transition: all var(--sp-transition);
+  box-shadow: 0 1px 4px rgba(124, 58, 237, 0.06);
 }
 
 .sp-regen-bar__input::placeholder {
@@ -557,23 +634,74 @@
 
 .sp-regen-bar__input:focus {
   outline: none;
-  border-color: var(--sp-text-primary);
-  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08);
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
 }
 
-/* ─── Badge ─────────────────────────────────────────────── */
+/* ─── Chips & Pills (kế thừa từ wp-chip, wp-pill) ────────── */
+.sp-pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sp-pill--platform {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.sp-pill--schedule {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.sp-pill--hashtag {
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+}
+
+/* Badge (source/AI/User-edited) */
 .sp-badge {
   display: inline-flex;
   align-items: center;
   padding: 2px 8px;
-  border-radius: 100px;
+  border-radius: 999px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 18px;
   white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
-/* ─── Empty State ───────────────────────────────────────── */
+/* ─── Campaign overview strip ───────────────────────────────── */
+.sp-campaign-objective {
+  font-size: 13px;
+  color: var(--sp-text-secondary);
+  margin: -8px 0 14px 0;
+  line-height: 1.5;
+  padding-left: 24px;
+}
+
+/* Campaign meta row — dates, etc */
+.sp-campaign-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0 4px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--sp-text-secondary);
+}
+
+/* ─── Empty State ───────────────────────────────────────────── */
 .sp-empty {
   text-align: center;
   padding: 24px 16px;
@@ -589,44 +717,47 @@
   border-radius: 50%;
   background: var(--sp-bg-subtle);
   color: var(--sp-text-muted);
-  margin-bottom: 12px;
+  margin: 0 auto 10px;
 }
 
 .sp-empty__text {
   font-size: 13px;
-  font-style: normal;
   margin: 0;
   line-height: 1.5;
 }
 
-/* ─── Footer Actions ────────────────────────────────────── */
+/* ─── Footer Actions ────────────────────────────────────────── */
 .sp-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 32px;
-  padding-top: 24px;
+  gap: 10px;
+  margin-top: 28px;
+  padding-top: 20px;
   border-top: 1px solid var(--sp-border-light);
 }
 
-/* ─── File List ─────────────────────────────────────────── */
+/* ─── File Section ──────────────────────────────────────────── */
+.sp-file-section {
+  margin-top: 20px;
+}
+
 .sp-file-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .sp-file-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  background: var(--sp-bg-subtle);
+  padding: 9px 13px;
+  background: var(--sp-bg-violet);
   border-radius: var(--sp-radius-md);
-  border: 1px solid var(--sp-border-light);
+  border: 1px solid var(--sp-brand-border);
   font-size: 13px;
-  gap: 12px;
+  gap: 10px;
 }
 
 .sp-file-item__name {
@@ -634,7 +765,7 @@
   color: var(--sp-text-primary);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -659,30 +790,30 @@
   background: #fef2f2;
 }
 
-/* ─── Review Section ────────────────────────────────────── */
+/* ─── Review / Confirmed Step ───────────────────────────────── */
 .sp-review-header {
   text-align: center;
-  margin-bottom: 36px;
-  padding-bottom: 28px;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
   border-bottom: 1px solid var(--sp-border-light);
 }
 
 .sp-review-icon {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: var(--sp-bg-subtle);
-  color: var(--sp-text-primary);
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
-  font-size: 20px;
+  margin: 0 auto 14px;
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.30);
 }
 
 .sp-review-title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--sp-text-primary);
   margin: 0 0 8px;
@@ -696,32 +827,33 @@
 
 /* Brand info block */
 .sp-brand-info {
-  background: var(--sp-bg-subtle);
+  background: var(--sp-bg-violet);
   border-radius: var(--sp-radius-lg);
-  padding: 24px;
-  margin-bottom: 32px;
-  border: 1px solid var(--sp-border-light);
+  padding: 20px;
+  margin-bottom: 28px;
+  border: 1px solid var(--sp-brand-border);
 }
 
 .sp-brand-info__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  font-size: 14px;
+  gap: 12px;
+  font-size: 13.5px;
   color: var(--sp-text-secondary);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .sp-brand-info__label {
   color: var(--sp-text-primary);
-  font-weight: 500;
+  font-weight: 700;
+  margin-right: 4px;
 }
 
 .sp-brand-info__full {
   grid-column: 1 / -1;
 }
 
-/* ─── Loading Splash ────────────────────────────────────── */
+/* ─── Loading Splash ────────────────────────────────────────── */
 .sp-loading {
   display: flex;
   flex-direction: column;
@@ -732,12 +864,12 @@
 }
 
 .sp-loading__spinner {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  border: 2.5px solid var(--sp-border);
-  border-top-color: var(--sp-text-primary);
-  animation: sp-spin 0.7s linear infinite;
+  border: 3px solid #ede9fe;
+  border-top-color: #7c3aed;
+  animation: sp-spin 0.8s linear infinite;
 }
 
 .sp-loading__text {
@@ -747,39 +879,30 @@
 }
 
 @keyframes sp-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-/* ─── Responsive ────────────────────────────────────────── */
+/* ─── Shimmer progress animation ────────────────────────────── */
+@keyframes sp-shimmer {
+  0%   { background-position: 0% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ─── Responsive ────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .sp-page {
-    padding: 20px 16px 48px;
+    padding: 16px 16px 48px;
   }
 
   .sp-card {
-    padding: 24px;
+    padding: 18px;
     border-radius: var(--sp-radius-lg);
-  }
-
-  .sp-header {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .sp-header-actions {
-    width: 100%;
-  }
-
-  .sp-header-actions .sp-btn {
-    flex: 1;
   }
 
   .sp-grid-2,
   .sp-grid-3 {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 14px;
   }
 
   .sp-regen-bar__row {
@@ -790,51 +913,20 @@
     width: 100%;
   }
 
-  .sp-thread__campaign {
-    padding: 16px;
+  .sp-thread__campaign-header {
+    flex-wrap: wrap;
   }
 
-  .sp-thread__topic {
-    padding-left: 16px;
-  }
-
-  .sp-thread__post {
-    padding-left: 12px;
-  }
-
-  .sp-brand-info__grid {
-    grid-template-columns: 1fr;
-  }
-
-  .sp-footer {
-    flex-direction: column;
-  }
-
-  .sp-footer .sp-btn {
-    width: 100%;
+  .sp-thread__topic-list,
+  .sp-thread__post-list {
+    margin-left: 4px;
+    padding-left: 14px;
   }
 }
 
-@media (max-width: 480px) {
-  .sp-page {
-    padding: 16px 12px 40px;
-  }
-
-  .sp-card {
-    padding: 20px;
-  }
-
-  .sp-header-title {
-    font-size: 20px;
-  }
-
-  .sp-thread__campaign-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .sp-thread__campaign-actions {
-    width: 100%;
-    justify-content: flex-end;
+@media (prefers-reduced-motion: reduce) {
+  .sp-loading__spinner {
+    animation: none;
+    border-color: #7c3aed;
   }
 }
