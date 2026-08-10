@@ -151,9 +151,9 @@ function RegisterPage() {
               Đăng nhập
             </Link>
             <span style={{ margin: '0 8px' }}>·</span>
-            <Link to="/auth-lab" className="login-link">
+            {/* <Link to="/auth-lab" className="login-link">
               Auth Lab
-            </Link>
+            </Link> */}
           </div>
         </div>
       </div>

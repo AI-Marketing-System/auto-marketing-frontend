@@ -10,7 +10,7 @@ function Navbar() {
         <Link to="/">Tính năng</Link>
         <Link to="/">Bảng giá</Link>
         <Link to="/">Blog</Link>
-        <Link to="/auth-lab">Auth Lab</Link>
+        {/* <Link to="/auth-lab">Auth Lab</Link> */}
       </nav>
 
       <div>

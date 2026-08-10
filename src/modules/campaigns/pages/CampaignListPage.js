@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import '../styles/CampaignListPage.css';
+import '../styles/CampaignListPage.css'; 
 import '../../../modules/social-accounts/styles/SocialAccountsPage.css';
 import CreateCampaignModal from '../components/CreateCampaignModal';
 import InviteMemberModal from '../../workspace/components/InviteMemberModal';

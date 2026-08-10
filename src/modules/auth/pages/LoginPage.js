@@ -122,16 +122,15 @@ function LoginPage() {
           </div>
         ) : null}
 
-
         <div className="login-footer">
           Chưa có tài khoản?
           <Link to="/register" className="signup-link">
             Đăng ký
           </Link>
           <span style={{ margin: '0 8px' }}>·</span>
-          <Link to="/auth-lab" className="signup-link">
+          {/* <Link to="/auth-lab" className="signup-link">
             Auth Lab
-          </Link>
+          </Link> */}
         </div>
       </div>
     </div>
