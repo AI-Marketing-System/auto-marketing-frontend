@@ -8,6 +8,7 @@ import CampaignActions from '../components/CampaignActions';
 import WorkspaceFanpageBar from '../components/WorkspaceFanpageBar';
 import AvatarGroup from '../../workspace/components/AvatarGroup';
 import WorkspaceMembersModal from '../../workspace/components/WorkspaceMembersModal';
+import WorkspaceContentSummary from '../components/WorkspaceContentSummary';
 import { workspaceApi as wsApi } from '../../workspace/api/workspaceApi';
 import {
   campaignApi,
@@ -469,6 +470,8 @@ function CampaignListPage() {
             </button>
           </div>
         </section>
+
+        {workspaceFilter !== 'ALL' && <WorkspaceContentSummary workspaceId={workspaceFilter} />}
 
         <div className="workspace-selector-card">
           <div className="workspace-selector-dropdown">
