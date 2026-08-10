@@ -14,6 +14,8 @@ import {
 } from '../components/PlannerIcons';
 import PlannerAlert from '../components/PlannerAlert';
 import PlannerDropzone from '../components/PlannerDropzone';
+import PlannerPendingFileList from '../components/PlannerPendingFileList';
+import PlannerDocumentLibrary from '../components/PlannerDocumentLibrary';
 import PlannerLoadingOverlay from '../components/PlannerLoadingOverlay';
 import StagedPlannerIntroPanel from '../components/StagedPlannerIntroPanel';
 import { PLAN_STAGES, SEED_INPUT_FIELDS } from '../utils/stagedPlannerConstants';
@@ -40,6 +42,8 @@ import {
   finalizeAndMaterializePlan,
 } from '../api/stagedPlannerApi';
 import { planDraftApi, parsePlanDraftResponse } from '../api/plannerApi';
+import { documentApi } from '../../campaigns/api/documentApi';
+import { useWorkspaceDocuments } from '../hooks/useWorkspaceDocuments';
 import { API_BASE_URL } from '../../../config/env';
 import { showTokenToast } from '../../subscription/components/TokenToast';
 import UpgradeModal from '../../subscription/components/UpgradeModal';
@@ -69,8 +73,15 @@ function StagedPlannerPage() {
     additionalInstructions: '',
   });
 
+  const {
+    documents, docsLoading, docsError, totalCount,
+    searchQuery, setSearchQuery, selectedDocIds, setSelectedDocIds,
+    handleToggleDoc, handleSelectAllSupported, handleClearSelection,
+    loadDocuments, handleDeleteDocument, uploadMultipleDocuments
+  } = useWorkspaceDocuments(workspaceId);
+
   const [pendingFiles, setPendingFiles] = useState([]);
-  const [selectedDocIds, setSelectedDocIds] = useState([]);
+  const [alsoSaveToLibrary, setAlsoSaveToLibrary] = useState(true);
 
   const [campaigns, setCampaigns] = useState([]);
   const [overview, setOverview] = useState(null);
@@ -192,13 +203,33 @@ function StagedPlannerPage() {
   // ─── Step 0 -> Step 1: Init & Generate Campaigns ───────────────────────
   const handleStartPlan = useCallback(async () => {
     if (!workspaceId) return;
-    const seedJson = JSON.stringify(seedInput);
+    
+    if (!seedInput.companyName.trim()) {
+      setError('Vui lòng điền Tên Công ty / Thương hiệu.');
+      return;
+    }
 
     await callApi(async () => {
+      let finalDocIds = [...selectedDocIds];
+      let filesToUploadInline = pendingFiles.map((p) => p.file || p);
+
+      if (pendingFiles.length > 0 && alsoSaveToLibrary) {
+        // Upload file vào thư viện workspace trước
+        const uploadResArray = await uploadMultipleDocuments(filesToUploadInline);
+        if (uploadResArray && uploadResArray.length > 0) {
+          const newIds = uploadResArray.map(res => res.data?.id).filter(Boolean);
+          finalDocIds = [...finalDocIds, ...newIds];
+        }
+        setPendingFiles([]); // Xoá pending file vì đã up
+        loadDocuments();     // Cập nhật lại list UI
+        filesToUploadInline = []; // Không truyền file thô vào initDraft nữa vì đã có ID
+      }
+
+      const seedJson = JSON.stringify(seedInput);
       await initDraft(workspaceId, {
         seedInput: seedJson,
-        files: pendingFiles.map((p) => p.file || p),
-        documentIds: selectedDocIds,
+        files: filesToUploadInline,
+        documentIds: finalDocIds,
       });
 
       const raw = await generateCampaigns(workspaceId);
@@ -215,7 +246,7 @@ function StagedPlannerPage() {
         setStage(PLAN_STAGES.CAMPAIGNS_GENERATED);
       }
     }, STAGED_INIT_COPY.loadingMsg);
-  }, [workspaceId, seedInput, pendingFiles, selectedDocIds, callApi, processTokenAwareResponse]);
+  }, [workspaceId, seedInput, pendingFiles, selectedDocIds, callApi, processTokenAwareResponse, alsoSaveToLibrary, loadDocuments]);
 
   // ─── Regenerate Campaigns ───────────────────────────────────────────────
   const handleRegenCampaigns = useCallback(async () => {
@@ -520,6 +551,20 @@ function StagedPlannerPage() {
           onChange={handleSeedChange}
           pendingFiles={pendingFiles}
           setPendingFiles={setPendingFiles}
+          alsoSaveToLibrary={alsoSaveToLibrary}
+          setAlsoSaveToLibrary={setAlsoSaveToLibrary}
+          documents={documents}
+          docsLoading={docsLoading}
+          docsError={docsError}
+          totalCount={totalCount}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedDocIds={selectedDocIds}
+          handleToggleDoc={handleToggleDoc}
+          handleSelectAllSupported={handleSelectAllSupported}
+          handleClearSelection={handleClearSelection}
+          loadDocuments={loadDocuments}
+          handleDeleteDocument={handleDeleteDocument}
           onStartPlan={handleStartPlan}
           loading={loading}
         />
@@ -615,7 +660,15 @@ function LoadingSplash() {
 // ─────────────────────────────────────────────────────────────────────────
 // STEP 0: Init Form Component
 // ─────────────────────────────────────────────────────────────────────────
-function InitStep({ seedInput, onChange, pendingFiles, setPendingFiles, onStartPlan, loading }) {
+function InitStep({ 
+  seedInput, onChange, pendingFiles, setPendingFiles, 
+  alsoSaveToLibrary, setAlsoSaveToLibrary,
+  documents, docsLoading, docsError, totalCount,
+  searchQuery, setSearchQuery, selectedDocIds,
+  handleToggleDoc, handleSelectAllSupported, handleClearSelection,
+  loadDocuments, handleDeleteDocument,
+  onStartPlan, loading 
+}) {
   const isFormValid = seedInput.companyName && seedInput.companyName.trim().length > 0;
 
   return (
@@ -645,30 +698,53 @@ function InitStep({ seedInput, onChange, pendingFiles, setPendingFiles, onStartP
         ))}
       </div>
 
-      {/* File Dropzone */}
-      <div className="sp-file-section">
-        <label className="sp-field__label">{STAGED_INIT_COPY.fileLabel}</label>
-        <PlannerDropzone onFiles={(files) => setPendingFiles((p) => [...p, ...files])} />
+      {/* File Dropzone & Library */}
+      <div className="sp-file-section" style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid #e2e8f0' }}>
+        <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1e293b', marginBottom: 16 }}>Nguồn tài liệu phân tích</h3>
+        <p style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
+          Chọn tài liệu có sẵn trong thư viện hoặc tải lên tài liệu mới. AI sẽ đọc toàn bộ các tài liệu được chọn.
+        </p>
+
+        <PlannerDropzone onFiles={(files) => setPendingFiles((p) => [
+          ...p, 
+          ...files.map((file) => ({
+            key: `${file.name}|${file.size}|${file.lastModified}|${Math.random()}`,
+            file,
+            name: file.name,
+            size: file.size,
+            ext: file.name.split('.').pop().toUpperCase(),
+          }))
+        ])} />
+        
+        <PlannerPendingFileList files={pendingFiles} onRemove={(keyToRemove) => setPendingFiles((p) => p.filter((item) => item.key !== keyToRemove))} />
+
         {pendingFiles.length > 0 && (
-          <div className="sp-file-list">
-            {pendingFiles.map((f, idx) => (
-              <div key={idx} className="sp-file-item">
-                <span className="sp-file-item__name">
-                  <FileTextIcon size={14} /> {f.name || f.file?.name}
-                </span>
-                <button
-                  type="button"
-                  className="sp-file-item__remove"
-                  onClick={() => setPendingFiles((p) => p.filter((_, i) => i !== idx))}
-                  disabled={loading}
-                  title="Xoá file"
-                >
-                  <TrashIcon size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
+          <label className="wp-checkbox" style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={alsoSaveToLibrary}
+              onChange={(e) => setAlsoSaveToLibrary(e.target.checked)}
+            />
+            <span style={{ fontSize: 13, color: '#334155' }}>Đồng thời lưu các file mới vào thư viện tài liệu của workspace</span>
+          </label>
         )}
+
+        <div style={{ marginTop: 32 }}>
+          <PlannerDocumentLibrary
+            documents={documents}
+            loading={docsLoading}
+            error={docsError}
+            totalCount={totalCount}
+            searchQuery={searchQuery}
+            onSearchChange={(e) => setSearchQuery(e)}
+            selectedDocIds={selectedDocIds}
+            onToggleDoc={handleToggleDoc}
+            onSelectAllSupported={handleSelectAllSupported}
+            onClearSelection={handleClearSelection}
+            onReload={loadDocuments}
+            onDelete={handleDeleteDocument}
+          />
+        </div>
       </div>
 
       <div className="sp-footer">
