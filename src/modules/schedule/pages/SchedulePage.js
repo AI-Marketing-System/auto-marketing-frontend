@@ -361,10 +361,8 @@ export default function SchedulePage({ workspaceId, workspaces = [], campaigns =
               postId: newPostId,
               fanpageIds: modalData.fanpageIds || [],
             });
-            window.alert('Bài viết đang được đăng ngay lên các Fanpage đã chọn!');
           } catch (e) {
             console.error('Publish immediately fail:', e);
-            window.alert('Đăng bài thất bại: ' + (e.message || 'Lỗi hệ thống'));
           }
         }
         await triggerFetchSchedules();
