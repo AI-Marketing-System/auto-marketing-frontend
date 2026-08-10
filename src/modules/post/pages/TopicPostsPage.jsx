@@ -260,10 +260,8 @@ export default function TopicPostsPage() {
               postId: currentEditPost.id,
               fanpageIds: modalData.fanpageIds || [],
             });
-            window.alert('Bài viết đang được đăng ngay lên các Fanpage đã chọn!');
           } catch (e) {
             console.error('Publish immediately fail:', e);
-            window.alert('Đăng bài thất bại: ' + (e.message || 'Lỗi hệ thống'));
           }
           setActiveTab('scheduled');
         }
@@ -302,10 +300,8 @@ export default function TopicPostsPage() {
                 postId: newPostId,
                 fanpageIds: modalData.fanpageIds || [],
               });
-              window.alert('Bài viết đang được đăng ngay lên các Fanpage đã chọn!');
             } catch (e) {
               console.error('Publish immediately fail:', e);
-              window.alert('Đăng bài thất bại: ' + (e.message || 'Lỗi hệ thống'));
             }
             setActiveTab('scheduled');
           }
