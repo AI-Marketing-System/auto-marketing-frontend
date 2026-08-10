@@ -15,6 +15,7 @@ import {
 import PlannerAlert from '../components/PlannerAlert';
 import PlannerDropzone from '../components/PlannerDropzone';
 import PlannerLoadingOverlay from '../components/PlannerLoadingOverlay';
+import StagedPlannerIntroPanel from '../components/StagedPlannerIntroPanel';
 import { PLAN_STAGES, SEED_INPUT_FIELDS } from '../utils/stagedPlannerConstants';
 import {
   STAGED_INIT_COPY,
@@ -55,6 +56,7 @@ function StagedPlannerPage() {
   const [error, setError] = useState(null);
   const [draftLoading, setDraftLoading] = useState(true);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [introCollapsed, setIntroCollapsed] = useState(true);
 
   // 7 core business input fields
   const [seedInput, setSeedInput] = useState({
@@ -500,6 +502,11 @@ function StagedPlannerPage() {
       <PlannerLoadingOverlay isLoading={loading} message={loadMsg} />
 
       <StagePageHeader workspaceId={workspaceId} />
+
+      <StagedPlannerIntroPanel
+        collapsed={introCollapsed}
+        onToggle={() => setIntroCollapsed((value) => !value)}
+      />
 
       {/* Progress Indicator - Purely linear, no clicking back */}
       <StageProgress currentStage={stage} />

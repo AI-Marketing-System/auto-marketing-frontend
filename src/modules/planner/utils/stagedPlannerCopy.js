@@ -24,6 +24,51 @@ export const STAGED_PLANNER_STAGES = {
 
 // ─── Bước 0: Init Form ───────────────────────────────────────────────────────
 
+export const STAGED_PLANNER_INTRO = {
+  eyebrow: 'AI Staged Planner',
+  title: 'Lên kế hoạch marketing từng bước cùng AI',
+  lead:
+    'AI Staged Planner giúp bạn xây dựng kế hoạch marketing bài bản qua 4 bước. ' +
+    'Khác với cách tạo toàn bộ một lần, luồng này cho phép bạn kiểm duyệt và điều chỉnh ' +
+    'chi tiết ở từng giai đoạn trước khi sinh nội dung tiếp theo.',
+
+  readsTitle: 'Bước 1: Khởi tạo',
+  reads: [
+    'Bạn cung cấp thông tin cốt lõi của doanh nghiệp (Tầm nhìn, Chân dung khách hàng...).',
+    'Tải lên các tài liệu bổ sung (Brief, Catalogue...).',
+    'AI sẽ đọc và phân tích bối cảnh để làm cơ sở cho các bước sau.',
+  ],
+
+  producesTitle: 'Bước 2-4: Khai triển',
+  produces: [
+    'Chiến dịch: AI đề xuất các chiến dịch quảng bá lớn.',
+    'Chủ đề: Từ các chiến dịch đã chốt, AI sinh ra các chủ đề nhỏ hơn.',
+    'Bài viết: Cuối cùng, AI tạo khung bài viết chi tiết cho từng chủ đề (tiêu đề, mục tiêu, gợi ý media...).',
+  ],
+
+  notTitle: 'Lưu ý quan trọng',
+  not: [
+    'Tại mỗi bước, bạn có quyền tự do chỉnh sửa, thêm bớt, hoặc yêu cầu AI sinh lại trước khi đi tiếp.',
+    'Mọi kết quả đang xem chỉ là bản nháp. Chưa có dữ liệu nào được tạo thật vào hệ thống.',
+    'Chỉ khi bạn bấm "Khởi Tạo Kế Hoạch Workspace" ở bước cuối, dữ liệu mới được đẩy vào CSDL.',
+  ],
+
+  durationNote:
+    'Quá trình sinh dữ liệu ở mỗi bước thường mất từ 15-30 giây.',
+  draftNote:
+    'Mọi chỉnh sửa của bạn được tự động lưu nháp. Bạn có thể rời đi và quay lại sau mà không mất dữ liệu.',
+
+  steps: [
+    { n: 1, title: 'Khởi tạo', body: 'Nhập thông tin doanh nghiệp & tài liệu.' },
+    { n: 2, title: 'Chiến dịch', body: 'Duyệt và chốt danh sách Chiến dịch.' },
+    { n: 3, title: 'Chủ đề', body: 'Duyệt và chốt danh sách Chủ đề.' },
+    { n: 4, title: 'Bài viết', body: 'Review bộ khung Bài viết & Hoàn tất.' },
+  ],
+
+  collapseLabel: 'Thu gọn hướng dẫn',
+  expandLabel: 'Quy trình hoạt động của AI Staged Planner',
+};
+
 export const STAGED_INIT_COPY = {
   stepTitle: 'Bước 1 — Khởi tạo Thông tin Doanh nghiệp',
   stepSubtitle:
