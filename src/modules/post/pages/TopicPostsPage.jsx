@@ -4,6 +4,7 @@ import { postApi } from '../api/postApi';
 import { topicApi } from '../../topic/api/topicApi';
 import { scheduleApi } from '../../schedule/api/scheduleApi';
 import { getWorkspaceFanpages } from '../../campaigns/api/workspaceFanpageApi';
+import { workspaceApi, parseWorkspacesResponse } from '../../campaigns/api/campaignApi';
 import { API_BASE_URL } from '../../../config/env';
 import CreatePostModal from '../components/CreatePostModal';
 import ScheduleDetailModal from '../../schedule/components/ScheduleDetailModal';
@@ -92,6 +93,9 @@ export default function TopicPostsPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
 
+  // Workspace brandTone (dùng cho AiWriter giọng văn thương hiệu)
+  const [workspaceBrandTone, setWorkspaceBrandTone] = useState('');
+
   // Map fanpageId → fanpage object
   const fanpagesMap = fanpages.reduce((acc, fp) => {
     acc[fp.fanpageId] = fp;
@@ -157,6 +161,22 @@ export default function TopicPostsPage() {
     getWorkspaceFanpages(workspaceId)
       .then((list) => setFanpages(list || []))
       .catch(() => {});
+  }, [workspaceId]);
+
+  // Fetch workspace brandTone
+  useEffect(() => {
+    if (!workspaceId) return;
+    Promise.all([
+      workspaceApi.myWorkspaces(API_BASE_URL).catch(() => []),
+      workspaceApi.memberWorkspaces(API_BASE_URL).catch(() => []),
+    ]).then(([myRes, memberRes]) => {
+      const all = [
+        ...parseWorkspacesResponse(myRes),
+        ...parseWorkspacesResponse(memberRes),
+      ];
+      const found = all.find((ws) => String(ws.id) === String(workspaceId));
+      if (found?.brandTone) setWorkspaceBrandTone(found.brandTone);
+    }).catch(() => {});
   }, [workspaceId]);
 
   useEffect(() => {
@@ -707,7 +727,7 @@ export default function TopicPostsPage() {
         topicId={topicId}
         topicName={topicDetails?.title}
         initialData={editingPost}
-        brandTone={topicDetails?.brandTone || topicDetails?.workspaceBrandTone}
+        brandTone={workspaceBrandTone || editingPost?.tone}
       />
 
       {/* Schedule Detail Modal (tái sử dụng từ workspace schedule view) */}

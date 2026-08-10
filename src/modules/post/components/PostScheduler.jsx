@@ -32,6 +32,7 @@ export default function PostScheduler({
   time = '09:00',
   onTimeChange,
   CalendarComponent,
+  aiScheduleSuggestion = '',  // Gợi ý lịch đăng từ AI skeleton (chuỗi tự nhiên)
 }) {
   return (
     <div className="cp-right">
@@ -194,6 +195,37 @@ export default function PostScheduler({
           {/* ── Date ── */}
           <div className="cp-section">
             <div className="cp-section-title">Ngày đăng</div>
+
+            {/* Gợi ý lịch đăng từ AI Planner */}
+            {aiScheduleSuggestion && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                  padding: '8px 10px',
+                  background: 'linear-gradient(135deg, #fdf4ff, #f5f3ff)',
+                  border: '1px dashed #c4b5fd',
+                  borderRadius: 8,
+                  marginBottom: 10,
+                  fontSize: 12,
+                }}
+              >
+                <span style={{ fontSize: 15, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>🤖</span>
+                <div>
+                  <div style={{ color: '#7c3aed', fontWeight: 600, marginBottom: 2 }}>
+                    AI Planner đề xuất:
+                  </div>
+                  <div style={{ color: '#4c1d95', fontWeight: 500, lineHeight: 1.4 }}>
+                    {aiScheduleSuggestion}
+                  </div>
+                  <div style={{ color: '#8b5cf6', fontSize: 11, marginTop: 4, fontStyle: 'italic' }}>
+                    Chọn ngày & giờ phía dưới theo gợi ý này
+                  </div>
+                </div>
+              </div>
+            )}
+
             {CalendarComponent && (
               <CalendarComponent selected={selectedDate} onChange={onDateChange} />
             )}

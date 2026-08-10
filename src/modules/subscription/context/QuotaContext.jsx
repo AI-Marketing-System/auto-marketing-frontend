@@ -27,7 +27,11 @@ export function QuotaProvider({ children }) {
   }, [refresh]);
 
   useEffect(() => {
-    const handleQuotaChanged = () => {
+    const handleQuotaChanged = (e) => {
+      // Nếu sự kiện có đính kèm remainingTokens thực tế từ API response, cập nhật UI tức thì 0ms
+      if (e?.detail?.remainingTokens !== undefined) {
+        setQuota((prev) => (prev ? { ...prev, remainingTokens: e.detail.remainingTokens } : prev));
+      }
       refresh();
     };
 

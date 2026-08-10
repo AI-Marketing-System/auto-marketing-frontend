@@ -1,10 +1,11 @@
 import React from 'react';
 import WorkspaceFanpageBar from '../../campaigns/components/WorkspaceFanpageBar';
+import { useQuota } from '../../subscription/hooks/useQuota';
 
 /**
  * Thanh trên cùng của trang Schedule:
  * - Danh sách fanpage đã kết nối với workspace (bên trái) — dùng lại WorkspaceFanpageBar
- * - Nút Quản lý, Viết bài mới, Công cụ (bên phải)
+ * - Token badge & Nút Quản lý, Viết bài mới, Công cụ (bên phải)
  *
  * @param {{
  *   workspaceId: number,
@@ -14,6 +15,8 @@ import WorkspaceFanpageBar from '../../campaigns/components/WorkspaceFanpageBar'
  * }} props
  */
 export default function ScheduleTopBar({ workspaceId, workspaceName = 'Chọn Workspace', onNewPost, onPublish }) {
+  const { quota } = useQuota();
+
   return (
     <div className="sc-topbar">
       {/* ── Bên trái: Fanpage đã kết nối ── */}
@@ -27,6 +30,28 @@ export default function ScheduleTopBar({ workspaceId, workspaceName = 'Chọn Wo
 
       {/* ── Bên phải ── */}
       <div className="sc-topbar__actions">
+        {/* Token Badge */}
+        {quota?.remainingTokens !== undefined && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '12px',
+              color: '#059669',
+              backgroundColor: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              padding: '5px 10px',
+              borderRadius: '8px',
+              fontWeight: 600,
+              flexShrink: 0,
+            }}
+            title="Số dư AI Token khả dụng của bạn"
+          >
+            ⚡ {quota.remainingTokens.toLocaleString('vi-VN')} token
+          </div>
+        )}
+
         {/* Nút Quản lý */}
         <div className="sc-manage-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
