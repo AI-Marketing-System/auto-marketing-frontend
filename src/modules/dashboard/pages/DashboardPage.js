@@ -1,0 +1,523 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
+import { API_BASE_URL } from '../../../config/env';
+import '../styles/DashboardPage.css';
+import WorkspaceCard from '../components/WorkspaceCard';
+import SharedWorkspaceCard from '../components/SharedWorkspaceCard';
+import CreateWorkspaceModal from '../components/CreateWorkspaceModal';
+
+function DashboardPage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [workspaces, setWorkspaces] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [sharedWorkspaces, setSharedWorkspaces] = useState([]);
+  const [loadingShared, setLoadingShared] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState(null);
+  const [pendingDeletes, setPendingDeletes] = useState({});
+
+  const fetchWorkspaces = () => {
+    setLoading(true);
+    const token = localStorage.getItem('marqops.authLab.accessToken');
+    fetch(`${API_BASE_URL}/workspaces`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Không thể tải danh sách workspace');
+        return res.json();
+      })
+      .then((resJson) => {
+        if (resJson && resJson.success && resJson.data) {
+          const mapped = resJson.data.map((ws) => ({
+            id: ws.id,
+            title: ws.name,
+            description: ws.description,
+            slug: ws.slug,
+            accountsCount: ws.fanpageCount || 0,
+          }));
+          setWorkspaces(mapped);
+        }
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  };
+
+  const fetchSharedWorkspaces = () => {
+    setLoadingShared(true);
+    const token = localStorage.getItem('marqops.authLab.accessToken');
+    fetch(`${API_BASE_URL}/workspaces/member`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Không thể tải danh sách workspace được chia sẻ');
+        return res.json();
+      })
+      .then((resJson) => {
+        if (resJson && resJson.success && resJson.data) {
+          const mapped = resJson.data.map((ws) => ({
+            id: ws.id,
+            title: ws.name,
+            role: ws.role === 'OWNER' ? 'ADMIN' : (ws.role || 'MEMBER'),
+            campaigns: ws.campaigns ? ws.campaigns.map(c => c.name) : [],
+            avatarUrl: ws.avatarUrl,
+          }));
+          setSharedWorkspaces(mapped);
+        }
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoadingShared(false));
+  };
+
+  useEffect(() => {
+    fetchWorkspaces();
+    fetchSharedWorkspaces();
+  }, []);
+
+  const handleCreateWorkspace = () => {
+    console.log('Opening create workspace modal');
+    setIsModalOpen(true);
+  };
+
+  const handleModalSubmit = (data) => {
+    const token = localStorage.getItem('marqops.authLab.accessToken');
+    if (editingWorkspace) {
+      // Edit Workspace
+      fetch(`${API_BASE_URL}/workspaces/${editingWorkspace.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: data.title,
+          description: data.description || '',
+          avatar: data.avatar || null,
+        }),
+      })
+        .then(async (res) => {
+          const resJson = await res.json().catch(() => null);
+          if (!res.ok) {
+            throw new Error(resJson?.message || 'Không thể cập nhật thông tin workspace');
+          }
+          return resJson;
+        })
+        .then((resJson) => {
+          if (resJson && resJson.success && resJson.data) {
+            const updated = resJson.data;
+            setWorkspaces((prev) =>
+              prev.map((ws) =>
+                ws.id === updated.id
+                  ? {
+                      ...ws,
+                      title: updated.name,
+                      description: updated.description,
+                      slug: updated.slug,
+                      avatarUrl: updated.avatarUrl,
+                    }
+                  : ws
+              )
+            );
+            setEditingWorkspace(null);
+            setIsModalOpen(false);
+            window.dispatchEvent(new CustomEvent('quota:changed'));
+          } else {
+            alert(resJson?.message || 'Cập nhật workspace thất bại');
+          }
+        })
+        .catch((err) => {
+          alert(err.message || 'Đã xảy ra lỗi khi cập nhật workspace');
+        });
+    } else {
+      // Create Workspace
+      fetch(`${API_BASE_URL}/workspaces`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: data.title,
+          description: data.description || '',
+          avatar: data.avatar || null,
+        }),
+      })
+        .then(async (res) => {
+          const resJson = await res.json().catch(() => null);
+          if (!res.ok) {
+            throw new Error(resJson?.message || 'Không thể tạo workspace mới');
+          }
+          return resJson;
+        })
+        .then((resJson) => {
+          if (resJson && resJson.success && resJson.data) {
+            const newWs = resJson.data;
+            setWorkspaces((prev) => [
+              ...prev,
+              {
+                id: newWs.id,
+                title: newWs.name,
+                description: newWs.description,
+                slug: newWs.slug,
+                avatarUrl: newWs.avatarUrl,
+                accountsCount: 0,
+              },
+            ]);
+            setIsModalOpen(false);
+            window.dispatchEvent(new CustomEvent('quota:changed'));
+          } else {
+            alert(resJson?.message || 'Tạo workspace thất bại');
+          }
+        })
+        .catch((err) => {
+          alert(err.message || 'Đã xảy ra lỗi khi tạo workspace');
+        });
+    }
+  };
+
+  const handleSettingsClick = (workspace) => {
+    console.log('Settings clicked for workspace:', workspace.title);
+    setEditingWorkspace(workspace);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteWorkspace = (workspaceId) => {
+    const workspaceToDelete = workspaces.find((ws) => ws.id === workspaceId);
+    if (!workspaceToDelete) return;
+
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa Workspace "${workspaceToDelete.title}" không? Mọi dữ liệu bên trong sẽ bị xóa vĩnh viễn.`)) {
+      return;
+    }
+
+    // 1. Lạc quan (Optimistic update): Xóa khỏi giao diện ngay lập tức
+    setWorkspaces((prev) => prev.filter((ws) => ws.id !== workspaceId));
+    setEditingWorkspace(null);
+    setIsModalOpen(false);
+
+    // 2. Set timeout 5s để xóa thật
+    const timeoutId = setTimeout(() => {
+      const token = localStorage.getItem('marqops.authLab.accessToken');
+      fetch(`${API_BASE_URL}/workspaces/${workspaceId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error('Không thể xóa workspace này');
+          return res.json();
+        })
+        .then((resJson) => {
+          if (resJson && resJson.success) {
+            // Xóa thành công, dọn dẹp state pending
+            setPendingDeletes((prev) => {
+              const newPending = { ...prev };
+              delete newPending[workspaceId];
+              return newPending;
+            });
+          } else {
+            // Thất bại: khôi phục lại UI và báo lỗi
+            alert(resJson.message || 'Xóa workspace thất bại');
+            setWorkspaces((prev) => [...prev, workspaceToDelete]);
+            setPendingDeletes((prev) => {
+              const newPending = { ...prev };
+              delete newPending[workspaceId];
+              return newPending;
+            });
+          }
+        })
+        .catch((err) => {
+          alert(err.message || 'Đã xảy ra lỗi khi xóa workspace');
+          setWorkspaces((prev) => [...prev, workspaceToDelete]);
+          setPendingDeletes((prev) => {
+            const newPending = { ...prev };
+            delete newPending[workspaceId];
+            return newPending;
+          });
+        });
+    }, 5000);
+
+    // 3. Lưu thông tin vào state để có thể Hoàn tác
+    setPendingDeletes((prev) => ({
+      ...prev,
+      [workspaceId]: { workspace: workspaceToDelete, timeoutId },
+    }));
+  };
+
+  const handleUndoDelete = (workspaceId) => {
+    setPendingDeletes((prev) => {
+      const pendingDelete = prev[workspaceId];
+      if (pendingDelete) {
+        // Hủy timeout
+        clearTimeout(pendingDelete.timeoutId);
+        
+        // Khôi phục UI
+        setWorkspaces((currentWorkspaces) => [...currentWorkspaces, pendingDelete.workspace]);
+        
+        const newPending = { ...prev };
+        delete newPending[workspaceId];
+        return newPending;
+      }
+      return prev;
+    });
+  };
+
+  const handleCardClick = (workspace) => {
+    if (workspace && workspace.id) {
+      navigate(`/workspaces/${workspace.id}/campaigns`);
+    }
+  };
+
+  return (
+    <div className="dashboard-container">
+      {/* Undo Toast Container */}
+      <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {Object.keys(pendingDeletes).map((wsId) => {
+          const ws = pendingDeletes[wsId].workspace;
+          return (
+            <div key={wsId} style={{ 
+              backgroundColor: '#1e293b', 
+              color: 'white', 
+              padding: '14px 24px', 
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '24px',
+              boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)',
+              animation: 'slideIn 0.3s ease-out forwards'
+            }}>
+              <span style={{ fontSize: '14.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Đang xóa Workspace <b>{ws.title}</b>...
+              </span>
+              <button 
+                onClick={() => handleUndoDelete(wsId)}
+                style={{ 
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)', 
+                  border: '1px solid rgba(59, 130, 246, 0.2)', 
+                  color: '#60a5fa', 
+                  fontWeight: '600', 
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => { e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'; e.target.style.color = '#93c5fd'; }}
+                onMouseOut={(e) => { e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.1)'; e.target.style.color = '#60a5fa'; }}
+              >
+                HOÀN TÁC (5s)
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      <style>{`
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
+
+      {/* Dashboard Inner Body */}
+      <main className="dashboard-main-content">
+        <div className="dashboard-inner-container">
+          {/* Greeting Header */}
+          <div className="greeting-section">
+            <h1 className="greeting-title">Xin chào {user?.fullName || 'User'} !</h1>
+          </div>
+
+          {/* Section 1: My Workspaces */}
+          <section className="workspace-section-container">
+            <div className="section-header">
+              <div className="section-title-wrapper">
+                <div className="icon-badge purple-badge">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 21h18M3 10h18M5 10V21M19 21V10M9 21V14h6v7M4 10l8-7 8 7" />
+                  </svg>
+                </div>
+                <h2 className="section-title-text">Workspace của tôi</h2>
+                <span className="tooltip-icon" title="Các workspace do bạn sở hữu">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" />
+                  </svg>
+                </span>
+              </div>
+              <div className="section-meta-info">
+                <span className="owner-role-badge">Vai trò: Admin</span>
+                <span className="tier-label">Business Tier</span>
+                <button
+                  type="button"
+                  className="icon-btn section-settings-btn"
+                  onClick={() => alert('Cài đặt tài khoản/tổ chức')}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Grid of Workspaces */}
+            <div className="workspaces-grid">
+              {/* Creator Card */}
+              <WorkspaceCard isCreator={true} onCardClick={handleCreateWorkspace} />
+
+              {loading ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px',
+                    gridColumn: 'span 3',
+                    color: '#64748b',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                  }}
+                >
+                  Đang tải danh sách Workspace...
+                </div>
+              ) : (
+                workspaces.map((ws) => (
+                  <WorkspaceCard
+                    key={ws.id}
+                    title={ws.title}
+                    accountsCount={ws.accountsCount}
+                    avatarUrl={ws.avatarUrl}
+                    onEditClick={() => handleSettingsClick(ws)}
+                    onDeleteClick={() => handleDeleteWorkspace(ws.id)}
+                    onCardClick={() => handleCardClick(ws)}
+                  />
+                ))
+              )}
+            </div>
+          </section>
+
+          {/* Section 2: Shared Workspaces */}
+          <section className="shared-section-container">
+            <div className="section-header center-header">
+              <div className="section-title-wrapper justify-center">
+                <h2 className="section-title-text shared-title-text">Workspace được chia sẻ</h2>
+                <span
+                  className="tooltip-icon"
+                  title="Các workspace được chia sẻ quyền quản trị/thành viên với bạn"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            <div className="shared-workspaces-flex" style={sharedWorkspaces.length === 0 ? { display: 'flex', width: '100%' } : {}}>
+              {loadingShared ? (
+                <div style={{ color: '#64748b', fontSize: '14px', textAlign: 'center', width: '100%', padding: '20px' }}>
+                  Đang tải danh sách...
+                </div>
+              ) : sharedWorkspaces.length > 0 ? (
+                sharedWorkspaces.map((ws) => (
+                  <SharedWorkspaceCard
+                    key={ws.id}
+                    role={ws.role}
+                    title={ws.title}
+                    campaigns={ws.campaigns}
+                    avatarUrl={ws.avatarUrl}
+                    onSettingsClick={() => handleSettingsClick(ws)}
+                    onCardClick={() => handleCardClick(ws)}
+                  />
+                ))
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '40px 20px',
+                  width: '100%',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '12px',
+                  border: '1px dashed #cbd5e1',
+                  margin: '0 auto'
+                }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '16px' }}>
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                  <p style={{ color: '#334155', fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
+                    Chưa có Workspace được chia sẻ
+                  </p>
+                  <p style={{ color: '#64748b', fontSize: '14px', textAlign: 'center', maxWidth: '450px', lineHeight: '1.5' }}>
+                    Bạn hiện chưa tham gia vào bất kỳ Workspace nào với tư cách thành viên. Hãy yêu cầu quản trị viên thêm bạn vào Workspace của họ nhé!
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <CreateWorkspaceModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setEditingWorkspace(null);
+          setIsModalOpen(false);
+        }}
+        onSubmit={handleModalSubmit}
+        workspaceData={editingWorkspace}
+        onDelete={handleDeleteWorkspace}
+      />
+    </div>
+  );
+}
+
+export default DashboardPage;

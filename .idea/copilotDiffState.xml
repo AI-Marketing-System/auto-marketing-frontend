@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="/App (snapshot).css">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="/App (snapshot).css" />
+              <option name="originalContent" value=".App {&#10;  text-align: center;&#10;  padding: 20px;&#10;  font-family: Arial, sans-serif;&#10;}&#10;&#10;h1 {&#10;  color: #333;&#10;  margin: 20px 0;&#10;}&#10;&#10;p {&#10;  color: #666;&#10;  font-size: 16px;&#10;}&#10;" />
+              <option name="updatedContent" value=".app-shell {&#10;  min-height: 100vh;&#10;  background: linear-gradient(180deg, #f7f9fc 0%, #eef3ff 100%);&#10;  color: #1f2937;&#10;}&#10;&#10;.home {&#10;  max-width: 1100px;&#10;  margin: 0 auto;&#10;  padding: 72px 24px 48px;&#10;}&#10;&#10;.hero {&#10;  text-align: center;&#10;  padding: 56px 24px 40px;&#10;}&#10;&#10;.hero-badge {&#10;  display: inline-block;&#10;  margin: 0 0 16px;&#10;  padding: 8px 14px;&#10;  border-radius: 999px;&#10;  background: #dbeafe;&#10;  color: #1d4ed8;&#10;  font-weight: 700;&#10;  letter-spacing: 0.5px;&#10;}&#10;&#10;.hero h1 {&#10;  margin: 0;&#10;  font-size: clamp(2rem, 4vw, 3.5rem);&#10;  line-height: 1.1;&#10;}&#10;&#10;.hero-description {&#10;  max-width: 720px;&#10;  margin: 18px auto 0;&#10;  color: #4b5563;&#10;  font-size: 1.05rem;&#10;  line-height: 1.7;&#10;}&#10;&#10;.hero-actions {&#10;  display: flex;&#10;  justify-content: center;&#10;  gap: 12px;&#10;  flex-wrap: wrap;&#10;  margin-top: 28px;&#10;}&#10;&#10;.primary-btn,&#10;.secondary-btn {&#10;  border: none;&#10;  border-radius: 12px;&#10;  padding: 12px 18px;&#10;  font-size: 0.98rem;&#10;  font-weight: 700;&#10;  cursor: pointer;&#10;}&#10;&#10;.primary-btn {&#10;  background: #2563eb;&#10;  color: #fff;&#10;}&#10;&#10;.secondary-btn {&#10;  background: #ffffff;&#10;  color: #2563eb;&#10;  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12);&#10;}&#10;&#10;.stats-grid {&#10;  display: grid;&#10;  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));&#10;  gap: 16px;&#10;  margin-top: 32px;&#10;}&#10;&#10;.stat-card,&#10;.feature-item {&#10;  background: rgba(255, 255, 255, 0.9);&#10;  border: 1px solid #e5e7eb;&#10;  border-radius: 18px;&#10;  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);&#10;}&#10;&#10;.stat-card {&#10;  display: flex;&#10;  flex-direction: column;&#10;  align-items: center;&#10;  gap: 8px;&#10;  padding: 24px 16px;&#10;}&#10;&#10;.stat-value {&#10;  font-size: 2rem;&#10;  font-weight: 800;&#10;  color: #2563eb;&#10;}&#10;&#10;.stat-label {&#10;  color: #4b5563;&#10;  font-weight: 600;&#10;}&#10;&#10;.feature-section {&#10;  margin-top: 42px;&#10;}&#10;&#10;.feature-section h2 {&#10;  margin-bottom: 18px;&#10;  font-size: 1.5rem;&#10;}&#10;&#10;.feature-list {&#10;  display: grid;&#10;  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));&#10;  gap: 16px;&#10;}&#10;&#10;.feature-item {&#10;  padding: 22px;&#10;}&#10;&#10;.feature-item h3 {&#10;  margin: 0 0 10px;&#10;}&#10;&#10;.feature-item p {&#10;  margin: 0;&#10;  color: #4b5563;&#10;  line-height: 1.6;&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

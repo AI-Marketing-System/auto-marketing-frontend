@@ -1,0 +1,618 @@
+/* ======================================================
+   ScheduleDetailModal.css
+   US-36 (Hủy lịch) | US-37 (Thêm fanpage) | US-38 (Xem trạng thái)
+   ====================================================== */
+
+/* ── Overlay ── */
+.sdm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 25, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: sdmFadeIn 0.2s ease;
+}
+
+@keyframes sdmFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal container ── */
+.sdm-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.18),
+    0 4px 16px rgba(0, 0, 0, 0.10);
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: sdmSlideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes sdmSlideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Header ── */
+.sdm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+  flex-shrink: 0;
+}
+
+.sdm-header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sdm-header__icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.sdm-header__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.sdm-header__subtitle {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  margin: 2px 0 0;
+}
+
+.sdm-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.sdm-close-btn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+
+/* ── Scrollable body ── */
+.sdm-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sdm-body::-webkit-scrollbar { width: 4px; }
+.sdm-body::-webkit-scrollbar-track { background: transparent; }
+.sdm-body::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+/* ── Section ── */
+.sdm-section { display: flex; flex-direction: column; gap: 10px; }
+
+.sdm-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sdm-section__title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+/* ── Post info ── */
+.sdm-post-info {
+  background: #f8fafc;
+  border: 1px solid #e8edf4;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sdm-post-info__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sdm-post-info__label {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 500;
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.sdm-post-info__value {
+  font-size: 0.86rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.sdm-post-content {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.sdm-post-content p {
+  font-size: 0.83rem;
+  color: #475569;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ── Status badges ── */
+.sdm-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 0.73rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.sdm-badge--waiting   { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.sdm-badge--running   { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+.sdm-badge--success   { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.sdm-badge--failed    { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.sdm-badge--cancelled { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+.sdm-badge--unknown   { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
+
+/* ── Target list (US-38) ── */
+.sdm-target-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sdm-target-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e8edf4;
+  border-radius: 10px;
+  transition: background 0.15s;
+}
+
+.sdm-target-item:hover { background: #f1f5f9; }
+
+/* Wrapper bọc ngoài để đặt badge */
+.sdm-fp-avatar-wrap {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+/* Vòng tròn chứa ảnh hoặc initials */
+.sdm-fp-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1877f2, #0c5cb8);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(24,119,242,0.25);
+}
+
+.sdm-fp-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.sdm-fp-avatar__initial {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+/* Badge Facebook nhỏ góc dưới phải */
+.sdm-fp-avatar__badge {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #1877f2;
+  border: 1.5px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.sdm-target-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sdm-target-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sdm-target-error {
+  font-size: 0.73rem;
+  color: #ef4444;
+}
+
+.sdm-target-retry {
+  font-size: 0.73rem;
+  color: #94a3b8;
+}
+
+.sdm-empty {
+  font-size: 0.84rem;
+  color: #94a3b8;
+  text-align: center;
+  padding: 16px 0;
+}
+
+.sdm-loading-inline {
+  font-size: 0.73rem;
+  color: #94a3b8;
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* ── Edit schedule form (US-35) ── */
+.sdm-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.sdm-btn-icon--edit {
+  color: #667eea;
+  border-color: #c7d2fe;
+  background: #f0f4ff;
+}
+
+.sdm-btn-icon--edit:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.sdm-edit-form {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sdm-edit-row {
+  display: flex;
+  gap: 10px;
+}
+
+.sdm-edit-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sdm-edit-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.sdm-input {
+  padding: 9px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  font-size: 0.85rem;
+  color: #334155;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sdm-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+}
+
+.sdm-input:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.sdm-edit-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sdm-edit-hint {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0;
+  padding: 10px 12px;
+  background: #fffbeb;
+  border: 1px dashed #fde68a;
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+/* ── Add fanpage (US-37) ── */
+.sdm-add-fanpage {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sdm-select {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.85rem;
+  color: #334155;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+
+.sdm-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+}
+
+/* ── Alert messages ── */
+.sdm-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.83rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.sdm-alert--error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.sdm-alert--success {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+/* ── Footer ── */
+.sdm-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 24px 18px;
+  border-top: 1px solid #f1f5f9;
+  flex-shrink: 0;
+  background: #fafbfc;
+}
+
+.sdm-confirm-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.sdm-confirm-text {
+  font-size: 0.83rem;
+  color: #dc2626;
+  font-weight: 600;
+  flex: 1;
+}
+
+/* ── Buttons ── */
+.sdm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.sdm-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Add fanpage button */
+.sdm-btn--add {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 9px 14px;
+}
+
+.sdm-btn--add:hover:not(:disabled) {
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Cancel schedule button */
+.sdm-btn--cancel {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  margin-right: auto;
+}
+
+.sdm-btn--cancel:hover:not(:disabled) {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+}
+
+/* Danger confirm button */
+.sdm-btn--danger {
+  background: #dc2626;
+  color: white;
+}
+
+.sdm-btn--danger:hover:not(:disabled) {
+  background: #b91c1c;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+}
+
+/* Ghost/close button */
+.sdm-btn--ghost {
+  background: transparent;
+  color: #64748b;
+  border: 1.5px solid #e2e8f0;
+}
+
+.sdm-btn--ghost:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+/* Save changes button (US-35) */
+.sdm-btn--save {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.sdm-btn--save:hover:not(:disabled) {
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Close modal button */
+.sdm-btn--close {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1.5px solid #e2e8f0;
+}
+
+.sdm-btn--close:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+/* ── Spinner ── */
+.sdm-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: sdmSpin 0.7s linear infinite;
+}
+
+@keyframes sdmSpin {
+  to { transform: rotate(360deg); }
+}
